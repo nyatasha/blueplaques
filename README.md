@@ -2,7 +2,7 @@
 
 Interactive map of all English Heritage blue plaques in London, with fame highlighting based on Wikipedia monthly pageviews.
 
-**Live site:** _add URL once deployed_
+**Live site:** https://nyatasha.github.io/blueplaques/
 
 ## Data
 
