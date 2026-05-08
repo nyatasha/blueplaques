@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nyatasha.github.io/blueplaques/sitemap.xml

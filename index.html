@@ -3,7 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>English Heritage Blue Plaques · London</title>
+  <title>English Heritage Blue Plaques Map · London</title>
+  <meta name="description" content="Interactive map of all 935 English Heritage blue plaques in London. Explore where Freddie Mercury, Charles Darwin, Florence Nightingale, Karl Marx, Oscar Wilde and hundreds more lived and worked.">
+  <link rel="canonical" href="https://nyatasha.github.io/blueplaques/">
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://nyatasha.github.io/blueplaques/">
+  <meta property="og:title"       content="English Heritage Blue Plaques Map · London">
+  <meta property="og:description" content="Interactive map of all 935 English Heritage blue plaques in London, with iconic people highlighted by Wikipedia popularity.">
+
+  <!-- Twitter -->
+  <meta name="twitter:card"        content="summary">
+  <meta name="twitter:title"       content="English Heritage Blue Plaques Map · London">
+  <meta name="twitter:description" content="Interactive map of all 935 English Heritage blue plaques in London.">
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "English Heritage Blue Plaques Map · London",
+    "url": "https://nyatasha.github.io/blueplaques/",
+    "description": "Interactive map of all 935 English Heritage blue plaques in London, with famous people highlighted by Wikipedia monthly pageviews.",
+    "applicationCategory": "Maps",
+    "about": {
+      "@type": "Dataset",
+      "name": "English Heritage Blue Plaques London",
+      "description": "All 935 English Heritage blue plaques in London with locations, inscriptions, erected dates and Wikipedia links. Subjects include Freddie Mercury, John Lennon, Charles Darwin, Florence Nightingale, Karl Marx, Oscar Wilde, Alan Turing, Charles Dickens, Virginia Woolf, Jimi Hendrix and hundreds more.",
+      "spatialCoverage": { "@type": "Place", "name": "London", "addressCountry": "GB" },
+      "license": "https://opendatacommons.org/licenses/pddl/",
+      "isBasedOn": { "@type": "WebSite", "name": "OpenPlaques", "url": "https://openplaques.org" }
+    }
+  }
+  </script>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
@@ -311,6 +344,54 @@
       font-size: 0.82rem;
       margin: 2px 0;
     }
+
+    /* ── Info button ─────────────────────────────────────── */
+    #info-btn {
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.6);
+      border-radius: 50%;
+      width: 26px; height: 26px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    #info-btn:hover { border-color: rgba(255,255,255,0.6); color: #fff; }
+
+    /* ── Info panel ──────────────────────────────────────── */
+    #info-panel {
+      display: none;
+      position: absolute;
+      top: 52px; left: 0; right: 0;
+      z-index: 1500;
+      background: rgba(13,27,42,0.96);
+      backdrop-filter: blur(6px);
+      color: #d0dce8;
+      padding: 20px 24px 22px;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    #info-panel.open { display: block; }
+    #info-panel h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    #info-panel a { color: #7ab3e8; text-decoration: none; }
+    #info-panel a:hover { text-decoration: underline; }
+    #info-panel .close-info {
+      float: right;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin: -4px -4px 0 10px;
+    }
   </style>
 </head>
 <body>
@@ -323,13 +404,47 @@
   <div class="controls">
     <input id="search" type="search" placeholder="Search name or address…" autocomplete="off" spellcheck="false">
     <div class="filters">
-      <button class="filter-btn active"    data-min="0" id="btn-all">All</button>
-      <button class="filter-btn"           data-min="2" id="btn-famous">Famous+</button>
+      <button class="filter-btn active"     data-min="0" id="btn-all">All</button>
+      <button class="filter-btn"            data-min="2" id="btn-famous">Famous+</button>
       <button class="filter-btn iconic-btn" data-min="3" id="btn-iconic">★ Iconic</button>
     </div>
     <span id="count"></span>
+    <button id="info-btn" aria-label="About this map">ℹ</button>
   </div>
 </header>
+
+<div id="info-panel" role="complementary" aria-label="About">
+  <button class="close-info" aria-label="Close">✕</button>
+  <h2>English Heritage Blue Plaques — London</h2>
+  <p>
+    The <strong>English Heritage blue plaque scheme</strong> has commemorated notable people in London since 1866 —
+    the oldest such scheme in the world. This map shows all <strong>935 blue plaques</strong> currently installed
+    across London boroughs, from Westminster and Chelsea to Hampstead, Brixton and Bow.
+  </p>
+  <p style="margin-top:8px">
+    Plaques mark the homes and workplaces of scientists, musicians, writers, artists and politicians.
+    Highlighted names include
+    <strong>Freddie Mercury, John Lennon, Jimi Hendrix, Charles Darwin, Florence Nightingale,
+    Karl Marx, Oscar Wilde, Alan Turing, Charles Dickens, Virginia Woolf, Agatha Christie</strong>
+    and hundreds more.
+    Gold clusters and markers indicate areas with internationally famous residents.
+  </p>
+  <p style="margin-top:8px;font-size:0.78rem;color:#7ab3e8">
+    Plaque data: <a href="https://openplaques.org" target="_blank" rel="noopener">OpenPlaques</a> (public domain) ·
+    Fame scores: Wikipedia monthly pageviews
+  </p>
+</div>
+
+<noscript>
+  <div style="padding:24px;font-family:sans-serif;max-width:700px;margin:0 auto">
+    <h1>English Heritage Blue Plaques Map · London</h1>
+    <p>Interactive map of all 935 English Heritage blue plaques in London. JavaScript is required to view the map.</p>
+    <p>The English Heritage blue plaque scheme commemorates notable people who lived or worked in London.
+    Subjects include Freddie Mercury, John Lennon, Charles Darwin, Florence Nightingale, Karl Marx,
+    Oscar Wilde, Alan Turing, Charles Dickens, Virginia Woolf, Agatha Christie and hundreds more.</p>
+    <p>Data from <a href="https://openplaques.org">OpenPlaques</a> (public domain).</p>
+  </div>
+</noscript>
 
 <div id="map"></div>
 
@@ -524,6 +639,10 @@
     searchQuery = e.target.value;
     applyFilter();
   });
+
+  const infoPanel = document.getElementById('info-panel');
+  document.getElementById('info-btn').addEventListener('click', () => infoPanel.classList.toggle('open'));
+  infoPanel.querySelector('.close-info').addEventListener('click', () => infoPanel.classList.remove('open'));
 
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
