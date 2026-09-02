@@ -1,0 +1,99 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   London Uncovered — design tokens
+   Premium urban exploration + London heritage. Restrained, editorial.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Brand blue — the blue plaque itself ───────────────────────────── */
+  --blue-900: #0C3468;
+  --blue-800: #0F4483;
+  --blue:     #1456A0;   /* primary */
+  --blue-600: #2E6DB4;
+  --blue-400: #6D9BD1;
+  --blue-200: #C3D7EE;
+  --blue-100: #E1EBF7;
+  --blue-050: #F1F6FC;
+
+  /* ── Deep ink ──────────────────────────────────────────────────────── */
+  --ink:      #14202B;
+  --ink-800:  #22303D;
+  --ink-600:  #46545F;
+  --ink-500:  #66727D;
+  --ink-400:  #8B959E;
+  --ink-300:  #B4BCC4;
+  --ink-200:  #D6DBE0;
+  --ink-100:  #E9ECEF;
+
+  /* ── Warm ivory — sheets, cards, My London ─────────────────────────── */
+  --ivory:    #F7F5F0;
+  --ivory-2:  #EFEBE2;
+  --ivory-3:  #E4DFD3;
+  --white:    #FFFFFF;
+
+  /* ── Muted gold — iconic, achievements, completion ─────────────────── */
+  --gold-900: #6E5320;
+  --gold-700: #96762F;
+  --gold:     #B99652;
+  --gold-300: #DFCB9C;
+  --gold-100: #F4ECDC;
+
+  --positive: #2C7A57;
+  --negative: #A33832;
+
+  /* ── Typography ────────────────────────────────────────────────────── */
+  --font-sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                "Helvetica Neue", Arial, sans-serif;
+  --font-serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino,
+                Georgia, "Times New Roman", serif;
+
+  --fs-xs:   0.6875rem;  /* 11 */
+  --fs-sm:   0.8125rem;  /* 13 */
+  --fs-base: 0.9375rem;  /* 15 */
+  --fs-md:   1.0625rem;  /* 17 */
+  --fs-lg:   1.375rem;   /* 22 */
+  --fs-xl:   1.75rem;    /* 28 */
+  --fs-2xl:  2.75rem;    /* 44 */
+
+  --tracking-caps: 0.09em;
+
+  /* ── Space ─────────────────────────────────────────────────────────── */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px; --sp-12: 48px;
+
+  /* ── Radii ─────────────────────────────────────────────────────────── */
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 22px; --r-2xl: 28px;
+  --r-pill: 999px;
+
+  /* ── Elevation ─────────────────────────────────────────────────────── */
+  --sh-1: 0 1px 2px rgba(20,32,43,.05), 0 2px 8px rgba(20,32,43,.07);
+  --sh-2: 0 2px 6px rgba(20,32,43,.08), 0 10px 28px rgba(20,32,43,.12);
+  --sh-3: 0 -1px 3px rgba(20,32,43,.05), 0 -10px 44px rgba(20,32,43,.17);
+  --sh-gold: 0 0 0 1px rgba(185,150,82,.35), 0 4px 18px rgba(185,150,82,.28);
+
+  /* ── Layout ────────────────────────────────────────────────────────── */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --nav-h: 56px;
+  --panel-w: 400px;
+  --tap: 44px;
+
+  /* ── Motion ────────────────────────────────────────────────────────── */
+  --ease:     cubic-bezier(.32,.72,0,1);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  --dur-1: 140ms; --dur-2: 260ms; --dur-3: 420ms; --dur-4: 620ms;
+
+  /* ── Stacking ──────────────────────────────────────────────────────── */
+  --z-map: 0; --z-mapui: 10; --z-screen: 20; --z-nav: 30;
+  --z-sheet: 40; --z-toast: 60; --z-boot: 70;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

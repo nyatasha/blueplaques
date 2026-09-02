@@ -1,0 +1,17 @@
+{
+  "name": "London Uncovered",
+  "short_name": "Uncovered",
+  "description": "Explore London's blue plaques, find discoveries near you and collect the stories you uncover.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F7F5F0",
+  "theme_color": "#1456A0",
+  "categories": ["travel", "education", "entertainment"],
+  "icons": [
+    { "src": "assets/app-icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/app-icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/app-icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

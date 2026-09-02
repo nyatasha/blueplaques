@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>London Uncovered — smoke test</title>
+<style>
+  body { font: 13px/1.6 ui-monospace, Menlo, monospace; margin: 20px; background: #14202B; color: #DDE3E9; }
+  h1 { font-size: 15px; margin-bottom: 12px; }
+  .pass { color: #6FCF97; } .fail { color: #FF8A80; } .group { color: #7FB3E8; margin-top: 10px; }
+  iframe { position: fixed; left: -9999px; top: 0; border: 0; }
+  #summary { font-size: 16px; font-weight: 700; margin-top: 16px; }
+</style>
+</head>
+<body>
+<h1>London Uncovered — browser smoke test</h1>
+<pre id="out">running…</pre>
+<div id="summary"></div>
+<iframe id="app" width="390" height="844"></iframe>
+
+<script type="module">
+/**
+ * Drives the real application inside an iframe and asserts on what a user
+ * would actually see. Top-level await keeps the document's load event pending
+ * until every check has run, so `chrome --dump-dom` captures the results.
+ */
+
+const lines = [];
+let passed = 0, failed = 0;
+
+/** Written after every check so a stalled run still shows how far it got. */
+function flush() { document.getElementById('out').innerHTML = lines.join('\n'); }
+
+const group = t => { lines.push(`\n<span class="group">${t}</span>`); flush(); };
+function check(name, ok, detail = '') {
+  if (ok) { passed++; lines.push(`<span class="pass">  ok  </span>${name}`); }
+  else { failed++; lines.push(`<span class="fail">  FAIL</span> ${name}${detail ? ` — ${detail}` : ''}`); }
+  flush();
+}
+const eq = (name, a, b) => check(name, a === b, `expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`);
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function until(fn, { timeout = 15000, step = 100 } = {}) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    try { const v = fn(); if (v) return v; } catch { /* not ready */ }
+    await sleep(step);
+  }
+  return null;
+}
+
+window.addEventListener('error', e => { lines.push(`<span class="fail">  ERROR</span> ${e.message}`); flush(); });
+window.addEventListener('unhandledrejection', e => { lines.push(`<span class="fail">  REJECT</span> ${e.reason}`); flush(); });
+
+group('loading app frame');
+// The frame and this page share an origin, so clearing storage here gives the
+// app a clean first-visit state before it boots.
+try { localStorage.removeItem('londonUncovered:v0'); } catch { /* ignore */ }
+
+const frame = document.getElementById('app');
+frame.src = '/index.html';
+
+// Wait for the *real* document. An iframe starts life on about:blank, which is
+// already `complete`, so a naive load-event wait captures the wrong Document.
+const ready = await until(
+  () => frame.contentWindow?.__lu && frame.contentDocument?.getElementById('boot'),
+  { timeout: 40000 });
+check('app frame booted', !!ready);
+
+const win = frame.contentWindow;
+const doc = frame.contentDocument;
+
+const q = sel => doc.querySelector(sel);
+const qa = sel => Array.from(doc.querySelectorAll(sel));
+
+try {
+/* ── Boot ───────────────────────────────────────────────────────────────── */
+group('boot');
+const lu = win.__lu;
+check('app exposes its dev handle (boot completed)', !!lu);
+
+if (lu) {
+  await until(() => q('#boot').hidden);
+  eq('boot overlay is dismissed', q('#boot').hidden, true);
+  check('no error card rendered', !doc.body.textContent.includes("Couldn't load"));
+
+  const total = lu.state.plaques.length;
+  check('dataset loaded', total > 900, `${total} plaques`);
+  eq('counter shows zero of the full dataset', q('#counter-value').textContent.replace(/\s+/g, ' ').trim(), `0 / ${total.toLocaleString('en-GB')}`);
+  check('map count pill populated', /discoveries/.test(q('#map-count').textContent));
+  eq('total-count in the crawlable About copy', q('#total-count').textContent, total.toLocaleString('en-GB'));
+
+  /* ── Map ──────────────────────────────────────────────────────────────── */
+  group('map');
+  await until(() => qa('.leaflet-marker-icon').length > 10);
+  check('markers or clusters rendered', qa('.leaflet-marker-icon').length > 10, `${qa('.leaflet-marker-icon').length} icons`);
+  check('tiles requested', qa('.leaflet-tile').length > 0, `${qa('.leaflet-tile').length} tiles`);
+  check('tile source needs no API key', !qa('.leaflet-tile').some(t => /cartocdn/.test(t.src)));
+  eq('category chips rendered', qa('#chips .chip').length, 10);
+  eq('first chip is All and is active', q('#chips .chip').getAttribute('aria-pressed'), 'true');
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  group('layout @390px');
+  eq('no horizontal document overflow', doc.documentElement.scrollWidth <= 390, true);
+  const bar = q('#brandbar').getBoundingClientRect();
+  const about = q('#about-open').getBoundingClientRect();
+  const counter = q('#counter').getBoundingClientRect();
+  check('brand bar fits the viewport', bar.right <= 390.5, `right=${bar.right.toFixed(1)}`);
+  check('counter is fully visible', counter.right <= 390.5 && counter.left >= 0, `left=${counter.left.toFixed(1)} right=${counter.right.toFixed(1)}`);
+  check('about button is fully visible', about.right <= 390.5 && about.width > 0, `right=${about.right.toFixed(1)}`);
+  const tabs = qa('.tab');
+  eq('three primary tabs', tabs.length, 3);
+  check('every tab is at least 44px tall', tabs.every(t => t.getBoundingClientRect().height >= 44),
+        tabs.map(t => t.getBoundingClientRect().height.toFixed(0)).join('/'));
+  const cta = q('#find-next').getBoundingClientRect();
+  check('primary CTA is within the viewport', cta.left >= 0 && cta.right <= 390.5, `${cta.left.toFixed(0)}–${cta.right.toFixed(0)}`);
+  check('primary CTA sits above the tab bar', cta.bottom <= q('#tabbar').getBoundingClientRect().top + 1);
+  // Measure the area a finger can actually hit, which may be widened by a
+  // pseudo-element, rather than the painted box.
+  const hitsAt = (el, x, y) => { const hit = doc.elementFromPoint(x, y); return !!hit && (hit === el || el.contains(hit) || hit.closest('button') === el); };
+  const targetOk = (sel) => {
+    const el = q(sel);
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    return hitsAt(el, cx, cy) && hitsAt(el, cx, cy - 21) && hitsAt(el, cx, cy + 21)
+        && hitsAt(el, cx - 21, cy) && hitsAt(el, cx + 21, cy);
+  };
+  const touchTargets = ['#locate', '#filters-open', '#find-next', '#counter', '#about-open'];
+  const failing = touchTargets.filter(sel => !targetOk(sel));
+  check('key controls offer a 44px touch target', failing.length === 0, `too small: ${failing.join(', ')}`);
+
+  /* ── Search ───────────────────────────────────────────────────────────── */
+  group('search');
+  const input = q('#search');
+  input.focus();
+  input.value = 'woolf';
+  input.dispatchEvent(new win.Event('input', { bubbles: true }));
+  await until(() => !q('#suggest').hidden);
+  check('suggestions open', !q('#suggest').hidden);
+  check('a person suggestion is offered', qa('#suggest .sg-item[data-kind="plaque"]').length > 0);
+  check('the query filters the map count', /of/.test(q('#map-count').textContent), q('#map-count').textContent);
+  const first = q('#suggest .sg-item');
+  check('suggestion labels the match', /Woolf/i.test(first.textContent), first.textContent.trim());
+  first.click();
+  await until(() => q('#sheet-plaque').classList.contains('open'));
+  check('choosing a suggestion opens the plaque sheet', q('#sheet-plaque').classList.contains('open'));
+  check('sheet shows the chosen person', /Woolf/i.test(q('#plaque-body').textContent));
+  check('search cleared after selection', input.value === '');
+
+  /* ── Collect ──────────────────────────────────────────────────────────── */
+  group('collect');
+  check('collect action offered', !!q('#plaque-foot [data-act="collect"]'));
+  q('#plaque-foot [data-act="collect"]').click();
+  await until(() => lu.progress().count === 1);
+  eq('one discovery recorded', lu.progress().count, 1);
+  eq('counter updated', q('#counter-value').textContent.replace(/\s+/g, ' ').trim().startsWith('1 /'), true);
+  check('xp awarded', lu.progress().xp > 0, `${lu.progress().xp} XP`);
+  check('unverified without location', lu.progress().verified === 0);
+  await until(() => qa('#toasts .toast').length > 0);
+  check('a discovery toast appears', qa('#toasts .toast').length > 0);
+  check('found state shown in the sheet', /Found/.test(q('#plaque-foot').textContent));
+  await until(() => qa('.pin-collected').length > 0, { timeout: 3000 });
+  check('marker switches to the collected state', qa('.pin-collected').length > 0);
+  check('progress persisted to localStorage',
+        JSON.parse(win.localStorage.getItem('londonUncovered:v0')).collected &&
+        Object.keys(JSON.parse(win.localStorage.getItem('londonUncovered:v0')).collected).length === 1);
+
+  /* ── Achievement ──────────────────────────────────────────────────────── */
+  group('achievements');
+  await until(() => qa('#toasts .toast').length > 1, { timeout: 4000 });
+  check('First Find achievement unlocked',
+        !!JSON.parse(win.localStorage.getItem('londonUncovered:v0')).unlockedAchievements.first_find);
+
+  /* ── Tabs ─────────────────────────────────────────────────────────────── */
+  group('navigation');
+  q('.tab[data-tab="quest"]').click();
+  await until(() => !q('#screen-quest').hidden);
+  check('quest screen shows', !q('#screen-quest').hidden);
+  eq('five quests rendered', qa('#quest-body .quest').length, 5);
+  check('a quest reports progress', /1 \/ 3|1 \/ 1/.test(q('#quest-body').textContent));
+  check('map controls hidden behind the quest tab',
+        win.getComputedStyle(q('#map-controls')).display === 'none');
+
+  q('.tab[data-tab="mylondon"]').click();
+  await until(() => !q('#screen-mylondon').hidden);
+  check('my london screen shows', !q('#screen-mylondon').hidden);
+  check('hero numbers rendered', qa('#mylondon-body .hero-num').length === 2, q('#mylondon-body .hero-num')?.textContent);
+  check('level card rendered', /Explorer · Level/.test(q('#mylondon-body').textContent));
+  check('recent discovery listed', qa('#mylondon-body .recent-item').length >= 1);
+
+  q('#mylondon-body [data-seg="collections"]').click();
+  await until(() => qa('#mylondon-body .collection').length > 0);
+  eq('nine collection cards', qa('#mylondon-body .collection').length, 9);
+
+  q('#mylondon-body [data-seg="achievements"]').click();
+  await until(() => qa('#mylondon-body .ach').length > 0);
+  check('achievement grid rendered', qa('#mylondon-body .ach').length >= 10, `${qa('#mylondon-body .ach').length} badges`);
+  check('at least one achievement unlocked', qa('#mylondon-body .ach.unlocked').length >= 1);
+  check('locked achievements show progress', qa('#mylondon-body .ach.locked .bar').length >= 1);
+
+  q('.tab[data-tab="map"]').click();
+  await until(() => q('#screen-quest').hidden && q('#screen-mylondon').hidden);
+  check('returning to map restores the controls',
+        win.getComputedStyle(q('#map-controls')).display !== 'none');
+
+  /* ── Filters ──────────────────────────────────────────────────────────── */
+  group('filters');
+  q('#filters-open').click();
+  await until(() => q('#sheet-filters').classList.contains('open'));
+  check('filter sheet opens', q('#sheet-filters').classList.contains('open'));
+  check('status, category, fame and distance groups', qa('#filters-body .fl-group').length === 4);
+  check('distance disabled without location', qa('#filters-body [data-group="distance"]').every(b => b.disabled));
+  const before = q('#map-count').textContent;
+  q('#filters-body [data-group="fame"][data-value="iconic"]').click();
+  await until(() => q('#map-count').textContent !== before);
+  check('applying a filter changes the visible count', q('#map-count').textContent !== before, q('#map-count').textContent);
+  check('apply button reports the count', /Show \d/.test(q('#filters-apply').textContent), q('#filters-apply').textContent);
+  check('filter badge appears', !q('#filter-badge').hidden);
+  q('#filters-clear').click();
+  await until(() => q('#filter-badge').hidden);
+  check('clearing filters resets the badge', q('#filter-badge').hidden);
+  q('#filters-close').click();
+
+  /* ── Category chip ────────────────────────────────────────────────────── */
+  group('categories');
+  const musicChip = qa('#chips .chip').find(c => c.dataset.cat === 'music');
+  musicChip.focus();
+  musicChip.click();
+  await until(() => musicChip.getAttribute('aria-pressed') === 'true');
+  check('chip activates', musicChip.getAttribute('aria-pressed') === 'true');
+  check('chip element survives selection (focus is not lost)',
+        doc.activeElement === musicChip, `focus is on ${doc.activeElement?.tagName}.${doc.activeElement?.className}`);
+  const musicTotal = lu.state.byCategory.get('music').length;
+  check('map count matches the category size',
+        q('#map-count').textContent.includes(musicTotal.toLocaleString('en-GB')),
+        `${q('#map-count').textContent} vs ${musicTotal}`);
+  qa('#chips .chip')[0].click();
+  await until(() => qa('#chips .chip')[0].getAttribute('aria-pressed') === 'true');
+  check('All chip restores the full set', /935|\d{3} discoveries/.test(q('#map-count').textContent));
+
+  /* ── About ────────────────────────────────────────────────────────────── */
+  group('about & seo');
+  check('crawlable About copy is in the DOM', doc.getElementById('about-content').textContent.length > 900);
+  check('OpenPlaques attributed', /OpenPlaques/.test(doc.getElementById('about-content').textContent));
+  check('not claiming to be English Heritage',
+        /not affiliated/.test(doc.getElementById('about-content').textContent));
+  q('#about-open').click();
+  await until(() => q('#sheet-about').classList.contains('open'));
+  check('about sheet opens', q('#sheet-about').classList.contains('open'));
+  q('#about-close').click();
+
+  /* ── Location (PRD §19–25, §31–33) ────────────────────────────────────── */
+  // The test runner grants geolocation and pins the fix to a real plaque, so
+  // the verified-collection path can be exercised end to end.
+  const standingOnId = new URLSearchParams(location.hash.slice(1)).get('geo');
+  if (standingOnId && win.navigator.geolocation) {
+    group('location');
+    check('location not requested before the user asks', lu.state.userPos === null);
+    q('#locate').click();
+    const gotFix = await until(() => lu.state.userPos, { timeout: 20000 });
+    check('a fix is acquired after tapping the location button', !!gotFix);
+
+    if (gotFix) {
+      await until(() => qa('.userdot').length > 0, { timeout: 5000 });
+      check('user position marker drawn', qa('.userdot').length > 0);
+
+      // Near me (PRD §22)
+      check('Near me control appears once located', !q('#nearby').hidden);
+      q('#nearby').click();
+      await until(() => q('#sheet-nearby').classList.contains('open'));
+      check('Near me sheet opens', q('#sheet-nearby').classList.contains('open'));
+      const nearbyRows = qa('#nearby-body .mp-item');
+      check('nearby discoveries listed', nearbyRows.length > 0, `${nearbyRows.length} rows`);
+      check('distances shown on nearby rows', qa('#nearby-body .mp-dist').length === nearbyRows.length);
+      const dists = qa('#nearby-body .mp-dist').map(e => e.textContent);
+      check('nearby list is ordered by distance', (() => {
+        const m = dists.map(t => t.endsWith('km') ? parseFloat(t) * 1000 : parseFloat(t));
+        return m.every((v, i) => i === 0 || v >= m[i - 1] - 0.5);
+      })(), dists.slice(0, 4).join(' · '));
+      check('nearby list prioritises uncollected',
+            qa('#nearby-body .mp-item.done').length === 0);
+      q('#nearby-close').click();
+      await until(() => !q('#sheet-nearby').classList.contains('open'));
+
+      // Distance filters unlock once a position exists.
+      q('#filters-open').click();
+      await until(() => q('#sheet-filters').classList.contains('open'));
+      check('distance filters enabled with a location',
+            qa('#filters-body [data-group="distance"]').every(b => !b.disabled));
+      q('#filters-close').click();
+
+      // Standing on a plaque: the sheet must offer a verified collect.
+      lu.open(standingOnId);
+      await until(() => q('#sheet-plaque').classList.contains('open'));
+      check('sheet shows how far away the plaque is', /\d+\s?m|km/.test(q('#plaque-body').textContent));
+      const verifiedBtn = q('#plaque-foot [data-act="collect"][data-verified="1"]');
+      check('nearby plaque offers a verified collect', !!verifiedBtn,
+            q('#plaque-foot').textContent.trim().slice(0, 70));
+      check('verification is explained', /verified/i.test(q('#plaque-foot').textContent));
+
+      if (verifiedBtn) {
+        verifiedBtn.click();
+        await until(() => lu.progress().verified === 1);
+        eq('collecting on location is verified', lu.progress().verified, 1);
+        check('verified find earns the location bonus', lu.progress().xp >= 20);
+        check('Local Explorer quest completes',
+              !!JSON.parse(win.localStorage.getItem('londonUncovered:v0')).completedQuests.local_explorer);
+      }
+
+      // Find my next discovery — first tap shows the one-time explainer.
+      q('.tab[data-tab="map"]').click();
+      q('#find-next').click();
+      await until(() => q('#sheet-message').classList.contains('open'), { timeout: 5000 });
+      check('first Find-next tap shows the one-time explainer',
+            /Uncover London as you explore/.test(q('#message-body').textContent));
+      q('#message-body [data-msg="primary"]').click();
+
+      const targeted = await until(() => lu.state.targetId, { timeout: 12000 });
+      check('a next discovery is chosen', !!targeted);
+      check('the target is not already collected', targeted && !lu.state.saved.collected[targeted]);
+      await until(() => qa('.pin-target').length > 0, { timeout: 5000 });
+      check('target marker is highlighted', qa('.pin-target').length > 0);
+      check('target sheet is labelled as the next discovery',
+            /Your next discovery/i.test(q('#plaque-body').textContent));
+      check('walking time offered', /min/.test(q('#plaque-foot').textContent + q('#plaque-body').textContent));
+      check('directions link points at a maps provider',
+            /maps\.(apple|google)\.com/.test(q('#plaque-foot a[data-act="directions"]')?.href || ''));
+
+      const firstTarget = lu.state.targetId;
+      const another = q('#plaque-foot [data-act="choose-another"]');
+      check('choose another is offered', !!another);
+      if (another) {
+        another.click();
+        await until(() => lu.state.targetId && lu.state.targetId !== firstTarget, { timeout: 12000 });
+        check('choose another picks a different discovery', lu.state.targetId !== firstTarget);
+      }
+
+      check('no coordinates recorded in analytics',
+            !JSON.stringify(lu.events()).includes(String(lu.state.userPos.lat).slice(0, 7)));
+      check('no coordinates written to storage',
+            !String(win.localStorage.getItem('londonUncovered:v0')).includes(String(lu.state.userPos.lat).slice(0, 7)));
+    }
+  }
+
+  /* ── Responsive sweep (PRD §57) ───────────────────────────────────────── */
+  group('responsive');
+  const widths = [320, 375, 390, 430, 768, 1024, 1440];
+  for (const w of widths) {
+    frame.style.width = `${w}px`;
+    frame.width = w;
+    await sleep(260);
+    const overflow = doc.documentElement.scrollWidth - w;
+    check(`no horizontal overflow at ${w}px`, overflow <= 1, `overflows by ${overflow}px`);
+    const bar = q('#brandbar').getBoundingClientRect();
+    check(`brand bar fits at ${w}px`, bar.right <= w + 1 && bar.left >= -1,
+          `${bar.left.toFixed(0)}–${bar.right.toFixed(0)}`);
+    if (w >= 900) {
+      check(`panel layout engages at ${w}px`,
+            win.getComputedStyle(q('#map-panel')).display === 'block');
+    } else {
+      check(`tab bar is pinned to the bottom at ${w}px`,
+            Math.abs(q('#tabbar').getBoundingClientRect().bottom - frame.clientHeight) < 2);
+    }
+  }
+  frame.style.width = '390px'; frame.width = 390;
+  await sleep(260);
+
+  /* ── Accessibility (PRD §58) ──────────────────────────────────────────── */
+  group('accessibility');
+  check('page language declared', doc.documentElement.lang.startsWith('en'));
+  // Controls inside a hidden subtree are not exposed to assistive tech either.
+  const exposedButtons = qa('button').filter(b => !b.closest('[hidden]'));
+  const unlabelled = exposedButtons.filter(b => !b.textContent.trim() && !b.getAttribute('aria-label'));
+  check('every icon-only control is labelled', unlabelled.length === 0,
+        unlabelled.map(b => b.id || b.className).join(', '));
+  check('images carry alt text', qa('img').every(i => i.hasAttribute('alt')));
+  check('search input is labelled',
+        !!doc.querySelector('label[for="search"]') || !!q('#search').getAttribute('aria-label'));
+  check('tabs expose the current page', qa('.tab').some(t => t.getAttribute('aria-current') === 'page'));
+  check('live region present for announcements', !!q('#live') && q('#live').getAttribute('aria-live') === 'polite');
+  // A `hidden` attribute must actually hide: author display rules outrank the
+  // UA stylesheet unless a reset says otherwise.
+  const wronglyVisible = qa('[hidden]').filter(el => win.getComputedStyle(el).display !== 'none');
+  check('every [hidden] element is really hidden', wronglyVisible.length === 0,
+        wronglyVisible.map(el => el.id || el.className).join(', '));
+  check('closed sheets are inert to keyboard users',
+        qa('.sheet').filter(sh => !sh.classList.contains('open'))
+                    .every(sh => sh.hasAttribute('inert') || sh.getAttribute('aria-hidden') === 'true'));
+  check('reduced motion is honoured in CSS',
+        Array.from(doc.styleSheets).some(sheet => {
+          try { return Array.from(sheet.cssRules).some(r => String(r.conditionText || '').includes('prefers-reduced-motion')); }
+          catch { return false; }
+        }));
+  const chip0 = qa('#chips .chip')[0];
+  chip0.focus();
+  check('chips are keyboard focusable', doc.activeElement === chip0);
+  check('chips expose pressed state', chip0.hasAttribute('aria-pressed'));
+
+  /* ── Reset ────────────────────────────────────────────────────────────── */
+  group('reset');
+  lu.reset();
+  await until(() => lu.progress().count === 0);
+  eq('progress cleared', lu.progress().count, 0);
+  await until(() => qa('.pin-collected').length === 0, { timeout: 3000 });
+  eq('collected markers reverted', qa('.pin-collected').length, 0);
+}
+
+} catch (err) {
+  failed++;
+  lines.push(`<span class="fail">  THREW</span> ${err && err.stack ? err.stack : err}`);
+}
+
+/* ── Report ─────────────────────────────────────────────────────────────── */
+flush();
+const summary = failed === 0
+  ? `<span class="pass">SMOKE PASS — ${passed} checks</span>`
+  : `<span class="fail">SMOKE FAIL — ${failed} of ${passed + failed} checks failed</span>`;
+document.getElementById('summary').innerHTML = summary;
+document.title = failed === 0 ? `SMOKE_PASS ${passed}` : `SMOKE_FAIL ${failed}/${passed + failed}`;
+</script>
+</body>
+</html>

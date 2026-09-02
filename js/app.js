@@ -1,0 +1,586 @@
+/**
+ * London Uncovered — bootstrap and orchestration.
+ *
+ * Owns the tab shell, wires the feature modules to each other, and runs the
+ * collect flow (award XP → update marker → re-evaluate quests and achievements
+ * → celebrate). Everything below is event-driven; no module reaches into
+ * another module's DOM.
+ */
+
+import { CATEGORY_BY_SLUG, VERIFY_RADIUS_M } from './config.js';
+import { loadPlaques } from './data.js';
+import * as store from './state.js';
+import { state } from './state.js';
+import * as mapView from './map.js';
+import { Sheet, initScrim, closeAllSheets } from './sheet.js';
+import { initSearch, clear as clearSearch } from './search.js';
+import { initFilters, openFilters, refreshFilters, activeFilterCount, clearFilters, isFiltered } from './filters.js';
+import { initPlaqueSheet, openPlaque, renderPlaqueSheet, currentPlaqueId } from './plaque-sheet.js';
+import { initQuestScreen, renderQuest } from './quest-screen.js';
+import { initMyLondon, renderMyLondon, showSegment } from './mylondon.js';
+import { syncUnlocks } from './achievements.js';
+import { syncCompletions, hasActionableQuest } from './quests.js';
+import { requestLocation, ensureLocation } from './location.js';
+import { recommendNext } from './recommend.js';
+import { distanceMetres, formatDistance } from './geo.js';
+import { qs, qsa, on, esc, delegate, toast, xpBurst, announce, fmtNumber } from './ui.js';
+import { storageAvailable } from './storage.js';
+import { isCollected } from './state.js';
+import { icon } from './icons.js';
+import { initAnalytics, trackEvent, recordedEvents } from './analytics.js';
+
+let sheets = {};
+let booted = false;
+
+/* ── Tabs ──────────────────────────────────────────────────────────────── */
+
+function setTab(tab, { track = true } = {}) {
+  if (state.tab === tab) return;
+  state.tab = tab;
+  document.body.dataset.tab = tab;
+
+  qs('#screen-quest').hidden = tab !== 'quest';
+  qs('#screen-mylondon').hidden = tab !== 'mylondon';
+  document.querySelectorAll('.tab').forEach(el => {
+    const active = el.dataset.tab === tab;
+    el.setAttribute('aria-current', active ? 'page' : 'false');
+  });
+
+  if (tab === 'quest') renderQuest();
+  if (tab === 'mylondon') { renderMyLondon(); if (track) trackEvent('my_london_opened'); }
+  if (tab === 'map') requestAnimationFrame(() => mapView.invalidateSize());
+  if (tab !== 'map') closeAllSheets();
+}
+
+/* ── Chips ─────────────────────────────────────────────────────────────── */
+
+/** Built once — the category list does not change while the app is running. */
+function renderChips() {
+  qs('#chips').innerHTML = [
+    '<button type="button" class="chip" data-cat="all" aria-pressed="true">All</button>',
+    ...store.categoryTotals().map(c => `<button type="button" class="chip" data-cat="${esc(c.slug)}"
+        aria-pressed="false">${esc(c.short)}</button>`),
+  ].join('');
+  syncChips();
+}
+
+/**
+ * Selection state is written onto the existing buttons rather than re-rendering
+ * the row: rebuilding would drop keyboard focus and reset the horizontal
+ * scroll position every time a category is chosen.
+ */
+function syncChips() {
+  const selected = state.filters.categories;
+  qsa('#chips .chip').forEach(chip => {
+    const on_ = chip.dataset.cat === 'all' ? selected.size === 0 : selected.has(chip.dataset.cat);
+    chip.setAttribute('aria-pressed', String(on_));
+  });
+}
+
+function toggleCategory(slug) {
+  const set = state.filters.categories;
+  if (slug === 'all') set.clear();
+  else if (set.has(slug)) set.delete(slug);
+  else { set.clear(); set.add(slug); }     // chips behave as single-select
+  trackEvent('category_selected', { category: slug });
+  syncChips();
+  refresh();
+}
+
+/* ── Shared refresh ────────────────────────────────────────────────────── */
+
+function refresh({ rerenderSheet = false } = {}) {
+  const visible = mapView.applyFilters();
+  const p = store.progress();
+
+  qs('#counter-value').innerHTML =
+    `<strong>${fmtNumber(p.count)}</strong> / ${fmtNumber(p.total)}`;
+
+  const countEl = qs('#map-count');
+  countEl.textContent = visible.length === p.total
+    ? `${fmtNumber(p.total)} discoveries`
+    : `${fmtNumber(visible.length)} of ${fmtNumber(p.total)}`;
+
+  const filterBtn = qs('#filters-open');
+  filterBtn.dataset.active = String(isFiltered());
+  const badge = qs('#filter-badge');
+  badge.hidden = activeFilterCount() === 0;
+  badge.textContent = activeFilterCount();
+
+  qs('#quest-dot').hidden = !hasActionableQuest();
+  qs('#nearby').hidden = !state.userPos;
+  renderMapPanel(visible);
+
+  renderEmptyState(visible.length);
+  if (rerenderSheet && currentPlaqueId()) renderPlaqueSheet();
+  if (state.tab === 'quest') renderQuest();
+  if (state.tab === 'mylondon') renderMyLondon();
+  refreshFilters();
+}
+
+/**
+ * Empty results are shown as a card over the map, never as a sheet: a modal
+ * here would steal focus from the search field the user is still typing in.
+ */
+function renderEmptyState(visibleCount) {
+  const el = qs('#map-empty');
+  if (visibleCount > 0) { el.hidden = true; return; }
+  const hasQuery = state.query.trim().length > 0;
+  qs('#map-empty-title').textContent = hasQuery ? 'Nothing found' : 'No discoveries match these filters';
+  qs('#map-empty-body').textContent = hasQuery
+    ? 'Try another person, place or category.'
+    : 'Loosen a filter to bring London back into view.';
+  qs('#map-empty-clear').textContent = hasQuery ? 'Clear search' : 'Clear filters';
+  el.hidden = false;
+}
+
+
+/* ── Desktop panel list ────────────────────────────────────────────────── */
+
+/**
+ * The right-hand panel on desktop would otherwise be empty under the CTA.
+ * It shows whatever is most useful for the current context: what is near you
+ * once location is on, otherwise the strongest names in the current view.
+ */
+function discoveryList(rows, { heading, count, emptyText }) {
+  return `
+    <div class="mp-head">
+      <span class="eyebrow">${esc(heading)}</span>
+      <span class="level-xp">${fmtNumber(count)}</span>
+    </div>
+    <div class="mp-list">
+      ${rows.length ? rows.map(({ p, d }, i) => {
+        const done = isCollected(p.id);
+        return `<button type="button" class="mp-item${p.fame >= 3 ? ' iconic' : ''}${done ? ' done' : ''}"
+                  data-panel-id="${esc(p.id)}">
+          <span class="mp-rank">${done ? icon('check') : i + 1}</span>
+          <span class="recent-main">
+            <span class="recent-name">${esc(p.title)}</span>
+            <span class="recent-sub">${esc(p.categoryLabel)}${p.fame >= 3 ? ' · Iconic' : ''}</span>
+          </span>
+          ${d !== null ? `<span class="mp-dist">${esc(formatDistance(d))}</span>` : icon('chevronR')}
+        </button>`;
+      }).join('') : `<p class="recent-sub">${esc(emptyText)}</p>`}
+    </div>`;
+}
+
+function rankedRows(visible, { byDistance, limit }) {
+  return (byDistance
+    ? visible.map(p => ({ p, d: distanceMetres(state.userPos, p) })).sort((a, b) => a.d - b.d)
+    : visible.map(p => ({ p, d: null })).sort((a, b) => b.p.fame - a.p.fame || b.p.views - a.p.views)
+  ).slice(0, limit);
+}
+
+function renderMapPanel(visible) {
+  const host = qs('#map-panel');
+  if (!host) return;
+  const located = !!state.userPos;
+  const searching = state.query.trim().length > 0 || isFiltered();
+  host.innerHTML = discoveryList(rankedRows(visible, { byDistance: located, limit: 12 }), {
+    heading: located ? 'Near you' : searching ? 'In this view' : 'Iconic Londoners',
+    count: visible.length,
+    emptyText: 'Nothing matches the current filters.',
+  });
+}
+
+/**
+ * "Near me" (PRD §22) — the mobile counterpart to the desktop panel list.
+ * Uncollected discoveries come first, since those are the ones worth walking to.
+ */
+function openNearby() {
+  if (!state.userPos) return;
+  trackEvent('near_me_used', { surface: 'sheet' });
+  const visible = mapView.visiblePlaques();
+  const uncollected = visible.filter(p => !isCollected(p.id));
+  const rows = rankedRows(uncollected.length ? uncollected : visible, { byDistance: true, limit: 25 });
+  qs('#nearby-body').innerHTML = discoveryList(rows, {
+    heading: uncollected.length ? 'Closest still to find' : 'Closest discoveries',
+    count: rows.length,
+    emptyText: "You've explored everything nearby. Zoom out or choose another category.",
+  });
+  sheets.nearby.open('full');
+}
+
+/* ── Collecting ────────────────────────────────────────────────────────── */
+
+function verifiedFor(plaque) {
+  if (!state.userPos) return false;
+  return distanceMetres(state.userPos, plaque) <= VERIFY_RADIUS_M;
+}
+
+function handleCollect(plaque, wantsVerified) {
+  trackEvent('collect_clicked', { fame: plaque.fame, category: plaque.category });
+  const verified = wantsVerified && verifiedFor(plaque);
+  const result = store.collect(plaque.id, verified);
+  if (!result) return;
+
+  trackEvent('discovery_collected', {
+    verified: result.verified, fame: plaque.fame, category: plaque.category,
+  });
+
+  mapView.refreshMarker(plaque.id, { pop: true });
+  if (state.targetId === plaque.id) mapView.setTarget(null);
+
+  xpBurst(result.xp);
+  qs('#counter').classList.add('bump');
+  setTimeout(() => qs('#counter').classList.remove('bump'), 500);
+
+  const p = store.progress();
+  announce(`${plaque.title} collected. ${result.xp} XP. ${p.count} of ${p.total} discovered.`);
+
+  toast({
+    eyebrow: 'Discovery added',
+    title: plaque.title,
+    desc: `${plaque.fame >= 3 ? 'Iconic discovery' : plaque.categoryLabel} · +${result.xp} XP · ${p.count} / ${p.total}`,
+    iconName: 'check',
+    gold: plaque.fame >= 3,
+  });
+
+  celebrateUnlocks();
+  warnIfNotPersisted();
+  refresh({ rerenderSheet: true });
+}
+
+/**
+ * Private browsing and locked-down browsers reject localStorage. The game still
+ * works for the session, but the player deserves to know it will not be kept.
+ */
+let storageWarningShown = false;
+function warnIfNotPersisted() {
+  if (storageWarningShown || storageAvailable()) return;
+  storageWarningShown = true;
+  toast({
+    eyebrow: 'Heads up',
+    title: "Progress won't be saved",
+    desc: 'This browser is blocking site storage, so your collection will not survive a refresh.',
+    iconName: 'info',
+    gold: false,
+  });
+}
+
+/** Achievement and quest toasts, staggered so they do not stack all at once. */
+function celebrateUnlocks() {
+  syncCompletions().forEach((quest, i) => {
+    trackEvent('quest_completed', { quest: quest.id });
+    setTimeout(() => toast({
+      eyebrow: 'Quest complete', title: quest.name, desc: quest.goal,
+      iconName: 'check', gold: false, onClick: () => setTab('quest'),
+    }), 700 + i * 400);
+  });
+
+  syncUnlocks().forEach((achievement, i) => {
+    trackEvent('achievement_unlocked', { achievement: achievement.id });
+    setTimeout(() => toast({
+      eyebrow: 'Achievement unlocked',
+      title: achievement.name,
+      desc: achievement.desc,
+      iconName: achievement.icon,
+      onClick: () => { setTab('mylondon'); showSegment('achievements'); },
+    }), 1100 + i * 450);
+  });
+}
+
+/* ── Location ──────────────────────────────────────────────────────────── */
+
+function locationDeniedMessage() {
+  showMessage({
+    icon: 'locate',
+    title: 'Location is off',
+    body: 'Use location to find discoveries near you. You can turn it back on in your browser settings for this site.',
+    primary: { label: 'Try again', onClick: () => { state.locationStatus = 'idle'; useLocation(); } },
+  });
+}
+
+async function useLocation({ centre = true, silent = false } = {}) {
+  const btn = qs('#locate');
+  btn.classList.add('locating');
+  try {
+    const pos = await (silent ? ensureLocation() : requestLocation());
+    mapView.setUserPosition(pos);
+    if (centre) mapView.centreOnUser(pos);
+    btn.dataset.active = 'true';
+    refresh({ rerenderSheet: true });
+    return pos;
+  } catch (reason) {
+    btn.dataset.active = 'false';
+    if (reason === 'denied') locationDeniedMessage();
+    else if (reason !== 'timeout') {
+      showMessage({ icon: 'locate', title: "Couldn't find you",
+        body: 'Your device could not provide a location just now.',
+        primary: { label: 'Try again', onClick: () => useLocation() } });
+    }
+    return null;
+  } finally {
+    btn.classList.remove('locating');
+  }
+}
+
+/* ── Find my next discovery ────────────────────────────────────────────── */
+
+async function findNext({ another = false } = {}) {
+  trackEvent('find_next_clicked', { another });
+
+  if (!store.getSetting('seenIntro')) {
+    store.setSetting('seenIntro', true);
+    showIntro(() => findNext({ another }));
+    return;
+  }
+
+  if (!state.userPos) {
+    const pos = await useLocation({ centre: false });
+    if (!pos) return;
+  }
+
+  if (another && state.targetId) state.suggestedIds.push(state.targetId);
+  const pick = recommendNext({ excludeIds: state.suggestedIds });
+
+  if (!pick) {
+    // Nothing left under the current constraints — say which constraint.
+    showMessage({
+      icon: 'compass',
+      title: isFiltered() ? 'Nothing nearby in this filter' : "You've explored everything nearby",
+      body: isFiltered()
+        ? 'Clear the filters, or zoom out and choose another part of London.'
+        : 'Zoom out or choose another category to keep going.',
+      primary: isFiltered()
+        ? { label: 'Clear filters', onClick: () => { clearFilters(); syncChips(); refresh(); state.suggestedIds = []; findNext(); } }
+        : { label: 'Start again', onClick: () => { state.suggestedIds = []; findNext(); } },
+    });
+    return;
+  }
+
+  state.suggestedIds.push(pick.plaque.id);
+  mapView.setTarget(pick.plaque.id);
+  mapView.focusPlaque(pick.plaque.id, { zoom: 16 });
+  openPlaque(pick.plaque.id);
+  announce(`Next discovery: ${pick.plaque.title}, ${formatDistance(pick.distance)} away.`);
+}
+
+/* ── Generic message sheet ─────────────────────────────────────────────── */
+
+function showMessage({ icon: iconName = 'info', title, body, primary, secondary }) {
+  qs('#message-body').innerHTML = `
+    <div class="notice">
+      <div class="notice-icon">${icon(iconName)}</div>
+      <div class="notice-title">${esc(title)}</div>
+      <p>${esc(body)}</p>
+      ${primary ? `<button type="button" class="btn btn-primary" data-msg="primary" data-autofocus>${esc(primary.label)}</button>` : ''}
+      ${secondary ? `<button type="button" class="btn btn-ghost btn-block btn-sm" data-msg="secondary" style="margin-top:var(--sp-2)">${esc(secondary.label)}</button>` : ''}
+    </div>`;
+  sheets.message._primary = primary?.onClick;
+  sheets.message._secondary = secondary?.onClick;
+  sheets.message.open('peek');
+}
+
+/** First-run explainer, shown once (PRD §54). */
+function showIntro(after) {
+  qs('#message-body').innerHTML = `
+    <div class="intro-art" aria-hidden="true"></div>
+    <div class="notice" style="padding-top:0">
+      <div class="notice-title" style="font-size:var(--fs-lg)">Uncover London as you explore</div>
+      <p>Find historical discoveries around you, collect the ones you have seen, and unlock achievements as your London fills in.</p>
+      <button type="button" class="btn btn-primary" data-msg="primary" data-autofocus>Start exploring</button>
+    </div>`;
+  sheets.message._primary = after;
+  sheets.message._secondary = null;
+  sheets.message.open('peek');
+}
+
+/* ── Sharing ───────────────────────────────────────────────────────────── */
+
+async function share() {
+  const p = store.progress();
+  trackEvent('share_clicked', { count: p.count });
+  const text = `I've uncovered ${p.count} of London's hidden stories with London Uncovered.`;
+  const url = location.href.split('#')[0];
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: 'London Uncovered', text, url });
+      return;
+    }
+    await navigator.clipboard.writeText(`${text} ${url}`);
+    toast({ eyebrow: 'Copied', title: 'Link copied to clipboard', iconName: 'check', gold: false });
+  } catch { /* the user dismissed the share sheet */ }
+}
+
+/* ── Navigation helpers used by several screens ────────────────────────── */
+
+function openCategoryOnMap(slug) {
+  if (!CATEGORY_BY_SLUG.has(slug)) return;
+  state.filters.categories.clear();
+  state.filters.categories.add(slug);
+  state.filters.status = 'uncollected';   // show what is left to find
+  clearSearch({ silent: true });
+  syncChips();
+  setTab('map');
+  closeAllSheets();
+  refresh();
+  trackEvent('category_selected', { category: slug, from: 'collection' });
+  announce(`${CATEGORY_BY_SLUG.get(slug).label} — showing uncollected discoveries.`);
+}
+
+function selectPlaque(id, { from } = {}) {
+  const plaque = state.byId.get(id);
+  if (!plaque) return;
+  setTab('map');
+  // A search selection clears the query, so re-apply filters before moving the
+  // camera — otherwise the marker may still be sitting outside the layer.
+  refresh();
+  trackEvent('plaque_opened', { fame: plaque.fame, category: plaque.category, from: from || 'unknown' });
+  mapView.focusPlaque(id, { zoom: Math.max(mapView.getMap().getZoom(), 16) });
+  openPlaque(id);
+}
+
+function questAction(action) {
+  switch (action) {
+    case 'find-next':        setTab('map'); findNext(); break;
+    case 'filter-iconic':    state.filters.fame = 'iconic'; state.filters.status = 'uncollected';
+                             setTab('map'); refresh(); break;
+    case 'filter-culture':   state.filters.categories.clear();
+                             ['writers', 'art', 'music', 'film-theatre'].forEach(s => state.filters.categories.add(s));
+                             state.filters.status = 'uncollected';
+                             syncChips(); setTab('map'); refresh(); break;
+    case 'open-collections': setTab('mylondon'); showSegment('collections'); break;
+    default:                 setTab('map'); break;
+  }
+}
+
+/* ── Boot ──────────────────────────────────────────────────────────────── */
+
+function bootError(err) {
+  qs('#boot').innerHTML = `
+    <div class="boot-card">
+      <div class="notice-icon">${icon('info')}</div>
+      <h2>Couldn't load London's discoveries</h2>
+      <p>${esc(String(err?.message || err))}</p>
+      <p style="margin-top:var(--sp-3)">If you are running this locally, serve the folder first:
+        <code>python3 -m http.server 8000</code></p>
+      <button type="button" class="btn btn-primary" onclick="location.reload()">Try again</button>
+    </div>`;
+  qs('#boot').hidden = false;
+}
+
+function wire() {
+  sheets.plaque = new Sheet('#sheet-plaque', {
+    onClose: () => { state.openPlaqueId = null; },
+  });
+  sheets.filters = new Sheet('#sheet-filters', { alwaysScrim: true });
+  sheets.about = new Sheet('#sheet-about', { alwaysScrim: true });
+  sheets.nearby = new Sheet('#sheet-nearby', { alwaysScrim: true });
+  sheets.message = new Sheet('#sheet-message');
+  initScrim();
+
+  delegate(qs('#sheet-message'), 'click', '[data-msg]', (_e, node) => {
+    const fn = node.dataset.msg === 'primary' ? sheets.message._primary : sheets.message._secondary;
+    sheets.message.close();
+    fn?.();
+  });
+
+  initPlaqueSheet(sheets.plaque, {
+    onCollect: handleCollect,
+    onUseLocation: () => useLocation({ centre: false }),
+    onChooseAnother: () => findNext({ another: true }),
+    onOpenCategory: openCategoryOnMap,
+  });
+
+  initFilters(sheets.filters, {
+    onChange: () => { syncChips(); refresh({ rerenderSheet: true }); },
+    countVisible: () => mapView.visiblePlaques().length,
+  });
+
+  initSearch({
+    onQuery: () => refresh(),
+    onPlaque: id => selectPlaque(id, { from: 'search' }),
+    onCategory: slug => { toggleCategory(slug); },
+    onPlace: ids => { setTab('map'); mapView.fitToIds(ids); },
+  });
+
+  initQuestScreen(questAction);
+
+  initMyLondon({
+    onOpenPlaque: id => selectPlaque(id, { from: 'my-london' }),
+    onOpenCategory: openCategoryOnMap,
+    onGoMap: () => setTab('map'),
+    onShare: share,
+  });
+
+  delegate(document, 'click', '.tab', (_e, node) => setTab(node.dataset.tab));
+  delegate(qs('#chips'), 'click', '.chip', (_e, node) => toggleCategory(node.dataset.cat));
+  delegate(qs('#map-panel'), 'click', '[data-panel-id]', (_e, node) =>
+    selectPlaque(node.dataset.panelId, { from: 'panel' }));
+
+  on(qs('#counter'), 'click', () => setTab('mylondon'));
+  on(qs('#filters-open'), 'click', openFilters);
+  on(qs('#locate'), 'click', () => useLocation());
+  on(qs('#find-next'), 'click', () => findNext());
+  on(qs('#map-empty-clear'), 'click', () => {
+    if (state.query.trim()) clearSearch({ silent: true });
+    clearFilters();
+    syncChips();
+    refresh();
+  });
+  on(qs('#about-open'), 'click', () => sheets.about.open('full'));
+  on(qs('#about-close'), 'click', () => sheets.about.close());
+  on(qs('#filters-close'), 'click', () => sheets.filters.close());
+  on(qs('#nearby-close'), 'click', () => sheets.nearby.close());
+  on(qs('#nearby'), 'click', openNearby);
+  delegate(qs('#sheet-nearby'), 'click', '[data-panel-id]', (_e, node) => {
+    sheets.nearby.close();
+    selectPlaque(node.dataset.panelId, { from: 'near-me' });
+  });
+
+  on(qs('#reset-progress'), 'click', () => {
+    if (!window.confirm('Reset all progress? This cannot be undone.')) return;
+    store.resetProgress();
+    state.plaques.forEach(p => mapView.refreshMarker(p.id));
+    sheets.about.close();
+    refresh({ rerenderSheet: true });
+    announce('Progress reset.');
+  });
+
+  on(window, 'resize', () => mapView.invalidateSize());
+  on(document, 'keydown', e => {
+    if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+      e.preventDefault(); qs('#search').focus();
+    }
+  });
+}
+
+async function boot() {
+  if (booted) return;
+  booted = true;
+  initAnalytics();
+
+  try {
+    const dataset = await loadPlaques();
+    store.setDataset(dataset);
+  } catch (err) {
+    bootError(err);
+    return;
+  }
+
+  mapView.initMap(selectPlaque);
+  mapView.buildMarkers();
+  wire();
+  renderChips();
+  refresh();
+
+  // Backfill unlock dates for anyone returning with saved progress.
+  syncUnlocks();
+  syncCompletions();
+
+  qs('#boot').hidden = true;
+  qs('#total-count').textContent = fmtNumber(state.plaques.length);
+  document.body.dataset.tab = 'map';
+
+  window.__lu = {
+    state, progress: store.progress, events: recordedEvents,
+    reset: () => { store.resetProgress(); state.plaques.forEach(p => mapView.refreshMarker(p.id)); refresh(); },
+    collect: (id, verified = false) => { handleCollect(state.byId.get(id), verified); },
+    open: id => selectPlaque(id, { from: 'console' }),
+  };
+}
+
+document.readyState === 'loading'
+  ? document.addEventListener('DOMContentLoaded', boot)
+  : boot();

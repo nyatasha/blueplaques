@@ -10,7 +10,13 @@ venv/
 # Editor
 .vscode/
 .idea/
+
+# Internal working documents (kept out of the public site repo)
 .claude/
 docs/
 journal/
 CLAUDE.md
+London Uncovered v0.md
+
+# Test artefacts
+.chrome-test-profile/

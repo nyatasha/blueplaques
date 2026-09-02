@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+#
+# London Uncovered — full test run.
+#
+#   bash tests/run.sh
+#
+# 1. Logic suite  — runs the game rules in JavaScriptCore (Safari's engine).
+# 2. Smoke suite  — drives the real app in headless Chrome and asserts on the
+#                   DOM a user would actually see.
+#
+# Both are dependency-free: JavaScriptCore ships with macOS, and the DevTools
+# client in tests/cdp.py is plain Python 3.
+
+set -uo pipefail
+cd "$(dirname "$0")/.."
+
+PORT="${PORT:-8123}"
+JSC="/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc"
+status=0
+
+echo "── logic suite ──────────────────────────────────────────────"
+if [ -x "$JSC" ]; then
+  ( cd tests && "$JSC" --module-file=logic.test.mjs ) || status=1
+else
+  echo "SKIP  JavaScriptCore not found at $JSC"
+fi
+
+echo
+echo "── smoke suite ──────────────────────────────────────────────"
+started_server=0
+if ! curl -sf -o /dev/null "http://localhost:$PORT/index.html"; then
+  echo "starting a server on :$PORT"
+  python3 -m http.server "$PORT" >/dev/null 2>&1 &
+  server_pid=$!
+  started_server=1
+  sleep 1
+fi
+
+if [ -d "/Applications/Google Chrome.app" ]; then
+  python3 tests/cdp.py smoke "$PORT" || status=1
+else
+  echo "SKIP  Google Chrome not installed"
+fi
+
+[ "$started_server" = 1 ] && kill "$server_pid" 2>/dev/null
+
+echo
+[ "$status" = 0 ] && echo "ALL TESTS PASSED" || echo "TESTS FAILED"
+exit $status

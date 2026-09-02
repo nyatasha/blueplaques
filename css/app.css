@@ -1,0 +1,324 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   London Uncovered — base, shell layout, typography, primitives
+   ───────────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/*
+ * Author `display` declarations outrank the UA rule behind the `hidden`
+ * attribute, so a hidden .btn (display:inline-flex) or .map-btn (display:grid)
+ * would still paint. Everything toggled with `hidden` relies on this.
+ */
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--ivory);
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; }
+a { color: var(--blue); }
+
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+/* Leaflet re-focuses the container on every interaction; a ring there is noise */
+.leaflet-container:focus-visible { outline: none; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+.serif { font-family: var(--font-serif); }
+
+.eyebrow {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+
+#app { position: fixed; inset: 0; }
+
+#map {
+  position: absolute; inset: 0;
+  z-index: var(--z-map);
+  isolation: isolate;            /* contain Leaflet's own stacking */
+  background: #E8EAE6;
+}
+
+/* On mobile the shell is a pass-through overlay: children position themselves
+   against the viewport. On desktop it becomes the right-hand panel. */
+#shell { display: contents; }
+
+/* ── Brand bar ─────────────────────────────────────────────────────────── */
+
+#brandbar {
+  position: fixed;
+  top: calc(var(--safe-t) + var(--sp-3));
+  left: calc(var(--safe-l) + var(--sp-3));
+  right: calc(var(--safe-r) + var(--sp-3));
+  z-index: var(--z-mapui);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  pointer-events: none;
+}
+#brandbar > * { pointer-events: auto; }
+
+.brand {
+  display: flex; align-items: center; gap: var(--sp-2);
+  background: rgba(255,255,255,.9);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border-radius: var(--r-pill);
+  padding: 7px 13px 7px 9px;
+  box-shadow: var(--sh-1);
+  min-width: 0;
+}
+.brand-disc {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--blue);
+  border: 2px solid rgba(255,255,255,.85);
+  box-shadow: inset 0 0 0 1px rgba(12,52,104,.35);
+  flex-shrink: 0;
+}
+.brand-name {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+
+.counter {
+  position: relative;
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px;
+  min-height: 36px;
+  padding: 0 13px;
+  border-radius: var(--r-pill);
+  background: rgba(255,255,255,.9);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: var(--sh-1);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-600);
+  white-space: nowrap;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.counter:hover { color: var(--ink); }
+.counter strong { color: var(--blue); font-weight: 700; }
+.counter-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--blue); flex-shrink: 0;
+}
+.counter.bump { animation: counter-bump var(--dur-3) var(--ease-out); }
+@keyframes counter-bump {
+  40% { transform: scale(1.09); }
+  100% { transform: scale(1); }
+}
+
+/* The info control is secondary: keep it small so brand + count always fit */
+#about-open { position: relative; width: 34px; height: 34px; flex-shrink: 0; }
+#about-open svg { width: 17px; height: 17px; }
+
+/*
+ * The brand-bar pills are deliberately slim — a 44px-tall pill floating over
+ * the map reads as heavy. The touch target is widened instead, so the pointer
+ * area meets the 44px minimum without changing the visual weight.
+ */
+.counter::after,
+#about-open::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: var(--tap);
+  min-height: var(--tap);
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 359px) {
+  #brandbar { gap: var(--sp-2); }
+  .brand { padding: 6px 10px 6px 7px; }
+  .brand-name { font-size: var(--fs-xs); }
+  .counter { padding: 0 10px; font-size: var(--fs-xs); }
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--tap);
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: background var(--dur-1), color var(--dur-1),
+              transform var(--dur-1) var(--ease-out), box-shadow var(--dur-1);
+  white-space: nowrap;
+}
+.btn:active { transform: scale(.975); }
+.btn[disabled] { opacity: .45; pointer-events: none; }
+.btn, a.btn { text-decoration: none; }
+/* Inline SVGs have no intrinsic size; without this they stretch to fill flex */
+.btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+.btn-sm svg { width: 15px; height: 15px; }
+
+.btn-primary { background: var(--blue); color: #fff; box-shadow: var(--sh-1); }
+.btn-primary:hover { background: var(--blue-800); }
+
+.btn-secondary {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink-200);
+}
+.btn-secondary:hover { background: var(--ivory-2); }
+
+.btn-ghost { color: var(--blue); font-weight: 600; }
+.btn-ghost:hover { background: var(--blue-050); }
+
+.btn-gold { background: var(--gold); color: #fff; }
+.btn-gold:hover { background: var(--gold-700); }
+
+.btn-done {
+  background: var(--blue-100);
+  color: var(--blue-800);
+  box-shadow: inset 0 0 0 1px var(--blue-200);
+}
+
+.btn-block { width: 100%; }
+.btn-sm { min-height: 36px; padding: 0 var(--sp-4); font-size: var(--fs-sm); }
+
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--tap); height: var(--tap);
+  border-radius: 50%;
+  color: var(--ink-600);
+  transition: background var(--dur-1), color var(--dur-1);
+}
+.icon-btn:hover { background: var(--ink-100); color: var(--ink); }
+.icon-btn svg { width: 20px; height: 20px; }
+
+/* ── Progress bar ──────────────────────────────────────────────────────── */
+
+/* Rendered as a <span> inside button-based cards, so the display is explicit */
+.bar {
+  display: block;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--ink-100);
+  overflow: hidden;
+}
+.bar > i {
+  display: block; height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--blue);
+  transition: width var(--dur-3) var(--ease-out);
+}
+.bar.gold > i { background: var(--gold); }
+
+/* ── Boot / error overlay ──────────────────────────────────────────────── */
+
+#boot {
+  position: fixed; inset: 0;
+  z-index: var(--z-boot);
+  display: grid; place-items: center;
+  background: var(--ivory);
+  padding: var(--sp-6);
+  transition: opacity var(--dur-3) var(--ease), visibility var(--dur-3);
+}
+#boot[hidden] { display: grid; opacity: 0; visibility: hidden; pointer-events: none; }
+
+.boot-card { text-align: center; max-width: 320px; }
+.boot-mark {
+  width: 46px; height: 46px; border-radius: 50%;
+  margin: 0 auto var(--sp-5);
+  background: var(--blue);
+  border: 3px solid rgba(255,255,255,.9);
+  box-shadow: 0 0 0 1px var(--blue-200), var(--sh-2);
+  animation: boot-pulse 1.6s var(--ease) infinite;
+}
+@keyframes boot-pulse {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 0 1px var(--blue-200), var(--sh-2); }
+  50%      { transform: scale(1.07); box-shadow: 0 0 0 10px rgba(20,86,160,.07), var(--sh-2); }
+}
+.boot-card h2 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em;
+  margin-bottom: var(--sp-2);
+}
+.boot-card p { font-size: var(--fs-sm); color: var(--ink-500); line-height: 1.6; }
+.boot-card code {
+  display: inline-block;
+  background: var(--ivory-2); border-radius: 6px;
+  padding: 2px 7px; margin: 3px 0;
+  font-size: var(--fs-sm);
+}
+.boot-card .btn { margin-top: var(--sp-5); }
+
+/* ── Static SEO content (crawlable, off-canvas until About opens) ──────── */
+
+#about-content h2 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-md); font-weight: 600;
+  margin: var(--sp-5) 0 var(--sp-2);
+}
+#about-content h2:first-child { margin-top: 0; }
+#about-content p { font-size: var(--fs-sm); color: var(--ink-600); margin-bottom: var(--sp-3); }
+#about-content strong { color: var(--ink); font-weight: 600; }
+
+/* ── Desktop: shell becomes a fixed right-hand panel ───────────────────── */
+
+@media (min-width: 900px) {
+  #map { right: var(--panel-w); }
+
+  #shell {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: var(--panel-w);
+    background: var(--ivory);
+    box-shadow: -1px 0 0 var(--ink-100), -12px 0 40px rgba(20,32,43,.06);
+    z-index: var(--z-screen);
+    padding-right: var(--safe-r);
+  }
+
+  #brandbar {
+    position: static;
+    padding: calc(var(--safe-t) + var(--sp-5)) var(--sp-5) var(--sp-4);
+    background: var(--ivory);
+    border-bottom: 1px solid var(--ink-100);
+  }
+  .brand, .counter { background: none; box-shadow: none; backdrop-filter: none; padding-left: 0; }
+  .counter { padding-right: 0; }
+  .brand-name { font-size: var(--fs-md); }
+}
