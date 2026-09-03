@@ -430,6 +430,43 @@ if (lu) {
           try { return Array.from(sheet.cssRules).some(r => String(r.conditionText || '').includes('prefers-reduced-motion')); }
           catch { return false; }
         }));
+  // Contrast is measured on rendered text against its effective background,
+  // so a token change or a new component cannot quietly ship below WCAG AA.
+  const srgb = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+  const parseRGB = str => (str.match(/[\d.]+/g) || []).map(Number);
+  const luminance = ([r, g, b]) => 0.2126 * srgb(r) + 0.7152 * srgb(g) + 0.0722 * srgb(b);
+  const contrast = (fg, bg) => {
+    const [a, b] = [luminance(fg), luminance(bg)].sort((x, y) => y - x);
+    return (a + 0.05) / (b + 0.05);
+  };
+  const effectiveBg = (el) => {
+    for (let node = el; node && node !== doc.documentElement; node = node.parentElement) {
+      const c = parseRGB(win.getComputedStyle(node).backgroundColor);
+      if (c.length >= 3 && (c[3] === undefined || c[3] > 0.85)) return c.slice(0, 3);
+    }
+    return [247, 245, 240];   // the ivory ground
+  };
+
+  const textNodes = qa('#screen-mylondon *, #sheet-plaque *, #screen-quest *, #map-controls *')
+    .filter(el => el.offsetParent !== null
+                && [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim().length > 1));
+  const lowContrast = [];
+  for (const el of textNodes.slice(0, 250)) {
+    const cs = win.getComputedStyle(el);
+    const fg = parseRGB(cs.color).slice(0, 3);
+    if (fg.length < 3) continue;
+    const size = parseFloat(cs.fontSize);
+    const bold = Number(cs.fontWeight) >= 700;
+    const isLarge = size >= 24 || (size >= 18.66 && bold);
+    const need = isLarge ? 3 : 4.5;
+    const got = contrast(fg, effectiveBg(el));
+    if (got < need - 0.01) {
+      lowContrast.push(`${el.className || el.tagName}@${size}px ${got.toFixed(2)}:1 (need ${need})`);
+    }
+  }
+  check('all visible text meets WCAG AA contrast', lowContrast.length === 0,
+        [...new Set(lowContrast)].slice(0, 6).join(' · '));
+
   const chip0 = qa('#chips .chip')[0];
   chip0.focus();
   check('chips are keyboard focusable', doc.activeElement === chip0);

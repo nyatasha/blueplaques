@@ -18,9 +18,11 @@
   --ink:      #14202B;
   --ink-800:  #22303D;
   --ink-600:  #46545F;
+  /* ink-400 and ink-300 carry 11px secondary text, so both are tuned to clear
+     WCAG AA 4.5:1 against --ivory rather than to look pleasingly faint. */
   --ink-500:  #66727D;
-  --ink-400:  #8B959E;
-  --ink-300:  #B4BCC4;
+  --ink-400:  #67717B;
+  --ink-300:  #64727F;
   --ink-200:  #D6DBE0;
   --ink-100:  #E9ECEF;
 
@@ -32,7 +34,7 @@
 
   /* ── Muted gold — iconic, achievements, completion ─────────────────── */
   --gold-900: #6E5320;
-  --gold-700: #96762F;
+  --gold-700: #8A6C2B;
   --gold:     #B99652;
   --gold-300: #DFCB9C;
   --gold-100: #F4ECDC;
