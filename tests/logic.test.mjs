@@ -65,8 +65,11 @@ eq('km formatting', formatDistance(1240), '1.2 km');
 eq('long distance formatting', formatDistance(12400), '12 km');
 eq('walk time floor is 1 min', walkingMinutes(10), 1);
 eq('walk time 400 m', walkingMinutes(400), 5);
-check('directions url carries the destination',
-  directionsUrl({ lat: 51.5, lng: -0.12 }).includes('51.5,-0.12'));
+const dirUrl = directionsUrl({ lat: 51.5, lng: -0.12 });
+check('directions url carries the destination', decodeURIComponent(dirUrl).includes('51.5,-0.12'));
+check('directions url is Google Maps on every platform',
+  dirUrl.startsWith('https://www.google.com/maps/dir/'), dirUrl);
+check('directions url asks for walking', dirUrl.includes('travelmode=walking'));
 
 /* ── Storage robustness (PRD §38) ───────────────────────────────────────── */
 group('storage');

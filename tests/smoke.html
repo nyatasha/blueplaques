@@ -330,8 +330,10 @@ if (lu) {
       check('target sheet is labelled as the next discovery',
             /Your next discovery/i.test(q('#plaque-body').textContent));
       check('walking time offered', /min/.test(q('#plaque-foot').textContent + q('#plaque-body').textContent));
-      check('directions link points at a maps provider',
-            /maps\.(apple|google)\.com/.test(q('#plaque-foot a[data-act="directions"]')?.href || ''));
+      const dirHref = q('#plaque-foot a[data-act="directions"]')?.href || '';
+      check('directions open Google Maps', dirHref.startsWith('https://www.google.com/maps/dir/'), dirHref.slice(0, 60));
+      check('directions ask for walking', dirHref.includes('travelmode=walking'));
+      check('directions carry the plaque coordinates', /destination=5[01]/.test(decodeURIComponent(dirHref)));
 
       const firstTarget = lu.state.targetId;
       const another = q('#plaque-foot [data-act="choose-another"]');

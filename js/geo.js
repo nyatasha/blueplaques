@@ -28,13 +28,15 @@ export function walkingMinutes(metres) {
 }
 
 /**
- * One tap to directions (PRD §77). Apple platforms get Apple Maps, everything
- * else gets Google Maps; both fall back gracefully in any browser.
+ * One tap to walking directions (PRD §77).
+ *
+ * Google Maps on every platform rather than Apple Maps on Apple devices: its
+ * walking directions and street-level detail are stronger for finding a
+ * specific building, and one destination means one thing to test. On iOS the
+ * link opens the Google Maps app when it is installed and the web map when it
+ * is not, so nothing is lost by not detecting the platform.
  */
 export function directionsUrl(plaque) {
-  const dest = `${plaque.lat},${plaque.lng}`;
-  const isApple = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
-  return isApple
-    ? `https://maps.apple.com/?daddr=${dest}&dirflg=w`
-    : `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=walking`;
+  const destination = encodeURIComponent(`${plaque.lat},${plaque.lng}`);
+  return `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=walking`;
 }
