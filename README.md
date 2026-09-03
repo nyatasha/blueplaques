@@ -25,8 +25,17 @@ you, collect the discoveries you make, and watch your London fill in.
 - **Quest** — five fixed goals that answer "what should I do next?".
 - **My London** — discoveries, percentage of London uncovered, level, recent
   finds, category collections and achievement badges.
+- **Themed collections** — fourteen sets that cut across the categories, each
+  finishable: Iconic Londoners, Swinging Sixties, Georgian London, South of the
+  River, Where They Worked and more. All derived from the data, none hand-listed.
+- **Iconic moments** — collecting one of the 49 Iconic plaques draws it as a
+  plaque and tells you something true about the person.
 - **Backup links** — move a collection to another browser or device without an
   account. The whole save travels inside a URL fragment.
+- **A shareable card** — a 1080×1350 image of your progress, rendered in the
+  browser, with a dot for every plaque on the map and yours filled in.
+- **Add to Home Screen** — offered after a third discovery, because Safari
+  clears site storage after a week away and a home-screen install is exempt.
 
 Progress lives in this browser's `localStorage`. There are no accounts, no
 backend and no tracking of your location.
@@ -139,12 +148,18 @@ js/
   quest-screen.js              Quest tab
   mylondon.js                  My London tab
   quests.js / achievements.js  fixed definitions, evaluated from progress
+  themes.js                    themed collections, derived from the dataset
+  celebrate.js                 the Iconic collect moment
+  share-card.js                canvas-rendered progress image
+  install.js                   Add to Home Screen offer and detection
+  backup.js                    save encoding, backup links, merge on restore
   location.js                  geolocation, requested only on user action
   recommend.js                 "find my next discovery" ranking
   geo.js                       Haversine, formatting, directions links
   sheet.js                     bottom-sheet controller
   ui.js / icons.js             DOM helpers, toasts, inline SVG icons
   analytics.js                 provider-agnostic trackEvent()
+data/iconic-notes.json         hand-written notes for Iconic plaques
 scripts/                       Python data pipeline
 tests/                         logic + smoke suites, CDP client
 data/plaques.geojson           the dataset
