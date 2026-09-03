@@ -21,6 +21,7 @@ import { initPlaqueSheet, openPlaque, renderPlaqueSheet, currentPlaqueId } from 
 import { initQuestScreen, renderQuest } from './quest-screen.js';
 import { initMyLondon, renderMyLondon, showSegment } from './mylondon.js';
 import { syncUnlocks } from './achievements.js';
+import { celebrateIconic, loadIconicNotes, noteFor } from './celebrate.js';
 import { syncCompletions, hasActionableQuest } from './quests.js';
 import { requestLocation, ensureLocation } from './location.js';
 import { recommendNext } from './recommend.js';
@@ -240,25 +241,37 @@ function handleCollect(plaque, wantsVerified) {
   mapView.refreshMarker(plaque.id, { pop: true });
   if (state.targetId === plaque.id) mapView.setTarget(null);
 
-  xpBurst(result.xp);
   qs('#counter').classList.add('bump');
   setTimeout(() => qs('#counter').classList.remove('bump'), 500);
 
   const p = store.progress();
   announce(`${plaque.title} collected. ${result.xp} XP. ${p.count} of ${p.total} discovered.`);
 
-  toast({
-    eyebrow: 'Discovery added',
-    title: plaque.title,
-    desc: `${plaque.fame >= 3 ? 'Iconic discovery' : plaque.categoryLabel} · +${result.xp} XP · ${p.count} / ${p.total}`,
-    iconName: 'check',
-    gold: plaque.fame >= 3,
-  });
+  if (plaque.fame >= 3) {
+    // The 49 Iconic plaques get a moment rather than a toast. Everything that
+    // would have piled up behind it waits until the card is dismissed.
+    trackEvent('iconic_collected', { category: plaque.category });
+    celebrateIconic(plaque, result.xp).then(() => {
+      celebrateUnlocks();
+      recordMilestones();
+      warnIfNotPersisted();
+      maybeOfferInstall();
+    });
+  } else {
+    xpBurst(result.xp);
+    toast({
+      eyebrow: 'Discovery added',
+      title: plaque.title,
+      desc: `${plaque.categoryLabel} · +${result.xp} XP · ${p.count} / ${p.total}`,
+      iconName: 'check',
+      gold: false,
+    });
+    celebrateUnlocks();
+    recordMilestones();
+    warnIfNotPersisted();
+    maybeOfferInstall();
+  }
 
-  celebrateUnlocks();
-  recordMilestones();
-  warnIfNotPersisted();
-  maybeOfferInstall();
   refresh({ rerenderSheet: true });
 }
 
@@ -865,6 +878,7 @@ async function boot() {
   state.verifyAnywhere =
     new URLSearchParams(location.search).get(VERIFY_ANYWHERE_PARAM) === VERIFY_ANYWHERE_VALUE;
 
+  loadIconicNotes();          // best-effort; a failure only costs the curated lines
   mapView.initMap(selectPlaque);
   mapView.buildMarkers();
   wire();

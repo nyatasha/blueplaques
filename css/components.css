@@ -256,6 +256,19 @@
   border-left: 3px solid var(--blue-200);
   margin-bottom: var(--sp-4);
 }
+.pq-iconic-note {
+  display: flex; gap: var(--sp-3);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--gold-100);
+  font-family: var(--font-serif);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+  color: var(--gold-900);
+}
+.pq-iconic-note svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 3px; color: var(--gold-700); }
+
 .pq-rows { margin-bottom: var(--sp-5); }
 .pq-row {
   display: flex; gap: var(--sp-3);
@@ -614,6 +627,100 @@
 .toast-desc  { font-size: var(--fs-xs); color: rgba(255,255,255,.66); line-height: 1.4; }
 .toast.plain .toast-badge { background: var(--blue); }
 .toast.plain .toast-eyebrow { color: var(--blue-400); }
+
+/* ── Iconic collect celebration ────────────────────────────────────────── */
+
+#celebrate {
+  position: fixed; inset: 0;
+  z-index: var(--z-toast);
+  display: grid; place-items: center;
+  padding: var(--sp-5);
+  background: rgba(11,20,28,.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease);
+}
+#celebrate.on { opacity: 1; }
+#celebrate[hidden] { display: none !important; }
+
+.cel-card {
+  width: min(360px, 100%);
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: var(--ivory);
+  border-radius: var(--r-2xl);
+  box-shadow: 0 24px 70px rgba(11,20,28,.5);
+  padding: var(--sp-6) var(--sp-5) var(--sp-5);
+  text-align: center;
+  transform: translateY(18px) scale(.96);
+  transition: transform var(--dur-3) var(--ease-out);
+}
+#celebrate.on .cel-card { transform: none; }
+
+.cel-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--fs-xs); font-weight: 700;
+  letter-spacing: var(--tracking-caps); text-transform: uppercase;
+  color: var(--gold-700);
+  margin-bottom: var(--sp-5);
+}
+.cel-eyebrow svg { width: 13px; height: 13px; }
+
+/* The plaque, drawn as a plaque */
+.cel-plaque {
+  width: 210px; height: 210px;
+  margin: 0 auto var(--sp-5);
+  border-radius: 50%;
+  background: radial-gradient(120% 120% at 32% 24%, #2E6DB4, var(--blue-900));
+  display: grid; place-items: center;
+  box-shadow: 0 0 0 7px rgba(255,255,255,.94),
+              0 0 0 9px rgba(185,150,82,.55),
+              0 16px 40px rgba(11,20,28,.42);
+  animation: cel-plaque-in var(--dur-4) var(--ease-out) both;
+}
+.cel-plaque-inner {
+  padding: 0 26px;
+  color: #fff;
+  font-family: var(--font-serif);
+  line-height: 1.25;
+  text-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+.cel-plaque-name  { display: block; font-size: 1.05rem; font-weight: 600; letter-spacing: .01em; }
+.cel-plaque-dates { display: block; font-size: .78rem; opacity: .82; margin-top: 5px; }
+.cel-plaque-role  {
+  display: block; font-size: .62rem; margin-top: 8px;
+  text-transform: uppercase; letter-spacing: .1em;
+  opacity: .72; font-family: var(--font-sans);
+}
+@keyframes cel-plaque-in {
+  0%   { transform: scale(.55) rotate(-9deg); opacity: 0; }
+  55%  { transform: scale(1.06) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.cel-name {
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em;
+  margin-bottom: var(--sp-2);
+}
+.cel-note {
+  font-family: var(--font-serif);
+  font-size: var(--fs-md); line-height: 1.55;
+  color: var(--ink-800);
+  margin: var(--sp-2) auto var(--sp-5);
+  max-width: 28ch;
+}
+.cel-xp {
+  font-family: var(--font-serif);
+  font-size: var(--fs-xl); font-weight: 600;
+  color: var(--gold-700);
+  margin-bottom: var(--sp-5);
+  animation: cel-xp-in var(--dur-4) var(--ease-out) both;
+  animation-delay: 180ms;
+}
+@keyframes cel-xp-in { from { opacity: 0; transform: translateY(10px); } }
+.cel-hint { font-size: var(--fs-xs); color: var(--ink-400); margin-top: var(--sp-3); }
 
 /* ── Collect celebration ───────────────────────────────────────────────── */
 

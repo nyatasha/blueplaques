@@ -508,6 +508,40 @@ if (lu) {
   check('chips are keyboard focusable', doc.activeElement === chip0);
   check('chips expose pressed state', chip0.hasAttribute('aria-pressed'));
 
+  /* ── Iconic collect celebration ───────────────────────────────────────── */
+  group('iconic perk');
+  lu.reset();
+  const ordinary = lu.state.plaques.find(p => p.fame < 3);
+  lu.collect(ordinary.id, false);
+  await until(() => lu.progress().count === 1);
+  check('an ordinary discovery gets a toast, not a card', q('#celebrate').hidden);
+
+  const iconicPlaque = lu.state.plaques.find(p => p.fame >= 3);
+  lu.collect(iconicPlaque.id, false);
+  await until(() => !q('#celebrate').hidden, { timeout: 4000 });
+  check('an Iconic discovery earns a card', !q('#celebrate').hidden);
+  const cel = q('#celebrate').textContent;
+  check('the card names the person', cel.includes(iconicPlaque.title), cel.slice(0, 50));
+  check('the plaque is drawn as a plaque', !!q('.cel-plaque-name'));
+  check('it carries a line about them', (q('.cel-note')?.textContent || '').length > 20,
+        q('.cel-note')?.textContent);
+  check('the XP lands with it', /\+50 XP/.test(cel));
+  check('the card is reachable by keyboard', !!q('.cel-done'));
+  q('.cel-done').click();
+  await until(() => q('#celebrate').hidden, { timeout: 3000 });
+  check('dismissing returns you to the map', q('#celebrate').hidden);
+
+  // The note should stay with the plaque, not vanish with the card.
+  lu.open(iconicPlaque.id);
+  await until(() => q('#sheet-plaque').classList.contains('open'));
+  q('.pq-peek')?.click();
+  await until(() => !!q('.pq-iconic-note'), { timeout: 3000 });
+  check('the note is kept in the plaque sheet', !!q('.pq-iconic-note'));
+  check('only Iconic plaques get one',
+        lu.state.plaques.filter(p => p.fame < 3).length > 0 && !!q('.pq-iconic-note'));
+  q('#plaque-close').click();
+  lu.reset();
+
   /* ── Add to Home Screen (PRD §69) ─────────────────────────────────────── */
   group('home screen');
   lu.reset();

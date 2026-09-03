@@ -15,6 +15,7 @@ import { distanceMetres, formatDistance, walkingMinutes, directionsUrl } from '.
 import { esc, qs, on, delegate, thumbUrl, fmtDate, fmtNumber } from './ui.js';
 import { icon, CATEGORY_ICON } from './icons.js';
 import { trackEvent } from './analytics.js';
+import { noteFor } from './celebrate.js';
 
 let sheet, actions = {}, currentId = null;
 
@@ -169,6 +170,9 @@ export function renderPlaqueSheet(id = currentId) {
         ${isCollected(plaque.id) ? `<span class="badge badge-found">${icon('check')} Found</span>` : ''}
         ${collectionEntry(plaque.id)?.verified ? `<span class="badge badge-verified">${icon('shield')} Verified</span>` : ''}
       </p>
+
+      ${plaque.fame >= 3 && isCollected(plaque.id)
+        ? `<p class="pq-iconic-note">${icon('star')} <span>${esc(noteFor(plaque))}</span></p>` : ''}
 
       ${plaque.inscription ? `<blockquote class="pq-inscription">${esc(plaque.inscription)}</blockquote>` : ''}
 

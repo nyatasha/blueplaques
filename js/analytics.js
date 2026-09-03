@@ -47,6 +47,8 @@ function describe(name, props = {}) {
         ? ['collect/verified', 'Discovery collected · verified on location']
         : ['collect/seen', 'Discovery collected · marked as seen'];
 
+    case 'iconic_collected':   return ['collect/iconic', 'Iconic discovery collected'];
+
     case 'find_next_clicked':
       return props.another
         ? ['find-next/another', 'Find next · choose another']
