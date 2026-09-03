@@ -108,9 +108,13 @@ function overview(p) {
             style="margin-top:var(--sp-2)">
       ${icon('refresh')} Move to another browser
     </button>
+    <button type="button" class="btn btn-ghost btn-block btn-sm" data-act="install"
+            style="margin-top:var(--sp-2)">
+      ${icon('bookmark')} Add to Home Screen
+    </button>
     <p class="backup-note" style="text-align:center">
-      Saved in this browser only. Add London Uncovered to your Home Screen,
-      or take a backup link, to keep your collection safe.
+      Saved in this browser only. Adding London Uncovered to your Home Screen —
+      or taking a backup link — keeps your collection safe.
     </p>`;
 }
 
@@ -201,6 +205,7 @@ export function initMyLondon(handlerMap) {
       case 'go-achievements':showSegment('achievements'); break;
       case 'share':          handlers.onShare(); break;
       case 'backup':         handlers.onBackup(); break;
+      case 'install':        handlers.onInstall(); break;
       default: break;
     }
   });

@@ -489,6 +489,37 @@ if (lu) {
   check('chips are keyboard focusable', doc.activeElement === chip0);
   check('chips expose pressed state', chip0.hasAttribute('aria-pressed'));
 
+  /* ── Add to Home Screen (PRD §69) ─────────────────────────────────────── */
+  group('home screen');
+  lu.reset();
+  q('.tab[data-tab="mylondon"]').click();
+  await until(() => !q('#screen-mylondon').hidden);
+  q('#mylondon-body [data-seg="overview"]').click();
+  await until(() => !!q('#mylondon-body [data-act="install"]') || !!q('#mylondon-body [data-act="go-map"]'));
+  check('an empty collection offers no Home Screen nag', !q('#mylondon-body [data-act="install"]'));
+
+  lu.state.plaques.slice(0, 3).forEach(p => lu.collect(p.id));
+  await until(() => lu.progress().count === 3);
+  q('#mylondon-body [data-seg="overview"]').click();
+  await until(() => !!q('#mylondon-body [data-act="install"]'));
+  check('My London offers it on demand', !!q('#mylondon-body [data-act="install"]'));
+
+  q('#mylondon-body [data-act="install"]').click();
+  await until(() => q('#sheet-install').classList.contains('open'));
+  check('the Home Screen sheet opens', q('#sheet-install').classList.contains('open'));
+  const installText = q('#install-body').textContent;
+  check('it says what is being protected', /3 discoveries/.test(installText), installText.slice(0, 60));
+  check('it explains why, not just how', /saved in this browser/i.test(installText));
+  check('it offers a way out', !!q('#sheet-install [data-install="later"]'));
+  check('desktop gets written steps rather than a fake button',
+        !!q('.install-step') || !!q('[data-install="go"]'));
+  q('#sheet-install [data-install="later"]').click();
+  await until(() => !q('#sheet-install').classList.contains('open'));
+  check('dismissing closes it', !q('#sheet-install').classList.contains('open'));
+  check('being offered is remembered', lu.state.saved.settings.homeScreenPromptSeen === true);
+  lu.reset();
+  q('.tab[data-tab="map"]').click();
+
   /* ── Analytics taxonomy (docs/analytics-plan.md) ──────────────────────── */
   group('analytics');
   const paths = lu.events().map(e => e.path);
@@ -553,8 +584,12 @@ if (lu) {
   await until(() => !q('#sheet-backup').classList.contains('open'), { timeout: 3000 });
   check('close anyway lets you out', !q('#sheet-backup').classList.contains('open'));
 
-  // Now simulate a different browser: wipe storage and open the link cold.
+  // Now simulate a different browser. Tear the old page down *before* wiping
+  // storage — a live app can write its state back at any moment (a setting
+  // change persists the whole save), which would undo the wipe.
   const token = url.split('#')[1];
+  frame.src = 'about:blank';
+  await until(() => !frame.contentWindow?.__lu, { timeout: 8000 });
   try { localStorage.removeItem('londonUncovered:v0'); } catch { /* ignore */ }
   // A query parameter forces a real navigation: changing only the fragment is a
   // same-document move, so the app would never re-boot and read the token.

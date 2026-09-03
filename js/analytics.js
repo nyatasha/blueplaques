@@ -75,6 +75,11 @@ function describe(name, props = {}) {
     case 'my_london_opened':   return ['my-london', 'My London opened'];
     case 'share_clicked':      return ['share',     'Share tapped'];
 
+    case 'install_prompt_shown': return [props.manual ? 'install/opened' : 'install/offered',
+                                        props.manual ? 'Home Screen opened from My London' : 'Home Screen offered'];
+    case 'install_outcome':      return [`install/${props.outcome}`, `Home Screen ${props.outcome}`];
+    case 'install_dismissed':    return ['install/dismissed', 'Home Screen dismissed'];
+
     case 'backup_created':     return ['backup/created',  'Backup link created'];
     case 'backup_restored':    return ['backup/restored', 'Backup restored'];
 

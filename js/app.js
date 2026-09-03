@@ -30,6 +30,8 @@ import { storageAvailable } from './storage.js';
 import { isCollected } from './state.js';
 import { icon } from './icons.js';
 import { initAnalytics, trackEvent, recordedEvents } from './analytics.js';
+import { watchForInstallPrompt, shouldOfferInstall, markOffered, canPromptDirectly,
+         promptInstall, isIOS, isInstalled, storageIsFragile } from './install.js';
 
 let sheets = {};
 let booted = false;
@@ -252,6 +254,7 @@ function handleCollect(plaque, wantsVerified) {
   celebrateUnlocks();
   recordMilestones();
   warnIfNotPersisted();
+  maybeOfferInstall();
   refresh({ rerenderSheet: true });
 }
 
@@ -342,6 +345,72 @@ async function useLocation({ centre = true, silent = false } = {}) {
   } finally {
     btn.classList.remove('locating');
   }
+}
+
+/* ── Add to Home Screen (PRD §69) ──────────────────────────────────────── */
+
+/**
+ * Offered as protection, not promotion: Safari clears site storage after seven
+ * days away, and a home-screen install is exempt. Chrome can install directly;
+ * iOS has no such API, so it gets the two-step Share → Add to Home Screen path.
+ */
+function openInstallSheet({ manual = false } = {}) {
+  markOffered();
+  trackEvent('install_prompt_shown', { manual, ios: isIOS() });
+
+  const why = `
+    <div class="install-why">
+      ${icon('shield')}
+      <span>${storageIsFragile()
+        ? 'Your collection is saved in this browser, and Safari clears it after about a week away. On your Home Screen it is kept safely.'
+        : 'Your collection is saved in this browser. On your Home Screen it opens full-screen and stays put.'}</span>
+    </div>`;
+
+  const body = canPromptDirectly()
+    ? `${why}
+       <div class="pq-actions" style="margin-top:var(--sp-5)">
+         <button type="button" class="btn btn-primary btn-block" data-install="go" data-autofocus>
+           ${icon('bookmark')} Add to Home Screen
+         </button>
+       </div>`
+    : `${why}
+       <div class="install-steps">
+         <div class="install-step"><span class="install-num">1</span>
+           ${icon('share')}<span>Tap the Share button in the browser bar</span></div>
+         <div class="install-step"><span class="install-num">2</span>
+           ${icon('bookmark')}<span>Choose <strong>Add to Home Screen</strong></span></div>
+         <div class="install-step"><span class="install-num">3</span>
+           ${icon('check')}<span>Open London Uncovered from there from now on</span></div>
+       </div>`;
+
+  qs('#install-body').innerHTML = `
+    <p style="font-size:var(--fs-sm);color:var(--ink-600);line-height:1.6;text-align:left">
+      Keep your ${fmtNumber(store.progress().count)} discoveries safe and open the map in one tap.
+    </p>
+    ${body}
+    <button type="button" class="btn btn-ghost btn-block btn-sm" data-install="later"
+            style="margin-top:var(--sp-3)">Not now</button>`;
+  sheets.install.open('full');
+}
+
+async function runInstall() {
+  const outcome = await promptInstall();
+  trackEvent('install_outcome', { outcome });
+  sheets.install.close();
+  if (outcome === 'accepted') {
+    toast({ eyebrow: 'Added', title: 'London Uncovered is on your Home Screen',
+            desc: 'Your collection is safe there.', iconName: 'check', gold: false });
+  }
+}
+
+/** Called after a collect; stays silent unless the moment is right. */
+function maybeOfferInstall() {
+  if (!shouldOfferInstall()) return;
+  // Let the collect celebration finish first.
+  setTimeout(() => {
+    if (sheets.message.isOpen || sheets.install.isOpen) return;
+    openInstallSheet();
+  }, 2400);
 }
 
 /**
@@ -662,6 +731,7 @@ function wire() {
   sheets.about = new Sheet('#sheet-about', { alwaysScrim: true });
   sheets.nearby = new Sheet('#sheet-nearby', { alwaysScrim: true });
   sheets.backup = new Sheet('#sheet-backup', { alwaysScrim: true, beforeClose: guardBackupClose });
+  sheets.install = new Sheet('#sheet-install', { alwaysScrim: true });
   sheets.message = new Sheet('#sheet-message');
   initScrim();
 
@@ -698,6 +768,7 @@ function wire() {
     onGoMap: () => setTab('map'),
     onShare: share,
     onBackup: openBackup,
+    onInstall: () => openInstallSheet({ manual: true }),
   });
 
   delegate(document, 'click', '.tab', (_e, node) => setTab(node.dataset.tab));
@@ -720,6 +791,11 @@ function wire() {
   on(qs('#filters-close'), 'click', () => sheets.filters.close());
   on(qs('#nearby-close'), 'click', () => sheets.nearby.close());
   on(qs('#backup-close'), 'click', () => sheets.backup.close());
+  on(qs('#install-close'), 'click', () => sheets.install.close());
+  delegate(qs('#sheet-install'), 'click', '[data-install]', (_e, node) => {
+    if (node.dataset.install === 'go') runInstall();
+    else { trackEvent('install_dismissed'); sheets.install.close(); }
+  });
   delegate(qs('#sheet-backup'), 'click', '[data-backup]', (_e, node) => {
     if (node.dataset.backup === 'dismiss') { backupLinkCopied = true; sheets.backup.close(); return; }
     copyBackupLink(node.dataset.backup);
@@ -753,6 +829,7 @@ async function boot() {
   // Derived from the progress already in localStorage, so the return-visit
   // metric needs no tracking identifier and no extra storage.
   initAnalytics({ returning: Object.keys(state.saved.collected).length > 0 });
+  watchForInstallPrompt();
 
   try {
     const dataset = await loadPlaques();

@@ -38,6 +38,13 @@ export const MAX_TRUSTED_ACCURACY_M = 250;
  */
 export const LOCATION_INVITE_DELAY_MS = 4200;
 
+/**
+ * Discoveries before the Home Screen offer appears. Late enough that there is
+ * something worth protecting, early enough to arrive before Safari's seven-day
+ * storage cap can bite.
+ */
+export const HOME_SCREEN_PROMPT_AFTER = 3;
+
 /** Walking speed used for the "approx. N min" hint. */
 export const WALK_METRES_PER_MIN = 80;
 

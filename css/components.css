@@ -688,6 +688,37 @@
   word-break: break-all;
   line-height: 1.5;
 }
+/* ── Add to Home Screen ────────────────────────────────────────────────── */
+
+.install-steps { margin: var(--sp-5) 0 var(--sp-4); }
+.install-step {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--ink-100);
+  font-size: var(--fs-base);
+  text-align: left;
+}
+.install-step:last-child { border-bottom: 0; }
+.install-num {
+  width: 26px; height: 26px; flex-shrink: 0;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--blue); color: #fff;
+  font-size: var(--fs-xs); font-weight: 700;
+}
+.install-step svg { width: 19px; height: 19px; color: var(--blue); flex-shrink: 0; }
+.install-why {
+  display: flex; gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--blue-050);
+  font-size: var(--fs-sm);
+  color: var(--ink-600);
+  line-height: 1.55;
+  text-align: left;
+}
+.install-why svg { width: 18px; height: 18px; color: var(--blue); flex-shrink: 0; margin-top: 2px; }
+
 .backup-warn {
   display: flex; align-items: flex-start; gap: var(--sp-3);
   margin-top: var(--sp-4);
