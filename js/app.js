@@ -22,6 +22,7 @@ import { initQuestScreen, renderQuest } from './quest-screen.js';
 import { initMyLondon, renderMyLondon, showSegment } from './mylondon.js';
 import { syncUnlocks } from './achievements.js';
 import { celebrateIconic, loadIconicNotes, noteFor } from './celebrate.js';
+import { drawShareCard, toBlob, canShareImage, epithetFor } from './share-card.js';
 import { syncCompletions, hasActionableQuest } from './quests.js';
 import { requestLocation, ensureLocation } from './location.js';
 import { recommendNext } from './recommend.js';
@@ -540,19 +541,83 @@ function showIntro(after) {
 
 /* ── Sharing ───────────────────────────────────────────────────────────── */
 
+let shareBlob = null;
+
+/**
+ * Offers the postable image first and the plain link second. The card is drawn
+ * on the spot from current progress, so it is always the real number.
+ */
 async function share() {
   const p = store.progress();
   trackEvent('share_clicked', { count: p.count });
-  const text = `I've uncovered ${p.count} of London's hidden stories with London Uncovered.`;
-  const url = location.href.split('#')[0];
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: 'London Uncovered', text, url });
-      return;
-    }
-    await navigator.clipboard.writeText(`${text} ${url}`);
-    toast({ eyebrow: 'Copied', title: 'Link copied to clipboard', iconName: 'check', gold: false });
-  } catch { /* the user dismissed the share sheet */ }
+
+  if (!p.count) {
+    showMessage({
+      icon: 'share', title: 'Nothing to show yet',
+      body: 'Collect a discovery or two and your London becomes something worth posting.',
+      primary: { label: 'Explore the map', onClick: () => setTab('map') },
+    });
+    return;
+  }
+
+  const canvas = drawShareCard();
+  shareBlob = await toBlob(canvas);
+  const { title, sub } = epithetFor(p);
+
+  qs('#share-body').innerHTML = `
+    <img class="share-preview" src="${canvas.toDataURL('image/png')}"
+         alt="Your London: ${esc(String(p.count))} discoveries found, ${(p.percent * 100).toFixed(1)}% of London uncovered, Explorer level ${p.level}. ${esc(title)}.">
+    <p style="text-align:center;font-size:var(--fs-sm);color:var(--ink-500);margin-bottom:var(--sp-4)">
+      <strong style="color:var(--ink)">${esc(title)}</strong><br>${esc(sub)}
+    </p>
+    <div class="share-actions">
+      <button type="button" class="btn btn-primary btn-block" data-share="image" data-autofocus>
+        ${icon('share')} Share this image
+      </button>
+      <button type="button" class="btn btn-secondary btn-block" data-share="save">Save image</button>
+      <button type="button" class="btn btn-ghost btn-block btn-sm" data-share="link">Share a link instead</button>
+    </div>`;
+  sheets.share.open('full');
+}
+
+async function doShare(mode) {
+  const p = store.progress();
+  const text = `I have uncovered ${p.count} of London's hidden stories with London Uncovered.`;
+  const url = location.href.split('#')[0].split('?')[0];
+
+  if (mode === 'link') {
+    trackEvent('share_mode', { mode: 'link' });
+    try {
+      if (navigator.share) await navigator.share({ title: 'London Uncovered', text, url });
+      else {
+        await navigator.clipboard.writeText(`${text} ${url}`);
+        toast({ eyebrow: 'Copied', title: 'Link copied', iconName: 'check', gold: false });
+      }
+    } catch { /* dismissed */ }
+    return;
+  }
+
+  if (!shareBlob) return;
+  const file = new File([shareBlob], 'my-london.png', { type: 'image/png' });
+
+  if (mode === 'image' && canShareImage(file)) {
+    trackEvent('share_mode', { mode: 'image' });
+    try { await navigator.share({ files: [file], text, title: 'My London' }); } catch { /* dismissed */ }
+    return;
+  }
+
+  // No image sharing here — hand them the file instead.
+  trackEvent('share_mode', { mode: 'save' });
+  const href = URL.createObjectURL(shareBlob);
+  const a = document.createElement('a');
+  a.href = href;
+  a.download = 'my-london.png';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 4000);
+  toast({ eyebrow: 'Saved', title: 'Image saved', desc: 'Post it wherever you like.',
+          iconName: 'check', gold: false });
 }
 
 /* ── Backup links ──────────────────────────────────────────────────────── */
@@ -767,6 +832,7 @@ function wire() {
   sheets.nearby = new Sheet('#sheet-nearby', { alwaysScrim: true });
   sheets.backup = new Sheet('#sheet-backup', { alwaysScrim: true, beforeClose: guardBackupClose });
   sheets.install = new Sheet('#sheet-install', { alwaysScrim: true });
+  sheets.share = new Sheet('#sheet-share', { alwaysScrim: true });
   sheets.message = new Sheet('#sheet-message');
   initScrim();
 
@@ -828,6 +894,8 @@ function wire() {
   on(qs('#nearby-close'), 'click', () => sheets.nearby.close());
   on(qs('#backup-close'), 'click', () => sheets.backup.close());
   on(qs('#install-close'), 'click', () => sheets.install.close());
+  on(qs('#share-close'), 'click', () => sheets.share.close());
+  delegate(qs('#sheet-share'), 'click', '[data-share]', (_e, node) => doShare(node.dataset.share));
   delegate(qs('#sheet-install'), 'click', '[data-install]', (_e, node) => {
     if (node.dataset.install === 'go') runInstall();
     else { trackEvent('install_dismissed'); sheets.install.close(); }

@@ -797,6 +797,20 @@
   word-break: break-all;
   line-height: 1.5;
 }
+/* ── Share card ────────────────────────────────────────────────────────── */
+
+.share-preview {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto var(--sp-5);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-2);
+  background: var(--ivory-2);
+  aspect-ratio: 1080 / 1350;
+}
+.share-actions { display: grid; gap: var(--sp-2); }
+
 /* ── Add to Home Screen ────────────────────────────────────────────────── */
 
 .install-steps { margin: var(--sp-5) 0 var(--sp-4); }

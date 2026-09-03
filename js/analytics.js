@@ -77,6 +77,7 @@ function describe(name, props = {}) {
     case 'achievement_unlocked': return [`achievement/${props.achievement}`, `Achievement · ${props.achievement}`];
     case 'my_london_opened':   return ['my-london', 'My London opened'];
     case 'share_clicked':      return ['share',     'Share tapped'];
+    case 'share_mode':         return [`share/${props.mode}`, `Shared as ${props.mode}`];
 
     case 'install_prompt_shown': return [props.manual ? 'install/opened' : 'install/offered',
                                         props.manual ? 'Home Screen opened from My London' : 'Home Screen offered'];

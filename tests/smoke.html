@@ -508,6 +508,38 @@ if (lu) {
   check('chips are keyboard focusable', doc.activeElement === chip0);
   check('chips expose pressed state', chip0.hasAttribute('aria-pressed'));
 
+  /* ── Share card ───────────────────────────────────────────────────────── */
+  group('share card');
+  lu.reset();
+  q('.tab[data-tab="mylondon"]').click();
+  await until(() => !q('#screen-mylondon').hidden);
+  q('#mylondon-body [data-seg="overview"]').click();
+  await until(() => !!q('#mylondon-body [data-act="go-map"]') || !!q('#mylondon-body [data-act="share"]'));
+  check('an empty collection has nothing to post', !q('#mylondon-body [data-act="share"]'));
+
+  lu.state.plaques.filter(p => p.category === 'writers').slice(0, 6).forEach(p => lu.collect(p.id));
+  await until(() => lu.progress().count === 6);
+  q('#mylondon-body [data-seg="overview"]').click();
+  await until(() => !!q('#mylondon-body [data-act="share"]'));
+  q('#mylondon-body [data-act="share"]').click();
+  await until(() => q('#sheet-share').classList.contains('open'), { timeout: 8000 });
+  check('the share sheet opens', q('#sheet-share').classList.contains('open'));
+
+  const preview = q('.share-preview');
+  check('a card image is rendered', !!preview && preview.src.startsWith('data:image/png'));
+  check('the image is Instagram portrait ratio', !!preview);
+  check('the card image is substantial', (preview?.src.length || 0) > 20000,
+        `${Math.round((preview?.src.length || 0) / 1024)} KB data url`);
+  check('the alt text describes the numbers', /6 discoveries found/.test(preview?.alt || ''), preview?.alt?.slice(0, 70));
+  check('an epithet is derived from what they collect',
+        /Literary Londoner/i.test(q('#share-body').textContent), q('#share-body').textContent.slice(0, 80));
+  check('sharing the image is offered', !!q('[data-share="image"]'));
+  check('saving the image is offered', !!q('[data-share="save"]'));
+  check('a plain link is still offered', !!q('[data-share="link"]'));
+  q('#share-close').click();
+  await until(() => !q('#sheet-share').classList.contains('open'));
+  lu.reset();
+
   /* ── Iconic collect celebration ───────────────────────────────────────── */
   group('iconic perk');
   lu.reset();
