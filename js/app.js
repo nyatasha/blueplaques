@@ -101,9 +101,13 @@ function refresh({ rerenderSheet = false } = {}) {
     `<strong>${fmtNumber(p.count)}</strong> / ${fmtNumber(p.total)}`;
 
   const countEl = qs('#map-count');
-  countEl.textContent = visible.length === p.total
-    ? `${fmtNumber(p.total)} discoveries`
-    : `${fmtNumber(visible.length)} of ${fmtNumber(p.total)}`;
+  const activeTheme = state.filters.theme
+    ? state.themes.find(t => t.id === state.filters.theme) : null;
+  countEl.textContent = activeTheme
+    ? `${activeTheme.name} · ${fmtNumber(visible.length)} left`
+    : visible.length === p.total
+      ? `${fmtNumber(p.total)} discoveries`
+      : `${fmtNumber(visible.length)} of ${fmtNumber(p.total)}`;
 
   const filterBtn = qs('#filters-open');
   filterBtn.dataset.active = String(isFiltered());
@@ -682,6 +686,24 @@ function openCategoryOnMap(slug) {
   announce(`${CATEGORY_BY_SLUG.get(slug).label} — showing uncollected discoveries.`);
 }
 
+/** Sends the map to a themed set, showing what is still to find in it. */
+function openThemeOnMap(themeId) {
+  const theme = state.themes.find(t => t.id === themeId);
+  if (!theme) return;
+  state.filters.categories.clear();
+  state.filters.theme = themeId;
+  state.filters.status = 'uncollected';
+  state.filters.fame = 'all';
+  clearSearch({ silent: true });
+  syncChips();
+  setTab('map');
+  closeAllSheets();
+  refresh();
+  mapView.fitToIds([...theme.ids]);
+  trackEvent('theme_selected', { theme: themeId });
+  announce(`${theme.name} — showing what is left to find.`);
+}
+
 function selectPlaque(id, { from } = {}) {
   const plaque = state.byId.get(id);
   if (!plaque) return;
@@ -765,6 +787,7 @@ function wire() {
   initMyLondon({
     onOpenPlaque: id => selectPlaque(id, { from: 'my-london' }),
     onOpenCategory: openCategoryOnMap,
+    onOpenTheme: openThemeOnMap,
     onGoMap: () => setTab('map'),
     onShare: share,
     onBackup: openBackup,

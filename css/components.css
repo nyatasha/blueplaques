@@ -490,7 +490,9 @@
   margin-bottom: var(--sp-3);
 }
 .collection-chip svg { width: 16px; height: 16px; }
-.collection.complete .collection-chip { background: var(--gold-100); color: var(--gold-700); }
+.collection.complete .collection-chip,
+.collection-chip.gold { background: var(--gold-100); color: var(--gold-700); }
+.collection.gold::after { background: var(--gold); }
 
 .collection::after {
   content: ""; position: absolute; inset: 0 auto 0 0;

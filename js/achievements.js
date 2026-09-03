@@ -29,6 +29,10 @@ export const ACHIEVEMENTS = [
   { id: 'renaissance',   group: 'Variety',    name: 'Renaissance Londoner', desc: 'Collect from 5 different categories.',   icon: 'layers', goal: 5, gold: true, value: p => p.categoriesWithAny },
   { id: 'culture_club',  group: 'Variety',    name: 'Culture Club',    desc: 'Collect 10 discoveries across the arts.',     icon: 'sparkle',goal: 10,
     value: p => CULTURE_CATEGORIES.reduce((sum, slug) => sum + found(p, slug), 0) },
+
+  { id: 'theme_starter', group: 'Collections', name: 'Set Collector',   desc: 'Collect 3 from a single themed collection.',   icon: 'layers',  goal: 3,  value: p => p.bestThemeCount },
+  { id: 'theme_explorer',group: 'Collections', name: 'Broad Tastes',    desc: 'Appear in 5 different themed collections.',    icon: 'compass', goal: 5,  value: p => p.themesWithAny },
+  { id: 'theme_master',  group: 'Collections', name: 'Set Completist',  desc: 'Collect 15 from a single themed collection.',  icon: 'trophy',  goal: 15, gold: true, value: p => p.bestThemeCount },
 ];
 
 /** Current state of every achievement, newest-unlocked information included. */

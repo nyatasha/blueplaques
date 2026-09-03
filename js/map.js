@@ -129,13 +129,15 @@ export function buildMarkers() {
 
 /** The plaques that pass search + every active filter (PRD §18). */
 export function visiblePlaques() {
-  const { status, categories, fame, distance } = state.filters;
+  const { status, categories, fame, distance, theme } = state.filters;
+  const themeIds = theme ? state.themes.find(t => t.id === theme)?.ids : null;
   const q = state.query.trim().toLowerCase();
   const maxDistance = DISTANCE_FILTERS.find(d => d.key === distance)?.metres ?? Infinity;
   const origin = state.userPos;
 
   return state.plaques.filter(plaque => {
     if (q && !plaque.search.includes(q)) return false;
+    if (themeIds && !themeIds.has(plaque.id)) return false;
     if (categories.size && !categories.has(plaque.category)) return false;
     if (fame === 'famous' && plaque.fame < 2) return false;
     if (fame === 'iconic' && plaque.fame < 3) return false;

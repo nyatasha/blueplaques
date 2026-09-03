@@ -61,6 +61,7 @@ function describe(name, props = {}) {
     case 'near_me_used':       return ['near-me',            'Near me opened'];
 
     case 'category_selected':  return [`category/${props.category}`, `Category · ${props.category}`];
+    case 'theme_selected':     return [`theme/${props.theme}`, `Theme · ${props.theme}`];
     case 'search_used':        return [`search/${props.kind}`, `Search · ${props.kind}`];
     case 'filter_applied':     return [`filter/${props.group}`, `Filter · ${props.group}`];
 

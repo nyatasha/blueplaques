@@ -20,6 +20,7 @@ import { evaluate as evaluateAchievements, syncUnlocks, ACHIEVEMENTS } from '../
 import { evaluate as evaluateQuests, QUESTS } from '../js/quests.js';
 import { recommendNext } from '../js/recommend.js';
 import { encodeBackup, decodeBackup, mergeBackup } from '../js/backup.js';
+import { buildThemes, THEME_DEFS } from '../js/themes.js';
 
 let passed = 0;
 const failures = [];
@@ -236,6 +237,47 @@ state.byCategory = new Map([['other', [near1, near2]]]);
 state.saved.collected = {};
 store.invalidate();
 eq('closer plaque wins when all else is equal', recommendNext().plaque.id, 'x1');
+
+/* ── Themed collections ─────────────────────────────────────────────────── */
+group('themes');
+store.setDataset(dataset);
+const themes = buildThemes(dataset.plaques);
+eq('every definition survives the size filter', themes.length, THEME_DEFS.length);
+check('themes are finishable, unlike the big categories',
+      themes.every(t => t.total >= 5 && t.total <= 120),
+      themes.map(t => `${t.id}:${t.total}`).join(' '));
+check('every theme has a tagline', themes.every(t => t.tagline && t.tagline.length > 10));
+check('ids are unique', new Set(themes.map(t => t.id)).size === themes.length);
+check('membership is drawn only from the dataset',
+      themes.every(t => [...t.ids].every(id => dataset.byId.has(id))));
+eq('iconic set matches the fame tier', themes.find(t => t.id === 'icons').total,
+   dataset.plaques.filter(p => p.fame === 3).length);
+eq('the legends set is the top twenty-five', themes.find(t => t.id === 'legends').total, 25);
+check('sets overlap — a plaque can belong to several',
+      dataset.plaques.some(p => themes.filter(t => t.ids.has(p.id)).length >= 3));
+// Themes are a bonus layer — categories already cover every plaque — but a
+// collection you are unlikely to make progress in is not motivating, so most
+// of the map should sit in at least one set.
+const covered = dataset.plaques.filter(p => themes.some(t => t.ids.has(p.id))).length;
+check('most plaques belong to at least one set',
+      covered > dataset.plaques.length * 0.5, `${covered} of ${dataset.plaques.length}`);
+check('no plaque is spread across an absurd number of sets',
+      dataset.plaques.every(p => themes.filter(t => t.ids.has(p.id)).length <= 7));
+
+state.saved.collected = {};
+store.invalidate();
+const iconSet = themes.find(t => t.id === 'icons');
+[...iconSet.ids].slice(0, 4).forEach(id => store.collect(id, false));
+const tp = store.progress();
+eq('theme progress is derived', tp.themes.find(t => t.id === 'icons').found, 4);
+check('best-theme count feeds the achievements', tp.bestThemeCount >= 4);
+check('themes-with-any is counted', tp.themesWithAny >= 1);
+eq('collecting four iconic plaques unlocks Set Collector',
+   evaluateAchievements().find(a => a.id === 'theme_starter').unlocked, true);
+eq('Set Completist still locked at four',
+   evaluateAchievements().find(a => a.id === 'theme_master').unlocked, false);
+state.saved.collected = {};
+store.invalidate();
 
 /* ── Backup links ───────────────────────────────────────────────────────── */
 group('backup');

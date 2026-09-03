@@ -124,7 +124,30 @@ function collections(p) {
   const sorted = [...p.categories].filter(c => c.total > 0)
     .sort((a, b) => b.found - a.found || b.total - a.total);
 
-  return `<div class="collections">${sorted.map(c => {
+  const themes = `
+    <div class="section-head" style="margin-top:0">
+      <span class="eyebrow">Themed collections</span>
+      <span class="level-xp">${p.themes.filter(t => t.found > 0).length} / ${p.themes.length} started</span>
+    </div>
+    <div class="collections" style="margin-bottom:var(--sp-8)">
+      ${p.themes.map(t => `
+        <button type="button" class="collection${t.found === t.total ? ' complete' : ''}${t.gold ? ' gold' : ''}"
+                data-act="open-theme" data-theme="${esc(t.id)}">
+          <div style="display:flex;align-items:center;gap:var(--sp-3)">
+            <span class="collection-chip${t.gold ? ' gold' : ''}">${icon(t.icon)}</span>
+            ${t.found === t.total ? `<span class="badge badge-iconic" style="margin-bottom:var(--sp-3)">${icon('star')} Complete</span>` : ''}
+          </div>
+          <div class="collection-name">${esc(t.name)}</div>
+          <div class="collection-count"><b>${t.found}</b> / ${fmtNumber(t.total)} discovered</div>
+          <div class="bar${t.found === t.total ? ' gold' : ''}"><i style="width:${(t.percent * 100).toFixed(1)}%"></i></div>
+          <div class="collection-names">${esc(t.tagline)}</div>
+          <div class="collection-go">${t.found ? 'Continue' : 'Start'} this set ${icon('arrowRight')}</div>
+        </button>`).join('')}
+    </div>
+
+    <div class="section-head"><span class="eyebrow">By category</span></div>`;
+
+  return themes + `<div class="collections">${sorted.map(c => {
     const names = (state.byCategory.get(c.slug) || [])
       .filter(pl => pl.fame >= 2).slice(0, 3)
       .map(pl => pl.title.split(' ').pop()).join(' · ');
@@ -201,6 +224,7 @@ export function initMyLondon(handlerMap) {
     switch (node.dataset.act) {
       case 'open-plaque':    handlers.onOpenPlaque(node.dataset.id); break;
       case 'open-category':  handlers.onOpenCategory(node.dataset.cat); break;
+      case 'open-theme':     handlers.onOpenTheme(node.dataset.theme); break;
       case 'go-map':         handlers.onGoMap(); break;
       case 'go-achievements':showSegment('achievements'); break;
       case 'share':          handlers.onShare(); break;

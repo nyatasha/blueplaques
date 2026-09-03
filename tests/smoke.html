@@ -189,7 +189,26 @@ if (lu) {
 
   q('#mylondon-body [data-seg="collections"]').click();
   await until(() => qa('#mylondon-body .collection').length > 0);
-  eq('nine collection cards', qa('#mylondon-body .collection').length, 9);
+  check('nine category collections', qa('#mylondon-body [data-act="open-category"]').length === 9);
+  check('themed collections listed', qa('#mylondon-body [data-act="open-theme"]').length >= 8,
+        `${qa('#mylondon-body [data-act="open-theme"]').length} themes`);
+  check('themes carry a tagline', /everyone knows|outlived them|swing/i.test(q('#mylondon-body').textContent));
+
+  // Tapping a theme should take you to the map showing what is left in it.
+  const themeCard = qa('#mylondon-body [data-act="open-theme"]')[0];
+  const themeId = themeCard.dataset.theme;
+  themeCard.click();
+  await until(() => lu.state.filters.theme === themeId, { timeout: 4000 });
+  eq('the theme filter activates', lu.state.filters.theme, themeId);
+  check('it returns you to the map', !q('#screen-mylondon').hidden === false);
+  check('the map count names the set', /·/.test(q('#map-count').textContent), q('#map-count').textContent);
+  const themeTotal = lu.state.themes.find(t => t.id === themeId).total;
+  check('only that set is shown', lu.state.plaques.filter(p =>
+        lu.state.themes.find(t => t.id === themeId).ids.has(p.id)).length === themeTotal);
+  check('the filter badge counts the theme', !q('#filter-badge').hidden);
+  lu.state.filters.theme = null;
+  q('.tab[data-tab="mylondon"]').click();
+  await until(() => !q('#screen-mylondon').hidden);
 
   q('#mylondon-body [data-seg="achievements"]').click();
   await until(() => qa('#mylondon-body .ach').length > 0);

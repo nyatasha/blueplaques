@@ -10,6 +10,7 @@
 import { XP, CATEGORIES, levelFromXp, xpForLevel } from './config.js';
 import * as storage from './storage.js';
 import { mergeBackup } from './backup.js';
+import { buildThemes } from './themes.js';
 
 const listeners = new Set();
 
@@ -19,13 +20,14 @@ export const state = {
   byId: new Map(),
   byCategory: new Map(),
   places: new Map(),
+  themes: [],
 
   saved: storage.load(),
 
   /** Transient UI state — never persisted. */
   tab: 'map',
   query: '',
-  filters: { status: 'all', categories: new Set(), fame: 'all', distance: 'all' },
+  filters: { status: 'all', categories: new Set(), fame: 'all', distance: 'all', theme: null },
   userPos: null,          // { lat, lng, accuracy } — memory only (PRD §62)
   locationStatus: 'idle', // idle | asking | granted | denied | unavailable
   targetId: null,
@@ -44,7 +46,7 @@ export function subscribe(fn) { listeners.add(fn); return () => listeners.delete
 export function emit(type, detail) { listeners.forEach(fn => fn(type, detail)); }
 
 export function setDataset({ plaques, byId, byCategory, places }) {
-  Object.assign(state, { plaques, byId, byCategory, places });
+  Object.assign(state, { plaques, byId, byCategory, places, themes: buildThemes(plaques) });
 }
 
 function persist() { storage.save(state.saved); }
@@ -160,6 +162,17 @@ export function progress() {
   const levelFloor = xpForLevel(level);
   const levelCeil = xpForLevel(level + 1);
 
+  const collectedIds = new Set(collectedPlaques.map(({ plaque }) => plaque.id));
+  const themes = state.themes.map(theme => {
+    let found = 0;
+    for (const id of collectedIds) if (theme.ids.has(id)) found++;
+    return {
+      id: theme.id, name: theme.name, tagline: theme.tagline,
+      icon: theme.icon, gold: !!theme.gold,
+      total: theme.total, found, percent: theme.total ? found / theme.total : 0,
+    };
+  });
+
   const categories = CATEGORIES.map(c => {
     const totalIn = state.byCategory.get(c.slug)?.length || 0;
     const found = byCategory.get(c.slug) || 0;
@@ -177,6 +190,9 @@ export function progress() {
     iconic, famous, verified,
     categories,
     categoriesWithAny: categories.filter(c => c.found > 0).length,
+    themes,
+    themesWithAny: themes.filter(t => t.found > 0).length,
+    bestThemeCount: themes.reduce((max, t) => Math.max(max, t.found), 0),
     recent: collectedPlaques.slice(0, 8),
     collectedPlaques,
   };
