@@ -9,6 +9,7 @@
 
 import { XP, CATEGORIES, levelFromXp, xpForLevel } from './config.js';
 import * as storage from './storage.js';
+import { mergeBackup } from './backup.js';
 
 const listeners = new Set();
 
@@ -94,6 +95,17 @@ export function markUnlocked(kind, key) {
   bag[key] = new Date().toISOString();
   persist();
   return true;
+}
+
+/**
+ * Folds a decoded backup into the current save. Merges rather than replaces,
+ * so restoring can never lose a discovery made on this device.
+ */
+export function applyBackup(entries) {
+  const result = mergeBackup(state.saved, entries, { knownIds: new Set(state.byId.keys()) });
+  persist();
+  emit('restore', result);
+  return result;
 }
 
 export function setSetting(key, value) {

@@ -670,6 +670,32 @@
     linear-gradient(180deg, var(--blue-050), var(--ivory));
 }
 
+/* ── Backup link ───────────────────────────────────────────────────────── */
+
+.backup-link {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--fs-xs);
+  color: var(--ink-600);
+  background: var(--white);
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  margin: var(--sp-4) 0 var(--sp-3);
+  resize: none;
+  /* Wrap rather than scroll sideways, so the whole link is visible at a glance */
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.5;
+}
+.backup-note {
+  font-size: var(--fs-xs);
+  color: var(--ink-400);
+  line-height: 1.6;
+  margin-top: var(--sp-4);
+}
+.backup-note strong { color: var(--ink-600); font-weight: 600; }
+
 /* ── Empty map state (PRD §61) — a card, never a modal ─────────────────── */
 
 #map-empty {

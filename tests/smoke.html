@@ -435,6 +435,24 @@ if (lu) {
   check('chips are keyboard focusable', doc.activeElement === chip0);
   check('chips expose pressed state', chip0.hasAttribute('aria-pressed'));
 
+  /* ── Analytics taxonomy (docs/analytics-plan.md) ──────────────────────── */
+  group('analytics');
+  const paths = lu.events().map(e => e.path);
+  check('a visit event records new vs returning',
+        paths.some(p => p === 'visit/new' || p === 'visit/returning'), paths[0]);
+  check('collections map to verified / seen paths',
+        paths.some(p => p === 'collect/verified' || p === 'collect/seen'));
+  check('the activation milestone is announced', paths.includes('milestone/1'));
+  check('category browsing is recorded', paths.some(p => p.startsWith('category/')));
+  check('location outcomes are recorded', paths.some(p => p.startsWith('location/')));
+  check('find-next is recorded', paths.some(p => p.startsWith('find-next')));
+  check('every path is url-safe and lowercase',
+        paths.every(p => /^[a-z0-9/_-]+$/.test(p)),
+        paths.filter(p => !/^[a-z0-9/_-]+$/.test(p)).join(', '));
+  const payload = JSON.stringify(lu.events());
+  check('no coordinates in any event', !/\b51\.\d{3}/.test(payload));
+  check('no plaque ids in any event path', !paths.some(p => /\/\d{3,}$/.test(p)));
+
   /* ── Reset ────────────────────────────────────────────────────────────── */
   group('reset');
   lu.reset();
@@ -443,6 +461,68 @@ if (lu) {
   await until(() => qa('.pin-collected').length === 0, { timeout: 3000 });
   eq('collected markers reverted', qa('.pin-collected').length, 0);
 }
+
+  /* ── Backup and restore (js/backup.js) ────────────────────────────────── */
+  group('backup & restore');
+  lu.reset();
+  const backupIds = lu.state.plaques.slice(0, 3).map(p => p.id);
+  backupIds.forEach(id => lu.collect(id));
+  await until(() => lu.progress().count === 3);
+
+  const url = lu.backupUrl();
+  check('a backup link is produced', !!url, url.slice(0, 60));
+  check('the payload rides in the fragment, never the query',
+        url.includes('#restore=lu1-') && !url.includes('?restore'));
+  check('the link is short enough to share', url.length < 400, `${url.length} chars`);
+
+  q('.tab[data-tab="mylondon"]').click();
+  await until(() => !q('#screen-mylondon').hidden);
+  // The segment is sticky, and an earlier group left it on Achievements.
+  q('#mylondon-body [data-seg="overview"]').click();
+  await until(() => !!q('#mylondon-body [data-act="backup"]'));
+  check('the Overview offers a backup link', !!q('#mylondon-body [data-act="backup"]'));
+  q('#mylondon-body [data-act="backup"]').click();
+  await until(() => q('#sheet-backup').classList.contains('open'));
+  check('the backup sheet opens from My London', q('#sheet-backup').classList.contains('open'));
+  check('the sheet shows the link', (q('#backup-url')?.value || '').includes('#restore=lu1-'));
+  check('the sheet warns to keep it private', /Keep it to yourself/.test(q('#backup-body').textContent));
+  q('#backup-close').click();
+
+  // Now simulate a different browser: wipe storage and open the link cold.
+  const token = url.split('#')[1];
+  try { localStorage.removeItem('londonUncovered:v0'); } catch { /* ignore */ }
+  // A query parameter forces a real navigation: changing only the fragment is a
+  // same-document move, so the app would never re-boot and read the token.
+  frame.src = `/index.html?fresh=${Date.now()}#${token}`;
+
+  // The new document is identifiable: storage was cleared, so it boots at zero
+  // and puts the restore prompt up.
+  const restored = await until(() =>
+    frame.contentWindow?.__lu?.progress?.().count === 0 &&
+    frame.contentDocument?.querySelector('#sheet-message')?.classList.contains('open'),
+    { timeout: 40000 });
+  check('opening the link in a clean browser offers a restore', !!restored);
+
+  if (restored) {
+    const doc2 = frame.contentDocument;
+    const win2 = frame.contentWindow;
+    const lu2 = win2.__lu;
+    check('the prompt says how much it carries', /3/.test(doc2.querySelector('#message-body').textContent));
+    check('it promises to merge, not replace',
+          /nothing is replaced/i.test(doc2.querySelector('#message-body').textContent));
+    doc2.querySelector('#message-body [data-msg="primary"]').click();
+    await until(() => lu2.progress().count === 3, { timeout: 8000 });
+    eq('the collection continues in the new browser', lu2.progress().count, 3);
+    check('the same discoveries came across',
+          backupIds.every(id => !!lu2.state.saved.collected[id]));
+    check('achievements were recomputed, not carried',
+          !!JSON.parse(win2.localStorage.getItem('londonUncovered:v0')).unlockedAchievements.first_find);
+    check('the token is cleared from the address bar',
+          !win2.location.hash.includes('restore'), win2.location.hash);
+    check('the restore was recorded for analytics',
+          lu2.events().some(e => e.path === 'backup/restored'));
+    lu2.reset();
+  }
 
 } catch (err) {
   failed++;

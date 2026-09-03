@@ -100,10 +100,18 @@ function overview(p) {
         <span class="quest-cta">See all achievements ${icon('arrowRight')}</span>
       </button>` : ''}
 
-    <div class="section-head"><span class="eyebrow">Share</span></div>
+    <div class="section-head"><span class="eyebrow">Your collection</span></div>
     <button type="button" class="btn btn-secondary btn-block" data-act="share">
       ${icon('share')} Share your London
-    </button>`;
+    </button>
+    <button type="button" class="btn btn-ghost btn-block btn-sm" data-act="backup"
+            style="margin-top:var(--sp-2)">
+      ${icon('refresh')} Move to another browser
+    </button>
+    <p class="backup-note" style="text-align:center">
+      Saved in this browser only. Add London Uncovered to your Home Screen,
+      or take a backup link, to keep your collection safe.
+    </p>`;
 }
 
 /* ── Collections ───────────────────────────────────────────────────────── */
@@ -192,6 +200,7 @@ export function initMyLondon(handlerMap) {
       case 'go-map':         handlers.onGoMap(); break;
       case 'go-achievements':showSegment('achievements'); break;
       case 'share':          handlers.onShare(); break;
+      case 'backup':         handlers.onBackup(); break;
       default: break;
     }
   });

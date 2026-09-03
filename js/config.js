@@ -41,6 +41,13 @@ export const XP = {
   verified: 10,   // bonus for a location-verified find
 };
 
+/**
+ * Collection counts announced to analytics as they are crossed. Lets a simple,
+ * storage-less analytics service report activation and strong activation
+ * without ever aggregating per visitor. See docs/analytics-plan.md.
+ */
+export const MILESTONES = [1, 3, 10, 25, 50, 100];
+
 export const FAME = {
   3: { key: 'iconic', label: 'Iconic', badge: 'badge-iconic' },
   2: { key: 'famous', label: 'Famous', badge: 'badge-famous' },

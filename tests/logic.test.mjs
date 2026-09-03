@@ -19,6 +19,7 @@ import { state } from '../js/state.js';
 import { evaluate as evaluateAchievements, syncUnlocks, ACHIEVEMENTS } from '../js/achievements.js';
 import { evaluate as evaluateQuests, QUESTS } from '../js/quests.js';
 import { recommendNext } from '../js/recommend.js';
+import { encodeBackup, decodeBackup, mergeBackup } from '../js/backup.js';
 
 let passed = 0;
 const failures = [];
@@ -232,6 +233,88 @@ state.byCategory = new Map([['other', [near1, near2]]]);
 state.saved.collected = {};
 store.invalidate();
 eq('closer plaque wins when all else is equal', recommendNext().plaque.id, 'x1');
+
+/* ── Backup links ───────────────────────────────────────────────────────── */
+group('backup');
+
+const day = (n) => new Date(n * 86400000).toISOString();
+const sampleSave = () => ({
+  collected: {
+    '485':   { collectedAt: day(20700), verified: true,  seq: 1 },
+    '10326': { collectedAt: day(20701), verified: false, seq: 2 },
+    '190':   { collectedAt: day(20701), verified: false, seq: 3 },
+  },
+});
+
+const token = encodeBackup(sampleSave());
+check('token carries the format marker', token.startsWith('lu1-'), token.slice(0, 12));
+check('token is compact', token.length < 40, `${token.length} chars: ${token}`);
+
+const decoded = decodeBackup(token);
+eq('all three entries survive', decoded.entries.length, 3);
+eq('order is preserved', decoded.entries.map(e => e.id).join(','), '485,10326,190');
+eq('verified flag round-trips', decoded.entries[0].verified, true);
+eq('unverified flag round-trips', decoded.entries[1].verified, false);
+eq('collection day round-trips', decoded.entries[0].collectedAt.slice(0, 10), day(20700).slice(0, 10));
+
+eq('empty save yields no token', encodeBackup({ collected: {} }), '');
+eq('garbage decodes to null', decodeBackup('not-a-backup'), null);
+eq('wrong prefix decodes to null', decodeBackup('lu9-dh.fu0'), null);
+eq('empty string decodes to null', decodeBackup(''), null);
+eq('non-string decodes to null', decodeBackup(null), null);
+check('a corrupt entry is skipped, not fatal', decodeBackup('lu1-dh.fu0-!!!-e9.fu0').entries.length === 2);
+
+// Restoring into an empty browser.
+const fresh = { collected: {} };
+const intoFresh = mergeBackup(fresh, decoded.entries);
+eq('all entries land in an empty save', intoFresh.added, 3);
+eq('total is correct', intoFresh.total, 3);
+check('seq is renumbered in date order',
+  Object.values(fresh.collected).map(e => e.seq).sort((a, b) => a - b).join(',') === '1,2,3');
+
+// Restoring over existing progress must never lose a find.
+const existing = {
+  collected: {
+    '485':   { collectedAt: day(20800), verified: false, seq: 1 },   // later, unverified
+    '99999': { collectedAt: day(20750), verified: false, seq: 2 },   // only on this device
+  },
+};
+const merged = mergeBackup(existing, decoded.entries);
+eq('new entries are added', merged.added, 2);
+eq('nothing local is dropped', !!existing.collected['99999'], true);
+eq('total counts both sources', merged.total, 4);
+eq('the earlier collection date wins', existing.collected['485'].collectedAt.slice(0, 10), day(20700).slice(0, 10));
+eq('verified survives a merge with an unverified copy', existing.collected['485'].verified, true);
+
+// Merging the same backup twice must be a no-op.
+const again = mergeBackup(existing, decoded.entries);
+eq('re-importing adds nothing', again.added, 0);
+eq('re-importing changes nothing', again.total, 4);
+
+// A backup made against a different dataset must not resurrect dead ids.
+const guarded = { collected: {} };
+const guardedResult = mergeBackup(guarded, decoded.entries, { knownIds: new Set(['485']) });
+eq('unknown ids are dropped', guardedResult.added, 1);
+eq('only the known id is stored', Object.keys(guarded.collected).join(','), '485');
+
+// A real save from the dataset should round-trip exactly.
+// (The recommendation block above swapped in fixture plaques — put the real
+// dataset back before touching the collection again.)
+store.setDataset(dataset);
+state.saved.collected = {};
+store.invalidate();
+const picks = dataset.plaques.slice(0, 40);
+picks.forEach((p, i) => store.collect(p.id, i % 4 === 0));
+const realToken = encodeBackup(state.saved);
+const realDecoded = decodeBackup(realToken);
+eq('40 real discoveries round-trip', realDecoded.entries.length, 40);
+eq('ids match the originals',
+   realDecoded.entries.map(e => e.id).join(','), picks.map(p => p.id).join(','));
+eq('verified flags match',
+   realDecoded.entries.filter(e => e.verified).length,
+   picks.filter((_, i) => i % 4 === 0).length);
+check('a 40-discovery link stays comfortably shareable', realToken.length < 500,
+      `${realToken.length} chars`);
 
 /* ── Report ─────────────────────────────────────────────────────────────── */
 print('');

@@ -25,6 +25,8 @@ you, collect the discoveries you make, and watch your London fill in.
 - **Quest** — five fixed goals that answer "what should I do next?".
 - **My London** — discoveries, percentage of London uncovered, level, recent
   finds, category collections and achievement badges.
+- **Backup links** — move a collection to another browser or device without an
+  account. The whole save travels inside a URL fragment.
 
 Progress lives in this browser's `localStorage`. There are no accounts, no
 backend and no tracking of your location.
@@ -143,6 +145,32 @@ data/plaques.geojson           the dataset
 
 ---
 
+## Backup links
+
+There are no accounts, so a collection lives in one browser. **My London → Move
+to another browser** produces a link that carries the whole save:
+
+```
+https://nyatasha.github.io/blueplaques/#restore=lu1-dh.fyz.1-e9.fyz-…
+```
+
+Opening it anywhere offers to restore. Details worth knowing:
+
+- The payload rides in the URL **fragment**, so it is never sent to any server.
+- Restoring **merges** — a discovery made on the receiving browser is never lost,
+  the earlier collection date wins, and verified beats unverified.
+- Only facts are encoded: plaque id, day, verified. Achievements, quests, XP and
+  levels are recomputed on arrival, so a backup cannot carry inconsistent state.
+- Ids absent from the current dataset are dropped, so an old link stays safe
+  after a data refresh.
+- Roughly 9 characters per discovery — a 50-plaque collection is ~450 characters.
+- Anyone holding the link can load that collection, so it is private by
+  convention, not by cryptography. The UI says so.
+
+`__lu.backupUrl()` returns the current link from the console.
+
+---
+
 ## Testing the verified-collection flow
 
 Collecting a discovery as **verified** normally requires standing within 100 m of the
@@ -168,8 +196,28 @@ The override is off unless explicitly switched on and is never persisted — dro
 query parameter restores normal behaviour. The test suite asserts both that it defaults to
 off and that switching it off again restores the proximity check.
 
-Other console helpers on `__lu`: `progress()`, `events()`, `open(id)`, `collect(id, verified)`
-and `reset()`.
+Other console helpers on `__lu`: `progress()`, `events()`, `open(id)`,
+`collect(id, verified)`, `backupUrl()` and `reset()`.
+
+---
+
+## Analytics
+
+Events go to [GoatCounter](https://nyatasha.goatcounter.com). Nothing is stored
+on the visitor's device — no cookies, no `localStorage`, no fingerprint — so no
+consent banner is required, and no coordinates or plaque ids are ever sent.
+
+To check the integration locally, GoatCounter ignores `localhost` unless asked:
+
+```bash
+python3 -m http.server 8000
+# open http://localhost:8000/?gc=local
+```
+
+`__lu.events()` shows every event with the exact path that was sent, whether or
+not the beacon got through.
+
+Full taxonomy, metric derivations and known limits: `docs/analytics-plan.md`.
 
 ---
 
@@ -177,9 +225,11 @@ and `reset()`.
 
 Two things are deliberately left unset, each in one documented place:
 
-- **Analytics** — `GA_MEASUREMENT_ID` in `js/analytics.js`. Empty by default,
-  so nothing leaves the browser. Set a GA4 id to start sending events;
-  no product code depends on the provider.
+- **Analytics** — `ENDPOINT` in `js/analytics.js`, pointing at GoatCounter.
+  Set it to `''` to switch analytics off entirely. GoatCounter stores nothing on
+  the visitor's device, so the site needs no consent banner. The event taxonomy
+  and how each success metric is derived are in `docs/analytics-plan.md`.
+  No product code names a provider — everything calls `trackEvent(name, props)`.
 - **Basemap** — `BASEMAP` in `js/config.js`. Defaults to Esri's Light Gray
   Canvas, which needs no API key. CARTO Positron now watermarks every tile
   requested without a key; the comment there explains how to switch back if

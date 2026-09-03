@@ -7,7 +7,8 @@
  * another module's DOM.
  */
 
-import { CATEGORY_BY_SLUG, VERIFY_RADIUS_M, VERIFY_ANYWHERE_PARAM, VERIFY_ANYWHERE_VALUE } from './config.js';
+import { CATEGORY_BY_SLUG, VERIFY_RADIUS_M, VERIFY_ANYWHERE_PARAM, VERIFY_ANYWHERE_VALUE, MILESTONES } from './config.js';
+import { backupUrl, pendingRestore, clearRestoreFromUrl, COMFORTABLE_URL_LENGTH } from './backup.js';
 import { loadPlaques } from './data.js';
 import * as store from './state.js';
 import { state } from './state.js';
@@ -248,6 +249,7 @@ function handleCollect(plaque, wantsVerified) {
   });
 
   celebrateUnlocks();
+  recordMilestones();
   warnIfNotPersisted();
   refresh({ rerenderSheet: true });
 }
@@ -267,6 +269,21 @@ function warnIfNotPersisted() {
     iconName: 'info',
     gold: false,
   });
+}
+
+/**
+ * Announces collection milestones as they are crossed, so a storage-less
+ * analytics service can report activation and strong activation without ever
+ * aggregating per visitor. Each threshold fires once and is recorded, so a
+ * reload or a restored backup cannot double-count it.
+ */
+function recordMilestones() {
+  const { count } = store.progress();
+  const fired = store.getSetting('firedMilestones') || [];
+  const newly = MILESTONES.filter(m => count >= m && !fired.includes(m));
+  if (!newly.length) return;
+  newly.forEach(m => trackEvent('milestone', { count: m }));
+  store.setSetting('firedMilestones', [...fired, ...newly]);
 }
 
 /** Achievement and quest toasts, staggered so they do not stack all at once. */
@@ -414,6 +431,99 @@ async function share() {
   } catch { /* the user dismissed the share sheet */ }
 }
 
+/* ── Backup links ──────────────────────────────────────────────────────── */
+
+/**
+ * Builds a link that carries the collection in the URL fragment, so it never
+ * reaches a server. Opening it in another browser offers to merge it in.
+ */
+function openBackup() {
+  const p = store.progress();
+  const url = backupUrl(state.saved);
+  const body = qs('#backup-body');
+
+  if (!url) {
+    body.innerHTML = `
+      <div class="notice">
+        <div class="notice-icon">${icon('bookmark')}</div>
+        <div class="notice-title">Nothing to move yet</div>
+        <p>Collect a discovery first, then come back for a link that carries your London to another browser.</p>
+      </div>`;
+    sheets.backup.open('full');
+    return;
+  }
+
+  trackEvent('backup_created');
+  const long = url.length > COMFORTABLE_URL_LENGTH;
+  body.innerHTML = `
+    <p style="font-size:var(--fs-sm);color:var(--ink-600);line-height:1.6">
+      This link carries your ${fmtNumber(p.count)} ${p.count === 1 ? 'discovery' : 'discoveries'}.
+      Open it in another browser — or on another device — and your collection continues from here.
+    </p>
+    <label class="sr-only" for="backup-url">Your backup link</label>
+    <textarea class="backup-link" id="backup-url" rows="3" readonly>${esc(url)}</textarea>
+    <div class="pq-actions">
+      <button type="button" class="btn btn-primary" data-backup="copy" data-autofocus>${icon('check')} Copy link</button>
+      ${navigator.share ? `<button type="button" class="btn btn-secondary" data-backup="share">${icon('share')} Share</button>` : ''}
+    </div>
+    <p class="backup-note">
+      <strong>Keep it to yourself</strong> — anyone with this link can load your collection.
+      Nothing is uploaded: the whole thing travels inside the link.
+      ${long ? '<br><br>It is a long link, so send it somewhere that will not shorten it — email or notes rather than a chat app.' : ''}
+    </p>`;
+  sheets.backup.open('full');
+}
+
+async function copyBackupLink(mode) {
+  const url = qs('#backup-url')?.value;
+  if (!url) return;
+  try {
+    if (mode === 'share' && navigator.share) {
+      await navigator.share({ title: 'My London Uncovered collection', url });
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    toast({ eyebrow: 'Copied', title: 'Backup link copied', iconName: 'check', gold: false });
+  } catch {
+    // Clipboard refused (or the share sheet was dismissed) — the field is
+    // selectable, so fall back to letting the user copy it by hand.
+    qs('#backup-url')?.select();
+  }
+}
+
+/** A link opened on this device is offered, never applied silently. */
+function offerRestore(restore) {
+  const count = restore.entries.length;
+  showMessage({
+    icon: 'bookmark',
+    title: 'Continue your collection',
+    body: `This link carries ${count} ${count === 1 ? 'discovery' : 'discoveries'}. `
+        + `They will be added to whatever is already saved in this browser — nothing is replaced.`,
+    primary: { label: `Restore ${count}`, onClick: () => applyRestore(restore) },
+    secondary: { label: 'Not now', onClick: clearRestoreFromUrl },
+  });
+}
+
+function applyRestore(restore) {
+  const result = store.applyBackup(restore.entries);
+  clearRestoreFromUrl();
+  state.plaques.forEach(p => mapView.refreshMarker(p.id));
+  syncUnlocks();
+  syncCompletions();
+  trackEvent('backup_restored');
+  refresh({ rerenderSheet: true });
+  announce(`Collection restored. ${result.total} discoveries.`);
+  toast({
+    eyebrow: 'Collection restored',
+    title: result.added
+      ? `${result.added} ${result.added === 1 ? 'discovery' : 'discoveries'} added`
+      : 'Already up to date',
+    desc: `${result.total} discoveries in this browser`,
+    iconName: 'check',
+    gold: false,
+  });
+}
+
 /* ── Navigation helpers used by several screens ────────────────────────── */
 
 function openCategoryOnMap(slug) {
@@ -478,6 +588,7 @@ function wire() {
   sheets.filters = new Sheet('#sheet-filters', { alwaysScrim: true });
   sheets.about = new Sheet('#sheet-about', { alwaysScrim: true });
   sheets.nearby = new Sheet('#sheet-nearby', { alwaysScrim: true });
+  sheets.backup = new Sheet('#sheet-backup', { alwaysScrim: true });
   sheets.message = new Sheet('#sheet-message');
   initScrim();
 
@@ -513,6 +624,7 @@ function wire() {
     onOpenCategory: openCategoryOnMap,
     onGoMap: () => setTab('map'),
     onShare: share,
+    onBackup: openBackup,
   });
 
   delegate(document, 'click', '.tab', (_e, node) => setTab(node.dataset.tab));
@@ -534,6 +646,8 @@ function wire() {
   on(qs('#about-close'), 'click', () => sheets.about.close());
   on(qs('#filters-close'), 'click', () => sheets.filters.close());
   on(qs('#nearby-close'), 'click', () => sheets.nearby.close());
+  on(qs('#backup-close'), 'click', () => sheets.backup.close());
+  delegate(qs('#sheet-backup'), 'click', '[data-backup]', (_e, node) => copyBackupLink(node.dataset.backup));
   on(qs('#nearby'), 'click', openNearby);
   delegate(qs('#sheet-nearby'), 'click', '[data-panel-id]', (_e, node) => {
     sheets.nearby.close();
@@ -560,7 +674,9 @@ function wire() {
 async function boot() {
   if (booted) return;
   booted = true;
-  initAnalytics();
+  // Derived from the progress already in localStorage, so the return-visit
+  // metric needs no tracking identifier and no extra storage.
+  initAnalytics({ returning: Object.keys(state.saved.collected).length > 0 });
 
   try {
     const dataset = await loadPlaques();
@@ -585,6 +701,9 @@ async function boot() {
 
   if (state.verifyAnywhere) setVerifyAnywhere(true);
   qs('#boot').hidden = true;
+
+  const restore = pendingRestore();
+  if (restore) offerRestore(restore);
   qs('#total-count').textContent = fmtNumber(state.plaques.length);
   document.body.dataset.tab = 'map';
 
@@ -594,6 +713,7 @@ async function boot() {
     collect: (id, verified = false) => { handleCollect(state.byId.get(id), verified); },
     open: id => selectPlaque(id, { from: 'console' }),
     verifyAnywhere: setVerifyAnywhere,
+    backupUrl: () => backupUrl(state.saved),
   };
 }
 
