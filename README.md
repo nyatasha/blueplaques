@@ -80,6 +80,13 @@ python3 scripts/add_fame.py              # + Wikipedia pageviews → fame 0–3
 python3 scripts/classify_categories.py   # + category + category_label
 ```
 
+The share card and app icons are generated too, but only when the branding
+changes — they are committed, not built per deploy:
+
+```bash
+python3 scripts/make_social_image.py     # assets/social/og-cover.png
+```
+
 ```
 fetch plaques → add fame → classify categories → data/plaques.geojson → deploy
 ```

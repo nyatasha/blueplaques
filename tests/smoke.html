@@ -239,6 +239,14 @@ if (lu) {
 
   /* ── About ────────────────────────────────────────────────────────────── */
   group('about & seo');
+  const og = sel => doc.querySelector(sel)?.getAttribute('content') || '';
+  check('share card declared for Open Graph', og('meta[property="og:image"]').endsWith('og-cover.png'));
+  check('share card uses an absolute url', og('meta[property="og:image"]').startsWith('https://'));
+  check('share card dimensions declared',
+        og('meta[property="og:image:width"]') === '1200' && og('meta[property="og:image:height"]') === '630');
+  check('share card has alt text', og('meta[property="og:image:alt"]').length > 20);
+  check('twitter uses the large card', og('meta[name="twitter:card"]') === 'summary_large_image');
+
   check('crawlable About copy is in the DOM', doc.getElementById('about-content').textContent.length > 900);
   check('OpenPlaques attributed', /OpenPlaques/.test(doc.getElementById('about-content').textContent));
   check('not claiming to be English Heritage',
