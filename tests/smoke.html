@@ -341,6 +341,46 @@ if (lu) {
     }
   }
 
+  /* ── Verify-anywhere test override (js/config.js) ─────────────────────── */
+  group('verify override');
+  check('override is off unless asked for', lu.state.verifyAnywhere === false);
+
+  // A plaque comfortably outside the 100 m radius, wherever the fix is.
+  const anchor = lu.state.userPos || { lat: 51.5074, lng: -0.1278 };
+  const faraway = lu.state.plaques.find(p =>
+    !lu.state.saved.collected[p.id] && Math.abs(p.lat - anchor.lat) > 0.02);
+
+  if (faraway) {
+    lu.open(faraway.id);
+    await until(() => q('#sheet-plaque').classList.contains('open'));
+    check('a distant plaque offers no verified collect by default',
+          !q('#plaque-foot [data-act="collect"][data-verified="1"]'));
+
+    lu.verifyAnywhere(true);
+    await until(() => !!q('#plaque-foot [data-act="collect"][data-verified="1"]'), { timeout: 4000 });
+    check('override offers a verified collect on a distant plaque',
+          !!q('#plaque-foot [data-act="collect"][data-verified="1"]'));
+    check('override is labelled as test mode in the sheet',
+          /Test mode/.test(q('#plaque-foot').textContent), q('#plaque-foot').textContent.trim().slice(0, 80));
+
+    const verifiedBefore = lu.progress().verified;
+    q('#plaque-foot [data-act="collect"][data-verified="1"]').click();
+    await until(() => lu.progress().verified === verifiedBefore + 1, { timeout: 4000 });
+    eq('collecting under the override is recorded as verified',
+       lu.progress().verified, verifiedBefore + 1);
+    check('the verified bonus is awarded',
+          lu.state.saved.collected[faraway.id]?.verified === true);
+
+    lu.verifyAnywhere(false);
+    const another = lu.state.plaques.find(p =>
+      !lu.state.saved.collected[p.id] && Math.abs(p.lat - anchor.lat) > 0.02);
+    lu.open(another.id);
+    await until(() => q('#plaque-body').textContent.includes(another.title), { timeout: 4000 });
+    check('switching the override off restores the proximity check',
+          !q('#plaque-foot [data-act="collect"][data-verified="1"]'));
+    q('#plaque-close').click();
+  }
+
   /* ── Responsive sweep (PRD §57) ───────────────────────────────────────── */
   group('responsive');
   const widths = [320, 375, 390, 430, 768, 1024, 1440];

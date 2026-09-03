@@ -12,6 +12,22 @@ export const SCHEMA_VERSION = 1;
 /** Metres. A discovery collected inside this radius counts as verified. */
 export const VERIFY_RADIUS_M = 100;
 
+/**
+ * ── TEST OVERRIDE ────────────────────────────────────────────────────────
+ * Verified collection normally requires standing within VERIFY_RADIUS_M of the
+ * plaque, which makes that path awkward to exercise from a desk. Loading the
+ * app with `?verify=anywhere` (or calling `__lu.verifyAnywhere(true)` in the
+ * console) lifts the proximity check so any discovery can be collected as
+ * verified.
+ *
+ * It is off unless explicitly switched on, it is never persisted, and while it
+ * is active the sheet says so — so a test find cannot be mistaken for a real
+ * one. Remove the query parameter to get normal behaviour back.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+export const VERIFY_ANYWHERE_PARAM = 'verify';
+export const VERIFY_ANYWHERE_VALUE = 'anywhere';
+
 /** Reported GPS accuracy worse than this is not trusted for verification. */
 export const MAX_TRUSTED_ACCURACY_M = 250;
 

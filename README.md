@@ -143,6 +143,36 @@ data/plaques.geojson           the dataset
 
 ---
 
+## Testing the verified-collection flow
+
+Collecting a discovery as **verified** normally requires standing within 100 m of the
+plaque, which is awkward to exercise from a desk. Load the app with:
+
+```
+http://localhost:8000/?verify=anywhere
+```
+
+and any discovery can be collected as verified — the proximity check is skipped, and it
+works whether or not the browser has a location fix. While it is active the plaque sheet
+says *"Test mode — collecting as verified without checking your location"*, so a test find
+cannot be mistaken for a real one.
+
+It can also be toggled from the console without reloading:
+
+```js
+__lu.verifyAnywhere(true)    // skip the proximity check
+__lu.verifyAnywhere(false)   // back to normal
+```
+
+The override is off unless explicitly switched on and is never persisted — dropping the
+query parameter restores normal behaviour. The test suite asserts both that it defaults to
+off and that switching it off again restores the proximity check.
+
+Other console helpers on `__lu`: `progress()`, `events()`, `open(id)`, `collect(id, verified)`
+and `reset()`.
+
+---
+
 ## Configuration points
 
 Two things are deliberately left unset, each in one documented place:

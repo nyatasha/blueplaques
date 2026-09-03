@@ -56,7 +56,8 @@ function metaLine(plaque, distance) {
 function actionsBlock(plaque, distance) {
   const collected = isCollected(plaque.id);
   const entry = collectionEntry(plaque.id);
-  const near = isNearby(distance);
+  const testMode = state.verifyAnywhere;
+  const near = testMode || isNearby(distance);
 
   if (collected) {
     return `
@@ -77,7 +78,11 @@ function actionsBlock(plaque, distance) {
           ${icon('check')} Collect this discovery
         </button>
       </div>
-      <p class="pq-verify-note">${icon('shield')} You're ${esc(formatDistance(distance))} away — this find will be verified.</p>`;
+      <p class="pq-verify-note">${icon('shield')} ${
+        testMode
+          ? 'Test mode — collecting as verified without checking your location.'
+          : `You're ${esc(formatDistance(distance))} away — this find will be verified.`
+      }</p>`;
   }
 
   if (distance !== null) {
@@ -171,8 +176,8 @@ export function renderPlaqueSheet(id = currentId) {
         ${plaque.address ? `<div class="pq-row"><dt>Address</dt><dd>${esc(plaque.address)}</dd></div>` : ''}
         ${plaque.year ? `<div class="pq-row"><dt>Erected</dt><dd>${esc(plaque.year)}</dd></div>` : ''}
         ${plaque.roles ? `<div class="pq-row"><dt>Known for</dt><dd>${esc(plaque.roles)}</dd></div>` : ''}
-        ${!isCollected(plaque.id) ? `<div class="pq-row"><dt>Worth</dt><dd>${xpFor(plaque, false)} XP${
-            state.userPos ? '' : ' · +10 XP if verified on location'}</dd></div>` : ''}
+        ${!isCollected(plaque.id) ? `<div class="pq-row"><dt>Worth</dt><dd>${xpFor(plaque, state.verifyAnywhere)} XP${
+            state.userPos || state.verifyAnywhere ? '' : ' · +10 XP if verified on location'}</dd></div>` : ''}
       </dl>
 
       ${collectionBlock(plaque)}

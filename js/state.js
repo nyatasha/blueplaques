@@ -30,6 +30,13 @@ export const state = {
   targetId: null,
   suggestedIds: [],       // recommendation history, for "Choose another" variety
   openPlaqueId: null,
+
+  /**
+   * Test override (see config.js). When true, a find counts as verified
+   * without any proximity — or even any location — check. Off unless the
+   * URL or the console switches it on; nothing persists it.
+   */
+  verifyAnywhere: false,
 };
 
 export function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }

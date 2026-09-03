@@ -7,7 +7,7 @@
  * another module's DOM.
  */
 
-import { CATEGORY_BY_SLUG, VERIFY_RADIUS_M } from './config.js';
+import { CATEGORY_BY_SLUG, VERIFY_RADIUS_M, VERIFY_ANYWHERE_PARAM, VERIFY_ANYWHERE_VALUE } from './config.js';
 import { loadPlaques } from './data.js';
 import * as store from './state.js';
 import { state } from './state.js';
@@ -204,8 +204,19 @@ function openNearby() {
 /* ── Collecting ────────────────────────────────────────────────────────── */
 
 function verifiedFor(plaque) {
+  if (state.verifyAnywhere) return true;          // test override, see config.js
   if (!state.userPos) return false;
   return distanceMetres(state.userPos, plaque) <= VERIFY_RADIUS_M;
+}
+
+/** Turn the proximity check off (or back on) and re-render what depends on it. */
+function setVerifyAnywhere(on) {
+  state.verifyAnywhere = !!on;
+  if (state.verifyAnywhere) {
+    console.info('[London Uncovered] Test mode: finds collect as verified without a location check. Reload without ?verify=anywhere for normal behaviour.');
+  }
+  refresh({ rerenderSheet: true });
+  return state.verifyAnywhere;
 }
 
 function handleCollect(plaque, wantsVerified) {
@@ -559,6 +570,9 @@ async function boot() {
     return;
   }
 
+  state.verifyAnywhere =
+    new URLSearchParams(location.search).get(VERIFY_ANYWHERE_PARAM) === VERIFY_ANYWHERE_VALUE;
+
   mapView.initMap(selectPlaque);
   mapView.buildMarkers();
   wire();
@@ -569,6 +583,7 @@ async function boot() {
   syncUnlocks();
   syncCompletions();
 
+  if (state.verifyAnywhere) setVerifyAnywhere(true);
   qs('#boot').hidden = true;
   qs('#total-count').textContent = fmtNumber(state.plaques.length);
   document.body.dataset.tab = 'map';
@@ -578,6 +593,7 @@ async function boot() {
     reset: () => { store.resetProgress(); state.plaques.forEach(p => mapView.refreshMarker(p.id)); refresh(); },
     collect: (id, verified = false) => { handleCollect(state.byId.get(id), verified); },
     open: id => selectPlaque(id, { from: 'console' }),
+    verifyAnywhere: setVerifyAnywhere,
   };
 }
 
