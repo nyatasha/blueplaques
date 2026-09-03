@@ -52,6 +52,9 @@ function describe(name, props = {}) {
         ? ['find-next/another', 'Find next · choose another']
         : ['find-next', 'Find my next discovery'];
 
+    case 'location_invite_shown':    return ['location/invited',  'Location invitation shown'];
+    case 'location_invite_accepted': return ['location/accepted',  'Location invitation accepted'];
+    case 'location_invite_declined': return ['location/declined',  'Location invitation declined'];
     case 'location_requested': return ['location/requested', 'Location requested'];
     case 'location_granted':   return ['location/granted',   'Location granted'];
     case 'location_denied':    return ['location/denied',    'Location denied'];

@@ -7,7 +7,8 @@
  * another module's DOM.
  */
 
-import { CATEGORY_BY_SLUG, VERIFY_RADIUS_M, VERIFY_ANYWHERE_PARAM, VERIFY_ANYWHERE_VALUE, MILESTONES } from './config.js';
+import { CATEGORY_BY_SLUG, VERIFY_RADIUS_M, VERIFY_ANYWHERE_PARAM, VERIFY_ANYWHERE_VALUE, MILESTONES,
+         LOCATION_INVITE_DELAY_MS } from './config.js';
 import { backupUrl, pendingRestore, clearRestoreFromUrl, COMFORTABLE_URL_LENGTH } from './backup.js';
 import { loadPlaques } from './data.js';
 import * as store from './state.js';
@@ -341,6 +342,43 @@ async function useLocation({ centre = true, silent = false } = {}) {
   } finally {
     btn.classList.remove('locating');
   }
+}
+
+/**
+ * A first-visit invitation to switch location on (PRD §19–21).
+ *
+ * This is not a permission request — the browser is only asked when the button
+ * here is pressed, which is the explicit user action §19 requires. Asking in
+ * our own words first means the real prompt arrives with a reason attached,
+ * and a decline costs the browser permission nothing.
+ *
+ * Shown once, ever. Declining is remembered, so it never nags (§21).
+ */
+function maybeInviteLocation() {
+  if (store.getSetting('locationInviteSeen')) return;
+  if (state.userPos || state.locationStatus !== 'idle') return;
+  if (!('geolocation' in navigator)) return;
+
+  setTimeout(() => {
+    // Say nothing if they have got on with it in the meantime.
+    if (state.userPos || state.locationStatus !== 'idle') return;
+    if (state.tab !== 'map' || sheets.message.isOpen || sheets.plaque.isOpen) return;
+    if (store.getSetting('locationInviteSeen')) return;
+
+    store.setSetting('locationInviteSeen', true);
+    trackEvent('location_invite_shown');
+    showMessage({
+      icon: 'locate',
+      title: 'See what is around you',
+      body: 'Turn on location to find discoveries near you, get walking directions, '
+          + 'and collect plaques where you stand. Your position stays on this device.',
+      primary: {
+        label: 'Use my location',
+        onClick: () => { trackEvent('location_invite_accepted'); useLocation({ centre: true }); },
+      },
+      secondary: { label: 'Not now', onClick: () => trackEvent('location_invite_declined') },
+    });
+  }, LOCATION_INVITE_DELAY_MS);
 }
 
 /* ── Find my next discovery ────────────────────────────────────────────── */
@@ -742,6 +780,7 @@ async function boot() {
 
   const restore = pendingRestore();
   if (restore) offerRestore(restore);
+  else maybeInviteLocation();
   qs('#total-count').textContent = fmtNumber(state.plaques.length);
   document.body.dataset.tab = 'map';
 

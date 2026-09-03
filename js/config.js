@@ -31,6 +31,13 @@ export const VERIFY_ANYWHERE_VALUE = 'anywhere';
 /** Reported GPS accuracy worse than this is not trusted for verification. */
 export const MAX_TRUSTED_ACCURACY_M = 250;
 
+/**
+ * How long the map is left alone before offering to use location on a first
+ * visit. Long enough that the map has loaded and been looked at — PRD §54 wants
+ * the product usable on arrival, not gated behind a dialog.
+ */
+export const LOCATION_INVITE_DELAY_MS = 4200;
+
 /** Walking speed used for the "approx. N min" hint. */
 export const WALK_METRES_PER_MIN = 80;
 
