@@ -437,7 +437,10 @@ async function share() {
  * Builds a link that carries the collection in the URL fragment, so it never
  * reaches a server. Opening it in another browser offers to merge it in.
  */
+let backupLinkCopied = false;
+
 function openBackup() {
+  backupLinkCopied = false;
   const p = store.progress();
   const url = backupUrl(state.saved);
   const body = qs('#backup-body');
@@ -480,15 +483,44 @@ async function copyBackupLink(mode) {
   try {
     if (mode === 'share' && navigator.share) {
       await navigator.share({ title: 'My London Uncovered collection', url });
+      backupLinkCopied = true;
       return;
     }
     await navigator.clipboard.writeText(url);
+    backupLinkCopied = true;
+    qs('#backup-warn')?.remove();
     toast({ eyebrow: 'Copied', title: 'Backup link copied', iconName: 'check', gold: false });
   } catch {
     // Clipboard refused (or the share sheet was dismissed) — the field is
     // selectable, so fall back to letting the user copy it by hand.
     qs('#backup-url')?.select();
   }
+}
+
+/**
+ * Closing the sheet without taking the link means walking away with nothing —
+ * the link is not stored anywhere and a fresh one is only reachable from here.
+ * The first close attempt says so; the second lets them go.
+ */
+function guardBackupClose() {
+  if (backupLinkCopied || !qs('#backup-url')) return true;
+  if (qs('#backup-warn')) return true;                 // already warned once
+  const warn = document.createElement('div');
+  warn.className = 'backup-warn';
+  warn.id = 'backup-warn';
+  warn.innerHTML = `
+    ${icon('info')}
+    <div>
+      <p><strong>Copy the link before you close this.</strong> It is not saved anywhere —
+      without it you cannot pick this collection up in another browser.</p>
+      <div class="pq-actions">
+        <button type="button" class="btn btn-primary btn-sm" data-backup="copy">${icon('check')} Copy link</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-backup="dismiss">Close anyway</button>
+      </div>
+    </div>`;
+  qs('#backup-body').appendChild(warn);
+  warn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  return false;
 }
 
 /** A link opened on this device is offered, never applied silently. */
@@ -499,7 +531,10 @@ function offerRestore(restore) {
     title: 'Continue your collection',
     body: `This link carries ${count} ${count === 1 ? 'discovery' : 'discoveries'}. `
         + `They will be added to whatever is already saved in this browser — nothing is replaced.`,
-    primary: { label: `Restore ${count}`, onClick: () => applyRestore(restore) },
+    primary: {
+      label: `Restore my ${count} ${count === 1 ? 'discovery' : 'discoveries'}`,
+      onClick: () => applyRestore(restore),
+    },
     secondary: { label: 'Not now', onClick: clearRestoreFromUrl },
   });
 }
@@ -588,7 +623,7 @@ function wire() {
   sheets.filters = new Sheet('#sheet-filters', { alwaysScrim: true });
   sheets.about = new Sheet('#sheet-about', { alwaysScrim: true });
   sheets.nearby = new Sheet('#sheet-nearby', { alwaysScrim: true });
-  sheets.backup = new Sheet('#sheet-backup', { alwaysScrim: true });
+  sheets.backup = new Sheet('#sheet-backup', { alwaysScrim: true, beforeClose: guardBackupClose });
   sheets.message = new Sheet('#sheet-message');
   initScrim();
 
@@ -647,7 +682,10 @@ function wire() {
   on(qs('#filters-close'), 'click', () => sheets.filters.close());
   on(qs('#nearby-close'), 'click', () => sheets.nearby.close());
   on(qs('#backup-close'), 'click', () => sheets.backup.close());
-  delegate(qs('#sheet-backup'), 'click', '[data-backup]', (_e, node) => copyBackupLink(node.dataset.backup));
+  delegate(qs('#sheet-backup'), 'click', '[data-backup]', (_e, node) => {
+    if (node.dataset.backup === 'dismiss') { backupLinkCopied = true; sheets.backup.close(); return; }
+    copyBackupLink(node.dataset.backup);
+  });
   on(qs('#nearby'), 'click', openNearby);
   delegate(qs('#sheet-nearby'), 'click', '[data-panel-id]', (_e, node) => {
     sheets.nearby.close();

@@ -29,6 +29,8 @@ export class Sheet {
     this.el = qs(selector);
     this.alwaysScrim = !!options.alwaysScrim;
     this.onClose = options.onClose;
+    /** Return false to stop the sheet closing — used to warn before losing something. */
+    this.beforeClose = options.beforeClose;
     this.onState = options.onState;
     this.isOpen = false;
     this.lastFocus = null;
@@ -55,6 +57,7 @@ export class Sheet {
 
   close() {
     if (!this.isOpen) return;
+    if (this.beforeClose && this.beforeClose() === false) return;
     this.isOpen = false;
     openSheets = openSheets.filter(s => s !== this);
     this.el.classList.remove('open');

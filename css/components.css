@@ -688,6 +688,19 @@
   word-break: break-all;
   line-height: 1.5;
 }
+.backup-warn {
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--gold-100);
+  box-shadow: inset 0 0 0 1px var(--gold-300);
+  animation: toast-in var(--dur-2) var(--ease-out);
+}
+.backup-warn svg { width: 18px; height: 18px; color: var(--gold-700); flex-shrink: 0; margin-top: 1px; }
+.backup-warn p { font-size: var(--fs-sm); color: var(--gold-900); line-height: 1.5; }
+.backup-warn .pq-actions { margin-top: var(--sp-3); }
+
 .backup-note {
   font-size: var(--fs-xs);
   color: var(--ink-400);

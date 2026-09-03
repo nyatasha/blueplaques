@@ -533,7 +533,18 @@ if (lu) {
   check('the backup sheet opens from My London', q('#sheet-backup').classList.contains('open'));
   check('the sheet shows the link', (q('#backup-url')?.value || '').includes('#restore=lu1-'));
   check('the sheet warns to keep it private', /Keep it to yourself/.test(q('#backup-body').textContent));
+
+  // Closing without taking the link must warn rather than silently discard it.
   q('#backup-close').click();
+  await until(() => !!q('#backup-warn'), { timeout: 3000 });
+  check('closing without copying warns first', !!q('#backup-warn'));
+  check('the sheet stays open on that first attempt', q('#sheet-backup').classList.contains('open'));
+  check('the warning explains the consequence',
+        /cannot pick this collection up/.test(q('#backup-warn').textContent));
+  check('the warning offers to copy', !!q('#backup-warn [data-backup="copy"]'));
+  q('#backup-warn [data-backup="dismiss"]').click();
+  await until(() => !q('#sheet-backup').classList.contains('open'), { timeout: 3000 });
+  check('close anyway lets you out', !q('#sheet-backup').classList.contains('open'));
 
   // Now simulate a different browser: wipe storage and open the link cold.
   const token = url.split('#')[1];
@@ -555,6 +566,9 @@ if (lu) {
     const win2 = frame.contentWindow;
     const lu2 = win2.__lu;
     check('the prompt says how much it carries', /3/.test(doc2.querySelector('#message-body').textContent));
+    check('the restore button speaks in the first person',
+          /Restore my 3 discoveries/.test(doc2.querySelector('#message-body').textContent),
+          doc2.querySelector('#message-body [data-msg="primary"]')?.textContent);
     check('it promises to merge, not replace',
           /nothing is replaced/i.test(doc2.querySelector('#message-body').textContent));
     doc2.querySelector('#message-body [data-msg="primary"]').click();
