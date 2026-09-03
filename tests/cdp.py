@@ -104,10 +104,15 @@ class WS:
 # ── Chrome session ───────────────────────────────────────────────────────────
 
 class Chrome:
-    def __init__(self, width=390, height=844, port=9333, scratch=None):
+    def __init__(self, width=390, height=844, port=0, scratch=None):
+        # Port 0 lets Chrome choose, and we read back the one it took from
+        # DevToolsActivePort. A fixed port is a trap: a browser left running by
+        # an earlier run keeps holding it, the new Chrome cannot bind, and we
+        # would attach to the old one -- testing the previous version of the
+        # code and reporting a pass.
         self.port = port
-        # A throwaway profile per run: a reused one caches the app's JS modules
-        # and would quietly test the previous version of the code.
+        # A throwaway profile per run, for the same reason: a reused one caches
+        # the app's JS modules.
         self.scratch = scratch or tempfile.mkdtemp(prefix="london-uncovered-chrome-")
         self._owns_scratch = scratch is None
         self.msg_id = 0
@@ -124,10 +129,24 @@ class Chrome:
              f"--window-size={width},{height}", "about:blank"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
+        self.port = self._read_devtools_port() if port == 0 else port
         ws_url = self._wait_for_target()
         self.ws = WS(ws_url)
         self.call("Page.enable")
         self.call("Runtime.enable")
+
+    def _read_devtools_port(self, timeout=25):
+        """Chrome writes the port it actually bound into the profile directory."""
+        path = os.path.join(self.scratch, "DevToolsActivePort")
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            try:
+                first = open(path).read().split("\n")[0].strip()
+                if first: return int(first)
+            except Exception:
+                pass
+            time.sleep(0.1)
+        raise RuntimeError("Chrome never wrote DevToolsActivePort")
 
     def _wait_for_target(self, timeout=25):
         deadline = time.time() + timeout

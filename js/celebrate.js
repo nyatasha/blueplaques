@@ -74,7 +74,7 @@ export function celebrateIconic(plaque, xp) {
     if (!host) { resolve(); return; }
 
     const surname = plaque.title.split(' ').slice(-1)[0];
-    const count = progress().count;
+    const count = progress().count;   // includes the plaque just collected
     host.innerHTML = `
       <div class="cel-card" role="dialog" aria-label="Iconic discovery collected" tabindex="-1">
         <div class="cel-eyebrow">${icon('star')} Iconic discovery</div>
@@ -91,8 +91,8 @@ export function celebrateIconic(plaque, xp) {
         <button type="button" class="btn btn-primary btn-block cel-done" data-autofocus>
           Added to my London
         </button>
-        <p class="cel-hint">${esc(surname)} joins ${count === 1 ? 'your first discovery'
-          : `${count} discoveries`}</p>
+        <p class="cel-hint">${count === 1 ? `${esc(surname)} is your first discovery`
+          : `${esc(surname)} joins ${count - 1} ${count === 2 ? 'other' : 'others'}`}</p>
       </div>`;
 
     host.hidden = false;

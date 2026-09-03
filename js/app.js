@@ -186,9 +186,13 @@ function renderMapPanel(visible) {
   if (!host) return;
   const located = !!state.userPos;
   const searching = state.query.trim().length > 0 || isFiltered();
-  host.innerHTML = discoveryList(rankedRows(visible, { byDistance: located, limit: 12 }), {
+  const rows = rankedRows(visible, { byDistance: located, limit: 12 });
+  host.innerHTML = discoveryList(rows, {
+    // "In this view" is a claim about the whole filtered set, so it counts all
+    // of it. The other two headings name the rows themselves, so they count
+    // those: 935 beside "Iconic Londoners" answered a different question.
     heading: located ? 'Near you' : searching ? 'In this view' : 'Iconic Londoners',
-    count: visible.length,
+    count: searching && !located ? visible.length : rows.length,
     emptyText: 'Nothing matches the current filters.',
   });
 }
@@ -252,9 +256,11 @@ function handleCollect(plaque, wantsVerified) {
     // The 49 Iconic plaques get a moment rather than a toast. Everything that
     // would have piled up behind it waits until the card is dismissed.
     trackEvent('iconic_collected', { category: plaque.category });
+    // Bookkeeping happens now; only the toasts wait behind the card.
+    const earned = recordUnlocks();
+    recordMilestones();
     celebrateIconic(plaque, result.xp).then(() => {
-      celebrateUnlocks();
-      recordMilestones();
+      showUnlockToasts(earned);
       warnIfNotPersisted();
       maybeOfferInstall();
     });
@@ -308,18 +314,30 @@ function recordMilestones() {
   store.setSetting('firedMilestones', [...fired, ...newly]);
 }
 
-/** Achievement and quest toasts, staggered so they do not stack all at once. */
-function celebrateUnlocks() {
-  syncCompletions().forEach((quest, i) => {
-    trackEvent('quest_completed', { quest: quest.id });
+/**
+ * Writes unlock dates and fires the analytics, then hands back what was newly
+ * earned. Deliberately separate from the toasts: an iconic celebration card
+ * holds its toasts back until it is dismissed, and a card the user never taps
+ * must not also cost them their unlock dates.
+ */
+function recordUnlocks() {
+  const quests = syncCompletions();
+  const achievements = syncUnlocks();
+  quests.forEach(q => trackEvent('quest_completed', { quest: q.id }));
+  achievements.forEach(a => trackEvent('achievement_unlocked', { achievement: a.id }));
+  return { quests, achievements };
+}
+
+/** Staggered so they do not stack all at once. */
+function showUnlockToasts({ quests, achievements }) {
+  quests.forEach((quest, i) => {
     setTimeout(() => toast({
       eyebrow: 'Quest complete', title: quest.name, desc: quest.goal,
       iconName: 'check', gold: false, onClick: () => setTab('quest'),
     }), 700 + i * 400);
   });
 
-  syncUnlocks().forEach((achievement, i) => {
-    trackEvent('achievement_unlocked', { achievement: achievement.id });
+  achievements.forEach((achievement, i) => {
     setTimeout(() => toast({
       eyebrow: 'Achievement unlocked',
       title: achievement.name,
@@ -328,6 +346,11 @@ function celebrateUnlocks() {
       onClick: () => { setTab('mylondon'); showSegment('achievements'); },
     }), 1100 + i * 450);
   });
+}
+
+/** Achievement and quest toasts, for callers with nothing to wait behind. */
+function celebrateUnlocks() {
+  showUnlockToasts(recordUnlocks());
 }
 
 /* ── Location ──────────────────────────────────────────────────────────── */
