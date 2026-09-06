@@ -1,0 +1,202 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   London Uncovered — static plaque pages
+
+   Used only by the generated pages under /plaques/<slug>/, which are plain
+   documents rather than part of the app shell. Everything below reads from
+   css/tokens.css, so the pages stay in step with the app's palette and type.
+   ───────────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.sp-body {
+  margin: 0;
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+.sp-body a { color: var(--blue-800); }
+
+/* ── Brand bar ─────────────────────────────────────────────────────────── */
+
+.sp-header {
+  background: var(--white);
+  border-bottom: 1px solid var(--ink-100);
+  padding: var(--sp-3) var(--sp-4);
+  padding-top: calc(var(--sp-3) + var(--safe-t));
+}
+
+.sp-brand {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font-weight: 700; letter-spacing: -.01em;
+  color: var(--ink); text-decoration: none;
+}
+
+.sp-brand-disc {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 3px var(--blue-200);
+}
+
+/* ── Layout ────────────────────────────────────────────────────────────── */
+
+.sp-main {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4) var(--sp-10);
+}
+
+.sp-card {
+  background: var(--white);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-1);
+  padding: var(--sp-5);
+}
+
+.sp-eyebrow {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+.sp-card h1 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-xl);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.sp-dates { margin: var(--sp-1) 0 0; color: var(--ink-400); font-size: var(--fs-sm); }
+
+.sp-badges {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: var(--sp-4) 0 0;
+}
+
+.sp-badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--ivory-2); color: var(--ink-600);
+  font-size: var(--fs-xs); font-weight: 650; letter-spacing: .02em;
+}
+
+.sp-badge-gold { background: var(--gold-100); color: var(--gold-900); }
+
+/* ── Content ───────────────────────────────────────────────────────────── */
+
+.sp-figure { margin: var(--sp-5) 0 0; }
+
+.sp-figure img {
+  display: block; width: 100%; height: auto;
+  border-radius: var(--r-md);
+  background: var(--ivory-2);
+}
+
+.sp-figure figcaption {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-xs); color: var(--ink-400);
+}
+
+.sp-inscription {
+  font-family: var(--font-serif);
+  font-size: var(--fs-base);
+  line-height: 1.65;
+  color: var(--ink-800);
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--blue-050);
+  border-radius: var(--r-md);
+  border-left: 3px solid var(--blue-200);
+}
+
+.sp-rows { margin: var(--sp-5) 0 0; }
+
+.sp-row {
+  display: flex; gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--ink-100);
+  font-size: var(--fs-sm);
+}
+
+.sp-row dt { flex: 0 0 96px; color: var(--ink-400); }
+.sp-row dd { margin: 0; color: var(--ink-800); }
+
+/* ── Back into the app ─────────────────────────────────────────────────── */
+
+.sp-cta {
+  display: block;
+  margin: var(--sp-5) 0 0;
+  padding: 13px var(--sp-5);
+  min-height: var(--tap);
+  border-radius: var(--r-pill);
+  background: var(--blue);
+  color: var(--white);
+  font-weight: 650;
+  text-align: center;
+  text-decoration: none;
+}
+
+.sp-cta:hover { background: var(--blue-800); }
+
+.sp-links {
+  display: flex; flex-wrap: wrap; gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.sp-link {
+  flex: 1 1 auto;
+  padding: 10px var(--sp-4);
+  min-height: var(--tap);
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--r-pill);
+  background: var(--ivory-2);
+  color: var(--ink-800);
+  font-size: var(--fs-sm); font-weight: 600;
+  text-decoration: none;
+}
+
+.sp-link:hover { background: var(--ivory-3); }
+
+/* ── Nearby ────────────────────────────────────────────────────────────── */
+
+.sp-near { margin-top: var(--sp-6); }
+
+.sp-near h2 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg);
+  margin: 0 0 var(--sp-3);
+}
+
+.sp-near ul { list-style: none; margin: 0; padding: 0; }
+
+.sp-near li {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--ink-200);
+}
+
+.sp-near a { font-weight: 600; text-decoration: none; }
+.sp-near a:hover { text-decoration: underline; }
+.sp-near-meta { color: var(--ink-400); font-size: var(--fs-xs); white-space: nowrap; }
+
+/* ── Footer ────────────────────────────────────────────────────────────── */
+
+.sp-footer {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 var(--sp-4) calc(var(--sp-10) + var(--safe-b));
+  color: var(--ink-400);
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+}
+
+.sp-footer p { margin: 0 0 var(--sp-2); }

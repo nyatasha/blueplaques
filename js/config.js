@@ -28,6 +28,13 @@ export const VERIFY_RADIUS_M = 100;
 export const VERIFY_ANYWHERE_PARAM = 'verify';
 export const VERIFY_ANYWHERE_VALUE = 'anywhere';
 
+/**
+ * Deep link from a generated static plaque page: `/?plaque=<id>` opens that
+ * discovery on the map as soon as the dataset is ready. An unknown id is
+ * ignored and the app boots normally.
+ */
+export const PLAQUE_PARAM = 'plaque';
+
 /** Reported GPS accuracy worse than this is not trusted for verification. */
 export const MAX_TRUSTED_ACCURACY_M = 250;
 

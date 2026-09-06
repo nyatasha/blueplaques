@@ -712,6 +712,49 @@ if (lu) {
     lu2.reset();
   }
 
+/* ── Deep link from a static plaque page (?plaque=<id>) ──────────────────── */
+group('deep link');
+{
+  // A whole reload, because the app reads the parameter once during boot.
+  const target = frame.contentWindow.__lu.state.plaques[0];
+  frame.src = 'about:blank';
+  await until(() => !frame.contentWindow?.__lu, { timeout: 8000 });
+  frame.src = `/index.html?plaque=${encodeURIComponent(target.id)}`;
+  const linked = await until(() => frame.contentWindow?.__lu &&
+                                   frame.contentDocument?.getElementById('boot')?.hidden,
+                             { timeout: 40000 });
+  check('the app boots with ?plaque= in the URL', !!linked);
+
+  if (linked) {
+    const doc3 = frame.contentDocument;
+    const win3 = frame.contentWindow;
+    await until(() => doc3.querySelector('#sheet-plaque').classList.contains('open'), { timeout: 8000 });
+    check('the plaque sheet opened on load',
+          doc3.querySelector('#sheet-plaque').classList.contains('open'));
+    eq('it opened the plaque named in the URL', win3.__lu.state.openPlaqueId, target.id);
+    check('the sheet shows that plaque',
+          doc3.querySelector('#plaque-body').textContent.includes(target.title));
+    eq('the app is on the map tab', doc3.body.dataset.tab, 'map');
+  }
+
+  // An id that is not in the dataset must leave a perfectly ordinary app.
+  frame.src = 'about:blank';
+  await until(() => !frame.contentWindow?.__lu, { timeout: 8000 });
+  frame.src = '/index.html?plaque=not-a-real-id';
+  const graceful = await until(() => frame.contentWindow?.__lu &&
+                                     frame.contentDocument?.getElementById('boot')?.hidden,
+                               { timeout: 40000 });
+  check('an unknown plaque id still boots the app', !!graceful);
+  if (graceful) {
+    const doc4 = frame.contentDocument;
+    check('no plaque sheet is forced open',
+          !doc4.querySelector('#sheet-plaque').classList.contains('open'));
+    check('the map still rendered markers',
+          doc4.querySelectorAll('.leaflet-marker-icon').length > 10);
+    check('no error card rendered', !doc4.body.textContent.includes("Couldn't load"));
+  }
+}
+
 } catch (err) {
   failed++;
   lines.push(`<span class="fail">  THREW</span> ${err && err.stack ? err.stack : err}`);

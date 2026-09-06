@@ -5,11 +5,13 @@
 #   bash tests/run.sh
 #
 # 1. Logic suite  — runs the game rules in JavaScriptCore (Safari's engine).
-# 2. Smoke suite  — drives the real app in headless Chrome and asserts on the
+# 2. SEO suite    — generates the static plaque pages into a temporary
+#                   directory and asserts on the HTML and the sitemap.
+# 3. Smoke suite  — drives the real app in headless Chrome and asserts on the
 #                   DOM a user would actually see.
 #
-# Both are dependency-free: JavaScriptCore ships with macOS, and the DevTools
-# client in tests/cdp.py is plain Python 3.
+# All three are dependency-free: JavaScriptCore ships with macOS, and both the
+# SEO suite and the DevTools client in tests/cdp.py are plain Python 3.
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -24,6 +26,10 @@ if [ -x "$JSC" ]; then
 else
   echo "SKIP  JavaScriptCore not found at $JSC"
 fi
+
+echo
+echo "── seo suite ────────────────────────────────────────────────"
+python3 tests/seo.test.py || status=1
 
 echo
 echo "── smoke suite ──────────────────────────────────────────────"

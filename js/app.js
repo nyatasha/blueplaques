@@ -8,7 +8,7 @@
  */
 
 import { CATEGORY_BY_SLUG, VERIFY_RADIUS_M, VERIFY_ANYWHERE_PARAM, VERIFY_ANYWHERE_VALUE, MILESTONES,
-         LOCATION_INVITE_DELAY_MS } from './config.js';
+         LOCATION_INVITE_DELAY_MS, PLAQUE_PARAM } from './config.js';
 import { backupUrl, pendingRestore, clearRestoreFromUrl, COMFORTABLE_URL_LENGTH } from './backup.js';
 import { loadPlaques } from './data.js';
 import * as store from './state.js';
@@ -817,6 +817,19 @@ function selectPlaque(id, { from } = {}) {
   openPlaque(id);
 }
 
+/**
+ * `?plaque=<id>` — the deep link the generated static pages point back at.
+ * Runs once the dataset and markers exist, and reuses the ordinary selection
+ * path so the camera move and the detail sheet behave exactly as a tap does.
+ * An unknown or missing id leaves the app in its normal starting state.
+ */
+function openDeepLinkedPlaque() {
+  const id = new URLSearchParams(location.search).get(PLAQUE_PARAM);
+  if (!id || !state.byId.has(id)) return false;
+  selectPlaque(id, { from: 'deep-link' });
+  return true;
+}
+
 function questAction(action) {
   switch (action) {
     case 'find-next':        setTab('map'); findNext(); break;
@@ -983,9 +996,11 @@ async function boot() {
   if (state.verifyAnywhere) setVerifyAnywhere(true);
   qs('#boot').hidden = true;
 
+  // A restore prompt is modal and takes precedence over anything a deep link
+  // would open underneath it.
   const restore = pendingRestore();
   if (restore) offerRestore(restore);
-  else maybeInviteLocation();
+  else if (!openDeepLinkedPlaque()) maybeInviteLocation();
   qs('#total-count').textContent = fmtNumber(state.plaques.length);
   document.body.dataset.tab = 'map';
 
