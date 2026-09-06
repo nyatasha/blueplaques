@@ -343,6 +343,9 @@
 .sg-item {
   display: flex; align-items: center; gap: var(--sp-3);
   width: 100%; text-align: left;
+  /* Rendered as an <a> to its static page when that URL is known, and as a
+     <button> otherwise; neither should look like a link. */
+  color: inherit; text-decoration: none; cursor: pointer;
   padding: 9px var(--sp-3);
   border-radius: var(--r-sm);
   font-size: var(--fs-base);
@@ -464,6 +467,7 @@
 .recent-item {
   display: flex; align-items: center; gap: var(--sp-3);
   width: 100%; text-align: left;
+  color: inherit; text-decoration: none; cursor: pointer;
   padding: var(--sp-3) 0;
   border-bottom: 1px solid var(--ink-100);
 }
@@ -902,6 +906,7 @@ body[data-tab="mylondon"] #map-empty { display: none; }
 .mp-item {
   display: flex; align-items: center; gap: var(--sp-3);
   width: 100%; text-align: left;
+  color: inherit; text-decoration: none; cursor: pointer;
   padding: var(--sp-3) 0;
   border-bottom: 1px solid var(--ink-100);
 }

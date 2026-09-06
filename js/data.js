@@ -7,6 +7,16 @@
 
 import { CATEGORY_BY_SLUG } from './config.js';
 
+/**
+ * The static page map written by scripts/generate_seo_pages.py. Loading it,
+ * rather than reimplementing the generator's slugify() here, is what keeps the
+ * app's links and the generated pages from drifting apart.
+ */
+const URL_MAP = 'data/plaque-urls.json';
+
+/** Slugs come from our own build, but they end up in hrefs, so check the shape. */
+const SLUG_RE = /^[a-z0-9-]+$/;
+
 /** Address tails that are not useful as a "place" suggestion. */
 const PLACE_STOPWORDS = new Set(['london', 'greater london', 'england', 'uk']);
 
@@ -30,6 +40,8 @@ function toPlaque(feature) {
     category: slug,
     categoryLabel: CATEGORY_BY_SLUG.get(slug).label,
     lat, lng,
+    /** Path to this plaque's static page, or '' when the map is unavailable. */
+    url: '',
     /** Life dates parsed out of the inscription, e.g. "1882–1941". */
     dates: extractDates(p.inscription || ''),
     search: '',   // filled below
@@ -53,8 +65,29 @@ function placesFromAddress(address) {
                  !PLACE_STOPWORDS.has(s.toLowerCase()));
 }
 
+/**
+ * id → `plaques/<slug>/`. Best-effort: the app is fully usable without it, so a
+ * missing or malformed map costs the links, not the map.
+ */
+async function loadPlaqueUrls(url = URL_MAP) {
+  try {
+    const res = await fetch(url, { cache: 'no-cache' });
+    if (!res.ok) return new Map();
+    const { base, slugs } = await res.json();
+    if (!SLUG_RE.test(String(base).replace(/\/$/, '')) || !slugs) return new Map();
+    return new Map(Object.entries(slugs)
+      .filter(([, slug]) => SLUG_RE.test(slug))
+      .map(([id, slug]) => [String(id), `${base}${slug}/`]));
+  } catch {
+    return new Map();
+  }
+}
+
 export async function loadPlaques(url = 'data/plaques.geojson') {
-  const res = await fetch(url, { cache: 'no-cache' });
+  const [res, urls] = await Promise.all([
+    fetch(url, { cache: 'no-cache' }),
+    loadPlaqueUrls(),
+  ]);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const geojson = await res.json();
   if (!geojson || !Array.isArray(geojson.features)) throw new Error('Malformed GeoJSON');
@@ -70,6 +103,7 @@ export async function loadPlaques(url = 'data/plaques.geojson') {
     if (!Number.isFinite(plaque.lat) || !Number.isFinite(plaque.lng)) continue;
     if (byId.has(plaque.id)) continue;          // ids are the collection key
 
+    plaque.url = urls.get(plaque.id) || '';
     plaque.search = [plaque.title, plaque.roles, plaque.address, plaque.area,
                      plaque.categoryLabel, plaque.inscription].join(' ').toLowerCase();
 

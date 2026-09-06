@@ -20,6 +20,30 @@ export function mark(text, query) {
   return `${esc(text.slice(0, at))}<mark>${esc(text.slice(at, at + query.length))}</mark>${esc(text.slice(at + query.length))}`;
 }
 
+/**
+ * A discovery row that points at a specific plaque.
+ *
+ * When the plaque's static page URL is known the row is rendered as a real
+ * anchor, so the DOM a crawler sees carries an href and a modifier-click opens
+ * the page in a new tab. Ordinary clicks are intercepted by the app and open
+ * the plaque on the map exactly as before. Without a URL — the map file failed
+ * to load — the row stays the button it has always been.
+ */
+export function plaqueRow({ href, className, attrs = '', html }) {
+  return href
+    ? `<a class="${className}" href="${esc(href)}" ${attrs}>${html}</a>`
+    : `<button type="button" class="${className}" ${attrs}>${html}</button>`;
+}
+
+/**
+ * True when a click on a link asks for somewhere other than this tab — a new
+ * tab, a new window, a save — and so must be left to the browser.
+ */
+export function opensElsewhere(event) {
+  return !!(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+            || (event.button ?? 0) !== 0);
+}
+
 export function on(target, type, handler, options) {
   target.addEventListener(type, handler, options);
   return () => target.removeEventListener(type, handler, options);

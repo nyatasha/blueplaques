@@ -27,7 +27,8 @@ import { syncCompletions, hasActionableQuest } from './quests.js';
 import { requestLocation, ensureLocation } from './location.js';
 import { recommendNext } from './recommend.js';
 import { distanceMetres, formatDistance } from './geo.js';
-import { qs, qsa, on, esc, delegate, toast, xpBurst, announce, fmtNumber } from './ui.js';
+import { qs, qsa, on, esc, delegate, toast, xpBurst, announce, fmtNumber,
+         plaqueRow, opensElsewhere } from './ui.js';
 import { storageAvailable } from './storage.js';
 import { isCollected } from './state.js';
 import { icon } from './icons.js';
@@ -161,15 +162,18 @@ function discoveryList(rows, { heading, count, emptyText }) {
     <div class="mp-list">
       ${rows.length ? rows.map(({ p, d }, i) => {
         const done = isCollected(p.id);
-        return `<button type="button" class="mp-item${p.fame >= 3 ? ' iconic' : ''}${done ? ' done' : ''}"
-                  data-panel-id="${esc(p.id)}">
+        return plaqueRow({
+          href: p.url,
+          className: `mp-item${p.fame >= 3 ? ' iconic' : ''}${done ? ' done' : ''}`,
+          attrs: `data-panel-id="${esc(p.id)}"`,
+          html: `
           <span class="mp-rank">${done ? icon('check') : i + 1}</span>
           <span class="recent-main">
             <span class="recent-name">${esc(p.title)}</span>
             <span class="recent-sub">${esc(p.categoryLabel)}${p.fame >= 3 ? ' · Iconic' : ''}</span>
           </span>
-          ${d !== null ? `<span class="mp-dist">${esc(formatDistance(d))}</span>` : icon('chevronR')}
-        </button>`;
+          ${d !== null ? `<span class="mp-dist">${esc(formatDistance(d))}</span>` : icon('chevronR')}`,
+        });
       }).join('') : `<p class="recent-sub">${esc(emptyText)}</p>`}
     </div>`;
 }
@@ -911,8 +915,14 @@ function wire() {
 
   delegate(document, 'click', '.tab', (_e, node) => setTab(node.dataset.tab));
   delegate(qs('#chips'), 'click', '.chip', (_e, node) => toggleCategory(node.dataset.cat));
-  delegate(qs('#map-panel'), 'click', '[data-panel-id]', (_e, node) =>
-    selectPlaque(node.dataset.panelId, { from: 'panel' }));
+  // Every row below is an anchor to the plaque's static page. A plain click is
+  // the in-app navigation it has always been; a modifier-click is left alone so
+  // the browser can open the page in a new tab.
+  delegate(qs('#map-panel'), 'click', '[data-panel-id]', (e, node) => {
+    if (opensElsewhere(e)) return;
+    e.preventDefault();
+    selectPlaque(node.dataset.panelId, { from: 'panel' });
+  });
 
   on(qs('#counter'), 'click', () => setTab('mylondon'));
   on(qs('#filters-open'), 'click', openFilters);
@@ -941,7 +951,9 @@ function wire() {
     copyBackupLink(node.dataset.backup);
   });
   on(qs('#nearby'), 'click', openNearby);
-  delegate(qs('#sheet-nearby'), 'click', '[data-panel-id]', (_e, node) => {
+  delegate(qs('#sheet-nearby'), 'click', '[data-panel-id]', (e, node) => {
+    if (opensElsewhere(e)) return;
+    e.preventDefault();
     sheets.nearby.close();
     selectPlaque(node.dataset.panelId, { from: 'near-me' });
   });

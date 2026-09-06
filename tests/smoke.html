@@ -186,6 +186,10 @@ if (lu) {
   check('hero numbers rendered', qa('#mylondon-body .hero-num').length === 2, q('#mylondon-body .hero-num')?.textContent);
   check('level card rendered', /Explorer · Level/.test(q('#mylondon-body').textContent));
   check('recent discovery listed', qa('#mylondon-body .recent-item').length >= 1);
+  check('each recent discovery links to its own page',
+        qa('#mylondon-body .recent-item').every(
+          r => r.tagName === 'A' && /^plaques\/[a-z0-9-]+\/$/.test(r.getAttribute('href'))),
+        qa('#mylondon-body .recent-item').map(r => `${r.tagName}:${r.getAttribute('href')}`).join(' '));
 
   q('#mylondon-body [data-seg="collections"]').click();
   await until(() => qa('#mylondon-body .collection').length > 0);
@@ -304,6 +308,9 @@ if (lu) {
       check('Near me sheet opens', q('#sheet-nearby').classList.contains('open'));
       const nearbyRows = qa('#nearby-body .mp-item');
       check('nearby discoveries listed', nearbyRows.length > 0, `${nearbyRows.length} rows`);
+      check('every Near me row links to its plaque page',
+            nearbyRows.every(r => r.tagName === 'A' &&
+                             /^plaques\/[a-z0-9-]+\/$/.test(r.getAttribute('href'))));
       check('distances shown on nearby rows', qa('#nearby-body .mp-dist').length === nearbyRows.length);
       const dists = qa('#nearby-body .mp-dist').map(e => e.textContent);
       check('nearby list is ordered by distance', (() => {
@@ -633,6 +640,93 @@ if (lu) {
 }
 
   /* ── Backup and restore (js/backup.js) ────────────────────────────────── */
+  /* ── Crawlable discovery links ────────────────────────────────────────── */
+  group('crawlable links');
+  {
+    // Every click on a link inside the frame is neutralised here, after the
+    // app's own handlers have run, so navigation never takes the frame away —
+    // and `defaultPrevented` tells us whether the app claimed the click.
+    let claimed = null;
+    doc.addEventListener('click', e => {
+      const a = e.target.closest('a[href]');
+      if (!a) return;
+      claimed = e.defaultPrevented;
+      e.preventDefault();
+    });
+
+    await until(() => qa('#map-panel .mp-item').length > 0);
+    const rows = qa('#map-panel .mp-item');
+    check('the discovery panel rendered rows', rows.length > 0, `${rows.length} rows`);
+    check('every discovery row is an anchor', rows.every(r => r.tagName === 'A'));
+    check('every row carries a real plaque URL',
+          rows.every(r => /^plaques\/[a-z0-9-]+\/$/.test(r.getAttribute('href') || '')),
+          rows.map(r => r.getAttribute('href')).slice(0, 3).join(' '));
+    check('no href is a javascript: URL',
+          !qa('a[href]').some(a => /^\s*javascript:/i.test(a.getAttribute('href'))));
+    // Slugs end in the plaque's id, so this catches a row wired to the wrong URL.
+    check('each href belongs to the plaque on that row',
+          rows.every(r => r.getAttribute('href') === `plaques/${
+            lu.state.byId.get(r.dataset.panelId)?.url.split('/')[1]}/`
+            && r.getAttribute('href').endsWith(`-${r.dataset.panelId}/`)),
+          rows.map(r => `${r.dataset.panelId}→${r.getAttribute('href')}`).slice(0, 3).join(' '));
+
+    check('the About sheet links every category as a plain anchor',
+          qa('#about-content .about-cats a').length === 9 &&
+          qa('#about-content .about-cats a').every(
+            a => /^categories\/[a-z0-9-]+\/$/.test(a.getAttribute('href'))));
+
+    group('links still behave as in-app navigation');
+    check('a discovery row is reachable by keyboard',
+          rows.every(r => r.hasAttribute('href') && r.tabIndex >= 0),
+          rows.map(r => r.tabIndex).slice(0, 3).join('/'));
+
+    claimed = null;
+    rows[0].click();
+    await until(() => q('#sheet-plaque').classList.contains('open'), { timeout: 5000 });
+    check('an ordinary click still opens the plaque on the map',
+          q('#sheet-plaque').classList.contains('open'));
+    eq('it opened the plaque the row names', lu.state.openPlaqueId, rows[0].dataset.panelId);
+    eq('the app took the click instead of navigating', claimed, true);
+    q('#plaque-close').click();
+    await until(() => !q('#sheet-plaque').classList.contains('open'));
+
+    claimed = null;
+    // Re-query: closing the sheet re-renders the panel, and the old node is
+    // detached, so an event dispatched on it would never reach the document.
+    q('#map-panel .mp-item').dispatchEvent(new win.MouseEvent('click',
+      { bubbles: true, cancelable: true, metaKey: true }));
+    await sleep(200);
+    eq('a modifier-click is left to the browser', claimed, false);
+    check('and does not open the sheet in this tab',
+          !q('#sheet-plaque').classList.contains('open'));
+
+    group('search results are links too');
+    const field = q('#search');
+    field.focus();
+    field.value = 'woolf';
+    field.dispatchEvent(new win.Event('input', { bubbles: true }));
+    await until(() => qa('#suggest .sg-item[data-kind="plaque"]').length > 0, { timeout: 5000 });
+    const people = qa('#suggest .sg-item[data-kind="plaque"]');
+    check('a person suggestion is an anchor to their page',
+          people.length > 0 && people.every(
+            a => a.tagName === 'A' && /^plaques\/[a-z0-9-]+\/$/.test(a.getAttribute('href'))),
+          people.map(a => `${a.tagName}:${a.getAttribute('href')}`).join(' '));
+    eq('it keeps its listbox role', people[0].getAttribute('role'), 'option');
+    check('and can still take keyboard focus',
+          (people[0].focus(), doc.activeElement === people[0]));
+
+    claimed = null;
+    people[0].click();
+    await until(() => q('#sheet-plaque').classList.contains('open'), { timeout: 5000 });
+    check('choosing one still opens it on the map',
+          q('#sheet-plaque').classList.contains('open'));
+    eq('the app took that click too', claimed, true);
+    q('#plaque-close').click();
+    await until(() => !q('#sheet-plaque').classList.contains('open'));
+    q('#search-clear').click();
+    await until(() => q('#search').value === '');
+  }
+
   group('backup & restore');
   lu.reset();
   const backupIds = lu.state.plaques.slice(0, 3).map(p => p.id);

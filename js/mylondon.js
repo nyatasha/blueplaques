@@ -8,7 +8,8 @@
 
 import { progress, state } from './state.js';
 import { evaluate as evaluateAchievements } from './achievements.js';
-import { qs, esc, delegate, fmtNumber, fmtDate, thumbUrl } from './ui.js';
+import { qs, esc, delegate, fmtNumber, fmtDate, thumbUrl, plaqueRow,
+         opensElsewhere } from './ui.js';
 import { icon, CATEGORY_ICON } from './icons.js';
 
 let segment = 'overview';
@@ -63,8 +64,11 @@ function overview(p) {
     </div>
     <div class="card" style="padding:var(--sp-2) var(--sp-5)">
       <div class="recent">
-        ${p.recent.slice(0, 5).map(({ plaque, entry }) => `
-          <button type="button" class="recent-item" data-act="open-plaque" data-id="${esc(plaque.id)}">
+        ${p.recent.slice(0, 5).map(({ plaque, entry }) => plaqueRow({
+          href: plaque.url,
+          className: 'recent-item',
+          attrs: `data-act="open-plaque" data-id="${esc(plaque.id)}"`,
+          html: `
             ${plaque.photo
               ? `<img class="recent-thumb" src="${esc(thumbUrl(plaque.photo, 120))}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
               : `<span class="recent-thumb" aria-hidden="true"></span>`}
@@ -73,8 +77,8 @@ function overview(p) {
               <span class="recent-sub">${esc(plaque.categoryLabel)}<span class="dotsep">·</span>${esc(fmtDate(entry.collectedAt))}</span>
             </span>
             ${entry.verified ? `<span class="badge badge-verified">${icon('shield')}</span>` : ''}
-            ${icon('chevronR')}
-          </button>`).join('')}
+            ${icon('chevronR')}`,
+        })).join('')}
       </div>
     </div>
 
@@ -220,9 +224,15 @@ export function initMyLondon(handlerMap) {
 
   delegate(root, 'click', '[data-seg]', (_e, node) => showSegment(node.dataset.seg));
 
-  delegate(root, 'click', '[data-act]', (_e, node) => {
+  delegate(root, 'click', '[data-act]', (e, node) => {
     switch (node.dataset.act) {
-      case 'open-plaque':    handlers.onOpenPlaque(node.dataset.id); break;
+      // A recent discovery is an anchor to its static page; a plain click keeps
+      // opening it on the map, a modifier-click opens the page in a new tab.
+      case 'open-plaque':
+        if (opensElsewhere(e)) return;
+        e.preventDefault();
+        handlers.onOpenPlaque(node.dataset.id);
+        break;
       case 'open-category':  handlers.onOpenCategory(node.dataset.cat); break;
       case 'open-theme':     handlers.onOpenTheme(node.dataset.theme); break;
       case 'go-map':         handlers.onGoMap(); break;

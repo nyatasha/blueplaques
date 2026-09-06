@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Generate one crawlable static page per plaque, plus the sitemap.
+Generate the crawlable static layer: one page per plaque, one per category,
+the client's plaque-URL map, and the sitemap.
 
 The interactive app renders every plaque from `data/plaques.geojson` in
 JavaScript, so no plaque has a URL of its own. This script gives each one a
@@ -11,6 +12,18 @@ plain HTML page at
 built from the same dataset, with the useful facts in the initial HTML rather
 than behind a fetch. Every page links back into the app at `/?plaque=<id>`,
 which the app reads on boot and opens.
+
+Category pages live at
+
+    categories/<slug>/index.html   →  /blueplaques/categories/writers-literature/
+
+and list every plaque in that category, so a crawler reaching the site can walk
+home → category → plaque without running any JavaScript. Plaque pages link back
+up to their category and sideways to their five nearest neighbours.
+
+`data/plaque-urls.json` is written by the same run, so the app can render its
+discovery lists as real links to these pages without reimplementing slugify()
+in JavaScript and drifting from it.
 
 Nothing is invented: each page carries only fields already in the dataset —
 inscription, address, year erected, roles, category, photo, source links and
@@ -25,6 +38,7 @@ Usage:
 """
 
 import argparse
+import collections
 import html
 import json
 import math
@@ -42,6 +56,8 @@ DATA = os.path.join(ROOT, "data", "plaques.geojson")
 SITE = "https://nyatasha.github.io/blueplaques/"
 SITE_NAME = "London Uncovered"
 PAGES_DIR = "plaques"          # relative to the site root
+CATS_DIR = "categories"        # relative to the site root
+URL_MAP = os.path.join("data", "plaque-urls.json")
 SLUG_MAX = 60                  # characters before the id suffix
 NEARBY = 5                     # internal links per page
 DESC_MAX = 155
@@ -60,6 +76,19 @@ CATEGORY_LABELS = {
 
 # Address tails that say nothing about where a plaque is; mirrors js/data.js.
 PLACE_STOPWORDS = {"london", "greater london", "england", "uk"}
+
+
+def category_slug(key):
+    """`"writers"` → `"writers-literature"`.
+
+    Derived from the canonical label rather than hard-coded, so renaming a
+    category renames its URL in one place, and the URL carries the words people
+    search for rather than the internal key.
+    """
+    return re.sub(r"[^a-z0-9]+", "-", CATEGORY_LABELS[key].lower()).strip("-")
+
+
+CATEGORY_URL = {key: category_slug(key) for key in CATEGORY_LABELS}
 
 
 # ── Text helpers ────────────────────────────────────────────────────────────
@@ -192,7 +221,22 @@ def load_plaques(path=DATA):
         p["slug"] = slugify(p["title"], p["id"])
         p["dates"] = extract_dates(p["inscription"])
         p["locality"] = locality(p["address"])
+        p["category_url"] = CATEGORY_URL[p["category"]]
     return plaques
+
+
+def by_category(plaques):
+    """Category key → its plaques, strongest first, in CATEGORY_LABELS order.
+
+    Empty categories are left out: a landing page listing nothing is a page
+    Google should never have been offered.
+    """
+    groups = {key: [] for key in CATEGORY_LABELS}
+    for p in plaques:
+        groups[p["category"]].append(p)
+    for rows in groups.values():
+        rows.sort(key=lambda p: (-p["fame"], p["title"].lower()))
+    return {key: rows for key, rows in groups.items() if rows}
 
 
 def nearest(plaque, plaques, count=NEARBY):
@@ -262,7 +306,9 @@ def rows_block(p):
         rows.append(("Erected", esc(p["year"])))
     if p["roles"]:
         rows.append(("Known for", esc(p["roles"][:1].upper() + p["roles"][1:])))
-    rows.append(("Category", esc(p["category_label"])))
+    rows.append(("Category",
+                 f'<a href="../../{CATS_DIR}/{esc(p["category_url"])}/">'
+                 f'{esc(p["category_label"])}</a>'))
     rows.append(("Coordinates", f"{p['lat']:.5f}, {p['lng']:.5f}"))
     body = "\n".join(
         f'        <div class="sp-row"><dt>{name}</dt><dd>{value}</dd></div>'
@@ -285,6 +331,16 @@ def links_block(p):
                  f'target="_blank">Directions</a>')
     return ('      <nav class="sp-links" aria-label="Sources">\n        '
             + "\n        ".join(links) + "\n      </nav>")
+
+
+def category_block(p, siblings):
+    """A link up to the category page, with the size of the set behind it."""
+    count = f"{siblings:,} plaques" if siblings != 1 else "1 plaque"
+    return ('      <section class="sp-more">\n'
+            f'        <h2>More in {esc(p["category_label"])}</h2>\n'
+            f'        <p><a href="../../{CATS_DIR}/{esc(p["category_url"])}/">'
+            f'Browse all {count} in {esc(p["category_label"])}</a></p>\n'
+            '      </section>\n')
 
 
 def nearby_block(p, neighbours):
@@ -318,7 +374,17 @@ def photo_block(p):
             f'        {caption}\n      </figure>\n')
 
 
-def render_page(p, neighbours):
+def crumbs_block(p):
+    """Home › Category › this plaque — the crawler's way back up the tree."""
+    return ('      <nav class="sp-crumbs" aria-label="Breadcrumb">\n'
+            f'        <a href="../../">{esc(SITE_NAME)}</a>\n'
+            f'        <span aria-hidden="true">›</span>\n'
+            f'        <a href="../../{CATS_DIR}/{esc(p["category_url"])}/">'
+            f'{esc(p["category_label"])}</a>\n'
+            '      </nav>\n')
+
+
+def render_page(p, neighbours, siblings):
     url = f"{SITE}{PAGES_DIR}/{p['slug']}/"
     description = meta_description(p)
     og_image = safe_url(thumb(p["photo"], 1200)) or esc(f"{SITE}assets/social/og-cover.png")
@@ -374,7 +440,7 @@ def render_page(p, neighbours):
 
   <main class="sp-main">
     <article class="sp-card">
-      <p class="sp-eyebrow">London blue plaque</p>
+{crumbs_block(p)}      <p class="sp-eyebrow">London blue plaque</p>
       <h1>{esc(p['title'])}</h1>
 {subtitle}      <p class="sp-badges">{''.join(badges)}</p>
 {photo_block(p)}{inscription}{rows_block(p)}
@@ -384,7 +450,7 @@ def render_page(p, neighbours):
 {links_block(p)}
     </article>
 
-{nearby_block(p, neighbours)}  </main>
+{nearby_block(p, neighbours)}{category_block(p, siblings)}  </main>
 
   <footer class="sp-footer">
     <p>Part of <a href="../../">{esc(SITE_NAME)}</a>, an interactive map of every
@@ -398,14 +464,172 @@ def render_page(p, neighbours):
 """
 
 
-def render_sitemap(plaques):
-    """Homepage plus every generated page.
+# ── Category pages ──────────────────────────────────────────────────────────
+
+def year_range(rows):
+    """(earliest, latest) year erected among rows that record one."""
+    years = sorted(int(p["year"]) for p in rows
+                   if re.fullmatch(r"\d{4}", p["year"] or ""))
+    return (years[0], years[-1]) if years else (None, None)
+
+
+def category_intro(label, rows, total):
+    """Counted facts only — no invented history, no padding.
+
+    Every clause here is derived from the dataset, so the page says something
+    true about this collection rather than restating the title in prose.
+    """
+    sentences = [f"{len(rows):,} of the {total:,} English Heritage blue plaques "
+                 f"on this map are classified as {label}."]
+    first, last = year_range(rows)
+    if first and last and first != last:
+        sentences.append(f"The earliest was erected in {first}, the most recent in {last}.")
+    elif first:
+        sentences.append(f"They were erected in {first}.")
+    # Only worth saying when the areas really are repeated: in a small category
+    # every locality appears once, and "most concentrated in" would be a lie.
+    counts = collections.Counter(p["locality"] for p in rows if p["locality"])
+    areas = [a for a, n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:4]
+             if n > 1]
+    if len(areas) >= 3:
+        sentences.append("They are most concentrated in "
+                         + ", ".join(areas[:-1]) + f" and {areas[-1]}.")
+    sentences.append("Every name below links to that plaque's page, with its "
+                     "inscription, address and location on the map.")
+    return " ".join(sentences)
+
+
+def category_description(label, rows):
+    names = ", ".join(p["title"] for p in rows[:6])
+    return truncate(f"All {len(rows):,} London blue plaques for {label}, "
+                    f"including {names}.")
+
+
+def category_rows_block(rows):
+    items = []
+    for p in rows:
+        meta = " · ".join(filter(None, [
+            p["dates"],
+            (p["roles"][:1].upper() + p["roles"][1:]) if p["roles"] else "",
+            p["address"] or p["locality"],
+            f"erected {p['year']}" if p["year"] else "",
+        ]))
+        items.append(
+            f'      <li class="cat-item">\n'
+            f'        <a href="../../{PAGES_DIR}/{esc(p["slug"])}/">{esc(p["title"])}</a>\n'
+            f'        <span class="cat-meta">{esc(meta)}</span>\n'
+            f'      </li>')
+    return '    <ul class="cat-list">\n' + "\n".join(items) + "\n    </ul>"
+
+
+def category_nav_block(current, groups):
+    links = [f'      <a href="../{esc(CATEGORY_URL[key])}/">{esc(CATEGORY_LABELS[key])} '
+             f'<span class="cat-nav-n">{len(rows):,}</span></a>'
+             for key, rows in groups.items() if key != current]
+    return ('    <nav class="cat-nav" aria-labelledby="other-cats">\n'
+            '      <h2 id="other-cats">Other collections</h2>\n'
+            + "\n".join(links) + "\n    </nav>")
+
+
+def render_category_page(key, groups, total):
+    rows = groups[key]
+    label = CATEGORY_LABELS[key]
+    url = f"{SITE}{CATS_DIR}/{CATEGORY_URL[key]}/"
+    title = f"{label} — London blue plaques — {SITE_NAME}"
+    description = category_description(label, rows)
+    listing = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": f"{label} blue plaques in London",
+        "url": url,
+        "description": description,
+        "isPartOf": {"@type": "WebSite", "name": SITE_NAME, "url": SITE},
+    }
+    payload = json.dumps(listing, ensure_ascii=False, indent=2).replace("<", "\\u003c")
+
+    return f"""<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1456A0">
+<title>{esc(title)}</title>
+<meta name="description" content="{esc(description)}">
+<link rel="canonical" href="{esc(url)}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{esc(SITE_NAME)}">
+<meta property="og:url" content="{esc(url)}">
+<meta property="og:title" content="{esc(title)}">
+<meta property="og:description" content="{esc(description)}">
+<meta property="og:image" content="{esc(SITE)}assets/social/og-cover.png">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{esc(title)}">
+<meta name="twitter:description" content="{esc(description)}">
+<meta name="twitter:image" content="{esc(SITE)}assets/social/og-cover.png">
+<link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
+<link rel="manifest" href="../../manifest.json">
+<link rel="stylesheet" href="../../css/tokens.css">
+<link rel="stylesheet" href="../../css/plaque-page.css">
+<script type="application/ld+json">
+{payload}
+</script>
+</head>
+<body class="sp-body">
+  <header class="sp-header">
+    <a class="sp-brand" href="../../">
+      <span class="sp-brand-disc" aria-hidden="true"></span>
+      <span>{esc(SITE_NAME)}</span>
+    </a>
+  </header>
+
+  <main class="sp-main cat-main">
+    <nav class="sp-crumbs" aria-label="Breadcrumb">
+      <a href="../../">{esc(SITE_NAME)}</a>
+      <span aria-hidden="true">›</span>
+      <span>{esc(label)}</span>
+    </nav>
+    <p class="sp-eyebrow">London blue plaques</p>
+    <h1>{esc(label)}</h1>
+    <p class="cat-intro">{esc(category_intro(label, rows, total))}</p>
+    <a class="sp-cta" href="../../">Explore them on the interactive map</a>
+
+{category_rows_block(rows)}
+
+{category_nav_block(key, groups)}
+  </main>
+
+  <footer class="sp-footer">
+    <p>Part of <a href="../../">{esc(SITE_NAME)}</a>, an interactive map of every
+       English Heritage blue plaque in London.</p>
+    <p>Plaque data from <a href="https://openplaques.org" rel="noopener nofollow"
+       target="_blank">OpenPlaques</a> (public domain). {esc(SITE_NAME)} is an
+       independent project and is not affiliated with or endorsed by English Heritage.</p>
+  </footer>
+</body>
+</html>
+"""
+
+
+def render_sitemap(plaques, groups):
+    """Homepage, every category page, then every plaque page.
+
+    Ordered home → category → plaque so the file mirrors the link graph. Each
+    URL is the page's own canonical, and duplicates are dropped rather than
+    trusted not to occur.
 
     No `lastmod`: nothing in the pipeline records when a plaque's facts last
     changed, and an invented date is worse than none. No `priority` or
     `changefreq` either — Google ignores both.
     """
-    urls = [SITE] + [f"{SITE}{PAGES_DIR}/{p['slug']}/" for p in plaques]
+    ordered = ([SITE]
+               + [f"{SITE}{CATS_DIR}/{CATEGORY_URL[key]}/" for key in groups]
+               + [f"{SITE}{PAGES_DIR}/{p['slug']}/" for p in plaques])
+    seen, urls = set(), []
+    for u in ordered:
+        if u not in seen:
+            seen.add(u)
+            urls.append(u)
     body = "\n".join(f"  <url><loc>{esc(u)}</loc></url>" for u in urls)
     return ('<?xml version="1.0" encoding="UTF-8"?>\n'
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -414,24 +638,49 @@ def render_sitemap(plaques):
 
 # ── Entry point ─────────────────────────────────────────────────────────────
 
+def write(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(text)
+
+
+def render_url_map(plaques):
+    """The id → page mapping the app uses to render its lists as real links.
+
+    Written by the same run that writes the pages, so the hrefs in the app can
+    never point at a slug this generator did not produce.
+    """
+    return json.dumps({
+        "base": f"{PAGES_DIR}/",
+        "slugs": {p["id"]: p["slug"] for p in plaques},
+    }, ensure_ascii=False, indent=0, sort_keys=True) + "\n"
+
+
 def generate(out_root, plaques, clean=True):
-    """Write `<out_root>/plaques/<slug>/index.html` and `<out_root>/sitemap.xml`."""
+    """Write the plaque pages, the category pages, the URL map and the sitemap."""
+    groups = by_category(plaques)
     pages_root = os.path.join(out_root, PAGES_DIR)
-    if clean and os.path.isdir(pages_root):
-        # Stale directories would otherwise outlive plaques dropped from the
-        # dataset and stay in the index.
-        shutil.rmtree(pages_root)
+    cats_root = os.path.join(out_root, CATS_DIR)
+    if clean:
+        # Stale directories would otherwise outlive plaques and categories
+        # dropped from the dataset and stay in the index.
+        for root in (pages_root, cats_root):
+            if os.path.isdir(root):
+                shutil.rmtree(root)
     os.makedirs(pages_root, exist_ok=True)
+    os.makedirs(cats_root, exist_ok=True)
 
     for p in plaques:
-        directory = os.path.join(pages_root, p["slug"])
-        os.makedirs(directory, exist_ok=True)
-        with open(os.path.join(directory, "index.html"), "w", encoding="utf-8") as fh:
-            fh.write(render_page(p, nearest(p, plaques)))
+        write(os.path.join(pages_root, p["slug"], "index.html"),
+              render_page(p, nearest(p, plaques), len(groups[p["category"]])))
 
-    with open(os.path.join(out_root, "sitemap.xml"), "w", encoding="utf-8") as fh:
-        fh.write(render_sitemap(plaques))
-    return len(plaques)
+    for key in groups:
+        write(os.path.join(cats_root, CATEGORY_URL[key], "index.html"),
+              render_category_page(key, groups, len(plaques)))
+
+    write(os.path.join(out_root, URL_MAP), render_url_map(plaques))
+    write(os.path.join(out_root, "sitemap.xml"), render_sitemap(plaques, groups))
+    return len(plaques), len(groups)
 
 
 def main(argv=None):
@@ -446,14 +695,18 @@ def main(argv=None):
         raise SystemExit("slug collision — refusing to overwrite pages")
 
     if args.dry_run:
-        print(f"{len(plaques)} plaques → {len(slugs)} pages under {PAGES_DIR}/ (nothing written)")
-        for p in plaques[:5]:
-            print(f"  {PAGES_DIR}/{p['slug']}/")
+        groups = by_category(plaques)
+        print(f"{len(plaques)} plaques → {len(slugs)} pages under {PAGES_DIR}/ "
+              f"and {len(groups)} under {CATS_DIR}/ (nothing written)")
+        for key, rows in groups.items():
+            print(f"  {CATS_DIR}/{CATEGORY_URL[key]}/  ({len(rows)})")
         return 0
 
-    count = generate(args.out, plaques)
+    count, categories = generate(args.out, plaques)
     print(f"wrote {count} plaque pages under {os.path.join(args.out, PAGES_DIR)}")
-    print(f"wrote sitemap.xml with {count + 1} URLs")
+    print(f"wrote {categories} category pages under {os.path.join(args.out, CATS_DIR)}")
+    print(f"wrote {URL_MAP}")
+    print(f"wrote sitemap.xml with {count + categories + 1} URLs")
     return 0
 
 

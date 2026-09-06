@@ -18,6 +18,12 @@
   -webkit-text-size-adjust: 100%;
 }
 
+/*
+ * The default for a link in the body copy. Component links below re-declare
+ * their own colour and must out-rank this, so each is written as `a.<class>`:
+ * a bare `.sp-cta` loses to `.sp-body a` and paints navy text on the blue
+ * button.
+ */
 .sp-body a { color: var(--blue-800); }
 
 /* ── Brand bar ─────────────────────────────────────────────────────────── */
@@ -29,7 +35,7 @@
   padding-top: calc(var(--sp-3) + var(--safe-t));
 }
 
-.sp-brand {
+a.sp-brand {
   display: inline-flex; align-items: center; gap: var(--sp-2);
   font-weight: 700; letter-spacing: -.01em;
   color: var(--ink); text-decoration: none;
@@ -131,7 +137,7 @@
 
 /* ── Back into the app ─────────────────────────────────────────────────── */
 
-.sp-cta {
+a.sp-cta {
   display: block;
   margin: var(--sp-5) 0 0;
   padding: 13px var(--sp-5);
@@ -144,14 +150,14 @@
   text-decoration: none;
 }
 
-.sp-cta:hover { background: var(--blue-800); }
+a.sp-cta:hover { background: var(--blue-800); }
 
 .sp-links {
   display: flex; flex-wrap: wrap; gap: var(--sp-2);
   margin-top: var(--sp-3);
 }
 
-.sp-link {
+a.sp-link {
   flex: 1 1 auto;
   padding: 10px var(--sp-4);
   min-height: var(--tap);
@@ -163,7 +169,7 @@
   text-decoration: none;
 }
 
-.sp-link:hover { background: var(--ivory-3); }
+a.sp-link:hover { background: var(--ivory-3); }
 
 /* ── Nearby ────────────────────────────────────────────────────────────── */
 
@@ -200,3 +206,102 @@
 }
 
 .sp-footer p { margin: 0 0 var(--sp-2); }
+
+/* ── Breadcrumb ────────────────────────────────────────────────────────── */
+
+.sp-crumbs {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--ink-400);
+}
+
+.sp-crumbs a { color: var(--ink-400); text-decoration: none; }
+.sp-crumbs a:hover { color: var(--blue-800); text-decoration: underline; }
+
+/* ── "More in this category" ───────────────────────────────────────────── */
+
+.sp-more { margin-top: var(--sp-6); }
+
+.sp-more h2 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg);
+  margin: 0 0 var(--sp-2);
+}
+
+.sp-more p { margin: 0; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Category landing pages — /categories/<slug>/
+   ───────────────────────────────────────────────────────────────────────── */
+
+.cat-main h1 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-xl);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.cat-intro {
+  margin: var(--sp-3) 0 var(--sp-5);
+  color: var(--ink-800);
+  max-width: 60ch;
+}
+
+.cat-list {
+  list-style: none;
+  margin: var(--sp-6) 0 0;
+  padding: 0;
+  /* One column on a phone; two once there is room for them to breathe. */
+  display: grid;
+  gap: 0 var(--sp-6);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 620px) {
+  .cat-main { max-width: 860px; }
+  .cat-list { grid-template-columns: 1fr 1fr; }
+}
+
+.cat-item {
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--ink-200);
+}
+
+.cat-item a { font-weight: 600; text-decoration: none; }
+.cat-item a:hover { text-decoration: underline; }
+
+.cat-meta {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-400);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.cat-nav {
+  margin-top: var(--sp-8);
+  display: flex; flex-wrap: wrap; gap: var(--sp-2);
+}
+
+.cat-nav h2 {
+  flex-basis: 100%;
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg);
+  margin: 0 0 var(--sp-1);
+}
+
+.cat-nav a {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: var(--tap);
+  padding: 8px var(--sp-4);
+  border-radius: var(--r-pill);
+  background: var(--white);
+  border: 1px solid var(--ink-100);
+  color: var(--ink-800);
+  font-size: var(--fs-sm); font-weight: 600;
+  text-decoration: none;
+}
+
+.cat-nav a:hover { background: var(--ivory-2); }
+.cat-nav-n { color: var(--ink-400); font-weight: 600; font-variant-numeric: tabular-nums; }

@@ -9,7 +9,7 @@
 
 import { CATEGORIES } from './config.js';
 import { state, isCollected } from './state.js';
-import { qs, esc, mark, on } from './ui.js';
+import { qs, esc, mark, on, plaqueRow, opensElsewhere } from './ui.js';
 import { icon as svg } from './icons.js';
 import { trackEvent } from './analytics.js';
 
@@ -38,7 +38,7 @@ function buildSuggestions(query) {
     .sort((a, b) => a.r - b.r || b.plaque.fame - a.plaque.fame || a.plaque.title.localeCompare(b.plaque.title))
     .slice(0, MAX_PEOPLE)
     .map(({ plaque }) => ({
-      kind: 'plaque', id: plaque.id, label: plaque.title,
+      kind: 'plaque', id: plaque.id, label: plaque.title, url: plaque.url,
       sub: plaque.categoryLabel, done: isCollected(plaque.id),
     }));
 
@@ -92,13 +92,17 @@ function render(query) {
   list.innerHTML = rows.map(row => {
     if (row.group) return `<div class="sg-group" role="presentation">${row.group}</div>`;
     const index = items.indexOf(row);
-    return `<button type="button" class="sg-item" role="option" id="sg-${index}"
-              aria-selected="false" data-kind="${row.kind}" data-id="${esc(row.id)}">
+    // A person is an anchor to their static page — the href is what a crawler
+    // and a middle-click need — while `role="option"` keeps the listbox
+    // semantics the combobox above depends on, exactly as before.
+    const inner = `
               ${svg(ICON_FOR[row.kind])}
               <span>${mark(row.label, query.trim())}</span>
               ${row.done ? `<span class="sg-tick" title="Collected">${svg('check')}</span>` : ''}
-              <span class="sg-sub">${esc(row.sub)}</span>
-            </button>`;
+              <span class="sg-sub">${esc(row.sub)}</span>`;
+    const attrs = `role="option" id="sg-${index}" aria-selected="false" ` +
+                  `data-kind="${row.kind}" data-id="${esc(row.id)}"`;
+    return plaqueRow({ href: row.url, className: 'sg-item', attrs, html: inner });
   }).join('');
 
   list.hidden = false;
@@ -177,7 +181,10 @@ export function initSearch({ onQuery, onPlaque, onCategory, onPlace }) {
   on(list, 'mousedown', e => e.preventDefault());   // keep focus in the input
   on(list, 'click', e => {
     const node = e.target.closest('.sg-item');
-    if (node) choose(items[Number(node.id.replace('sg-', ''))]);
+    if (!node) return;
+    if (opensElsewhere(e)) return;      // let the browser open the static page
+    e.preventDefault();
+    choose(items[Number(node.id.replace('sg-', ''))]);
   });
 
   on(qs('#search-clear'), 'click', () => { clear(); input.focus(); });
