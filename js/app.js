@@ -8,7 +8,7 @@
  */
 
 import { CATEGORY_BY_SLUG, VERIFY_RADIUS_M, VERIFY_ANYWHERE_PARAM, VERIFY_ANYWHERE_VALUE, MILESTONES,
-         LOCATION_INVITE_DELAY_MS, PLAQUE_PARAM } from './config.js';
+         LOCATION_INVITE_DELAY_MS, PLAQUE_PARAM, WALK_PARAM } from './config.js';
 import { backupUrl, pendingRestore, clearRestoreFromUrl, COMFORTABLE_URL_LENGTH } from './backup.js';
 import { loadPlaques } from './data.js';
 import * as store from './state.js';
@@ -19,6 +19,8 @@ import { initSearch, clear as clearSearch } from './search.js';
 import { initFilters, openFilters, refreshFilters, activeFilterCount, clearFilters, isFiltered } from './filters.js';
 import { initPlaqueSheet, openPlaque, renderPlaqueSheet, currentPlaqueId } from './plaque-sheet.js';
 import { initQuestScreen, renderQuest } from './quest-screen.js';
+import { initWalkScreen, renderWalks, showWalk } from './walk-screen.js';
+import { loadWalks, walkBySlug, allWalks } from './walks.js';
 import { initMyLondon, renderMyLondon, showSegment } from './mylondon.js';
 import { syncUnlocks } from './achievements.js';
 import { celebrateIconic, loadIconicNotes, noteFor } from './celebrate.js';
@@ -46,6 +48,7 @@ function setTab(tab, { track = true } = {}) {
   state.tab = tab;
   document.body.dataset.tab = tab;
 
+  qs('#screen-walks').hidden = tab !== 'walks';
   qs('#screen-quest').hidden = tab !== 'quest';
   qs('#screen-mylondon').hidden = tab !== 'mylondon';
   document.querySelectorAll('.tab').forEach(el => {
@@ -53,6 +56,7 @@ function setTab(tab, { track = true } = {}) {
     el.setAttribute('aria-current', active ? 'page' : 'false');
   });
 
+  if (tab === 'walks') { renderWalks(); if (track) trackEvent('walks_opened'); }
   if (tab === 'quest') renderQuest();
   if (tab === 'mylondon') { renderMyLondon(); if (track) trackEvent('my_london_opened'); }
   if (tab === 'map') requestAnimationFrame(() => mapView.invalidateSize());
@@ -106,7 +110,10 @@ function refresh({ rerenderSheet = false } = {}) {
   const countEl = qs('#map-count');
   const activeTheme = state.filters.theme
     ? state.themes.find(t => t.id === state.filters.theme) : null;
-  countEl.textContent = activeTheme
+  const activeWalk = state.filters.walk ? walkBySlug(state.filters.walk) : null;
+  countEl.textContent = activeWalk
+    ? `${activeWalk.name} · ${fmtNumber(visible.length)} stops`
+    : activeTheme
     ? `${activeTheme.name} · ${fmtNumber(visible.length)} left`
     : visible.length === p.total
       ? `${fmtNumber(p.total)} discoveries`
@@ -124,6 +131,7 @@ function refresh({ rerenderSheet = false } = {}) {
 
   renderEmptyState(visible.length);
   if (rerenderSheet && currentPlaqueId()) renderPlaqueSheet();
+  if (state.tab === 'walks') renderWalks();
   if (state.tab === 'quest') renderQuest();
   if (state.tab === 'mylondon') renderMyLondon();
   refreshFilters();
@@ -810,6 +818,26 @@ function openThemeOnMap(themeId) {
   announce(`${theme.name} — showing what is left to find.`);
 }
 
+/**
+ * "Start walk" — puts the whole route on the map.
+ *
+ * Unlike a themed collection this shows every stop, collected or not: a walk is
+ * a route to follow, and hiding the ones already found would break it in half.
+ */
+function openWalkOnMap(walk) {
+  if (!walk) return;
+  clearFilters();
+  state.filters.walk = walk.slug;
+  clearSearch({ silent: true });
+  syncChips();
+  setTab('map');
+  closeAllSheets();
+  refresh();
+  mapView.fitToIds(walk.ids);
+  trackEvent('walk_started', { walk: walk.slug });
+  announce(`${walk.name} — ${walk.stops.length} stops on the map.`);
+}
+
 function selectPlaque(id, { from } = {}) {
   const plaque = state.byId.get(id);
   if (!plaque) return;
@@ -832,6 +860,21 @@ function openDeepLinkedPlaque() {
   const id = new URLSearchParams(location.search).get(PLAQUE_PARAM);
   if (!id || !state.byId.has(id)) return false;
   selectPlaque(id, { from: 'deep-link' });
+  return true;
+}
+
+/**
+ * `?walk=<slug>` — the deep link the generated static walk pages point back at.
+ * Opens the walk's own screen and puts its stops on the map, so arriving from a
+ * search result lands on the route rather than on the whole of London.
+ */
+function openDeepLinkedWalk() {
+  const slug = new URLSearchParams(location.search).get(WALK_PARAM);
+  const walk = slug ? walkBySlug(slug) : null;
+  if (!walk) return false;
+  openWalkOnMap(walk);
+  setTab('walks');
+  showWalk(walk.slug);
   return true;
 }
 
@@ -888,6 +931,7 @@ function wire() {
     onUseLocation: () => useLocation({ centre: false }),
     onChooseAnother: () => findNext({ another: true }),
     onOpenCategory: openCategoryOnMap,
+    onOpenWalk: slug => { setTab('walks'); showWalk(slug); },
   });
 
   initFilters(sheets.filters, {
@@ -903,6 +947,11 @@ function wire() {
   });
 
   initQuestScreen(questAction);
+
+  initWalkScreen({
+    onOpenPlaque: id => selectPlaque(id, { from: 'walk' }),
+    onStartWalk: openWalkOnMap,
+  });
 
   initMyLondon({
     onOpenPlaque: id => selectPlaque(id, { from: 'my-london' }),
@@ -995,7 +1044,9 @@ async function boot() {
   state.verifyAnywhere =
     new URLSearchParams(location.search).get(VERIFY_ANYWHERE_PARAM) === VERIFY_ANYWHERE_VALUE;
 
-  loadIconicNotes();          // best-effort; a failure only costs the curated lines
+  // Both best-effort: a failure costs the walks or the curated lines, nothing else.
+  await loadWalks(state.byId);
+  loadIconicNotes();
   mapView.initMap(selectPlaque);
   mapView.buildMarkers();
   wire();
@@ -1013,12 +1064,15 @@ async function boot() {
   // would open underneath it.
   const restore = pendingRestore();
   if (restore) offerRestore(restore);
-  else if (!openDeepLinkedPlaque()) maybeInviteLocation();
+  else if (!openDeepLinkedPlaque() && !openDeepLinkedWalk()) maybeInviteLocation();
   qs('#total-count').textContent = fmtNumber(state.plaques.length);
-  document.body.dataset.tab = 'map';
+  // Whatever the boot path settled on — a `?walk=` deep link opens the Walks
+  // tab, everything else stays on the map.
+  document.body.dataset.tab = state.tab;
 
   window.__lu = {
     state, progress: store.progress, events: recordedEvents,
+    walks: allWalks,
     reset: () => { store.resetProgress(); state.plaques.forEach(p => mapView.refreshMarker(p.id)); refresh(); },
     collect: (id, verified = false) => { handleCollect(state.byId.get(id), verified); },
     open: id => selectPlaque(id, { from: 'console' }),

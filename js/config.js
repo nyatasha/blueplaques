@@ -35,6 +35,13 @@ export const VERIFY_ANYWHERE_VALUE = 'anywhere';
  */
 export const PLAQUE_PARAM = 'plaque';
 
+/**
+ * Deep link from a generated static walk page: `/?walk=<slug>` opens that walk
+ * on the map, filtered to its stops, as soon as the dataset and the walk
+ * definitions are ready. An unknown slug is ignored and the app boots normally.
+ */
+export const WALK_PARAM = 'walk';
+
 /** Reported GPS accuracy worse than this is not trusted for verification. */
 export const MAX_TRUSTED_ACCURACY_M = 250;
 

@@ -21,6 +21,15 @@ and list every plaque in that category, so a crawler reaching the site can walk
 home → category → plaque without running any JavaScript. Plaque pages link back
 up to their category and sideways to their five nearest neighbours.
 
+Curated self-guided walks live at
+
+    walks/<slug>/index.html        →  /blueplaques/walks/bloomsbury-writers/
+
+with an index at walks/. Each is defined in `data/walks.json` as a name, some
+prose and an ordered list of plaque ids; the stop count, distance and walking
+time on the page are derived here from the coordinates, never typed. A plaque
+that is a stop on a walk links up to it from its own page.
+
 `data/plaque-urls.json` is written by the same run, so the app can render its
 discovery lists as real links to these pages without reimplementing slugify()
 in JavaScript and drifting from it.
@@ -52,15 +61,24 @@ from urllib.parse import quote, urlsplit
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(SCRIPT_DIR)
 DATA = os.path.join(ROOT, "data", "plaques.geojson")
+WALKS_DATA = os.path.join(ROOT, "data", "walks.json")
 
 SITE = "https://nyatasha.github.io/blueplaques/"
 SITE_NAME = "London Uncovered"
 PAGES_DIR = "plaques"          # relative to the site root
 CATS_DIR = "categories"        # relative to the site root
+WALKS_DIR = "walks"            # relative to the site root
 URL_MAP = os.path.join("data", "plaque-urls.json")
 SLUG_MAX = 60                  # characters before the id suffix
 NEARBY = 5                     # internal links per page
 DESC_MAX = 155
+
+# Straight-line legs understate a walk; 1.3 is the ordinary circuity allowance
+# for a dense urban street grid, and every distance and duration a walk page
+# shows is labelled approximate because of it. js/walks.js uses the same
+# factor and js/config.js the same pace, so the app and these pages agree.
+ROUTE_FACTOR = 1.3
+WALK_METRES_PER_MIN = 80
 
 CATEGORY_LABELS = {
     "writers": "Writers & Literature",
@@ -424,7 +442,27 @@ def crumbs_block(p):
             '      </nav>\n')
 
 
-def render_page(p, neighbours, siblings):
+def walks_block(walks):
+    """The cross-link from a plaque up to the curated walks it is a stop on.
+
+    Absent from the great majority of pages, which are on no walk — an empty
+    "Walks" heading on 970 pages would be boilerplate, and boilerplate is what
+    this generator exists not to write.
+    """
+    if not walks:
+        return ""
+    items = "\n".join(
+        f'          <li><a href="../../{WALKS_DIR}/{esc(w["slug"])}/">{esc(w["name"])}</a>'
+        f'<span class="sp-near-meta">{esc(walk_summary(w))}</span></li>'
+        for w in walks)
+    heading = "On this walk" if len(walks) == 1 else "On these walks"
+    return ('      <section class="sp-walks" aria-labelledby="walks">\n'
+            f'        <h2 id="walks">{heading}</h2>\n'
+            '        <ul>\n' + items + '\n        </ul>\n'
+            '      </section>\n')
+
+
+def render_page(p, neighbours, siblings, on_walks=()):
     url = f"{SITE}{PAGES_DIR}/{p['slug']}/"
     description = meta_description(p)
     og_image = safe_url(thumb(p["photo"], 1200)) or esc(f"{SITE}assets/social/og-cover.png")
@@ -490,7 +528,7 @@ def render_page(p, neighbours, siblings):
 {links_block(p)}
     </article>
 
-{nearby_block(p, neighbours)}{category_block(p, siblings)}  </main>
+{walks_block(on_walks)}{nearby_block(p, neighbours)}{category_block(p, siblings)}  </main>
 
   <footer class="sp-footer">
     <p>Part of <a href="../../">{esc(SITE_NAME)}</a>, an interactive map of the
@@ -651,10 +689,356 @@ def render_category_page(key, groups, total):
 """
 
 
-def render_sitemap(plaques, groups):
+# ── Walks ───────────────────────────────────────────────────────────────────
+#
+# A walk is a hand-picked, ordered run of plaques that already exist in the
+# dataset. `data/walks.json` holds only identity and prose — slug, name, area,
+# copy, and the stop ids in walking order. Everything measurable is derived
+# here from the coordinates, exactly as js/walks.js derives it for the app, so
+# a walk page can never claim a distance the dataset does not support.
+
+
+def load_walks(plaques, path=WALKS_DATA):
+    """Resolve the walk definitions against the dataset.
+
+    A walk with an unresolvable stop is a hard error rather than a short walk:
+    these files are hand-edited, and a typo that silently drops a stop would
+    ship a route that leaves a gap in the middle of it.
+    """
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as fh:
+        payload = json.load(fh)
+
+    by_id = {p["id"]: p for p in plaques}
+    walks = []
+    for definition in payload.get("walks") or []:
+        slug = str(definition.get("slug") or "")
+        if not re.fullmatch(r"[a-z0-9-]+", slug):
+            raise SystemExit(f"walks.json: bad slug {slug!r}")
+        stops = []
+        for stop in definition.get("stops") or []:
+            plaque = by_id.get(str(stop.get("id")))
+            if plaque is None:
+                raise SystemExit(f"walks.json: {slug} names unknown plaque "
+                                 f"{stop.get('id')!r}")
+            stops.append({"plaque": plaque, "note": (stop.get("note") or "").strip()})
+        if len(stops) < 2:
+            raise SystemExit(f"walks.json: {slug} needs at least two stops")
+
+        line = sum(haversine(stops[i - 1]["plaque"], stops[i]["plaque"])
+                   for i in range(1, len(stops)))
+        metres = line * ROUTE_FACTOR
+        walks.append({
+            "slug": slug,
+            "name": definition.get("name") or slug,
+            "area": definition.get("area") or "London",
+            "tagline": (definition.get("tagline") or "").strip(),
+            "intro": (definition.get("intro") or "").strip(),
+            "start_hint": (definition.get("startHint") or "").strip(),
+            "stops": stops,
+            "metres": metres,
+            "minutes": max(1, round(metres / WALK_METRES_PER_MIN)),
+        })
+
+    slugs = [w["slug"] for w in walks]
+    if len(set(slugs)) != len(slugs):
+        raise SystemExit("walks.json: duplicate slug")
+    return walks
+
+
+# Small counts read better as words in prose. Anything larger stays a numeral.
+WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six",
+         7: "seven", 8: "eight", 9: "nine", 10: "ten"}
+
+
+def spell(n):
+    return WORDS.get(n, f"{n:,}")
+
+
+def walk_distance(metres):
+    """`1.7 km` / `900 m` — mirrors formatWalkDistance() in js/walks.js."""
+    if metres < 1000:
+        return f"{round(metres / 50) * 50} m"
+    return f"{metres / 1000:.1f} km"
+
+
+def walks_by_plaque(walks):
+    """Plaque id → the walks it is a stop on, for the cross-link on its page."""
+    index = collections.defaultdict(list)
+    for walk in walks:
+        for stop in walk["stops"]:
+            index[stop["plaque"]["id"]].append(walk)
+    return index
+
+
+def walk_summary(walk):
+    """The one line of facts that appears on every surface a walk has."""
+    return (f"{len(walk['stops'])} stops · about {walk_distance(walk['metres'])} · "
+            f"about {walk['minutes']} minutes' walking")
+
+
+def walk_description(walk):
+    return truncate(f"{walk['tagline']} A self-guided London walk past "
+                    f"{len(walk['stops'])} blue plaques in "
+                    f"{walk['area'].split(',')[0]} — about "
+                    f"{walk_distance(walk['metres'])} and {walk['minutes']} "
+                    f"minutes on foot.")
+
+
+def walk_stops_block(walk):
+    """The ordered stops, as an <ol> — each an anchor to that plaque's page."""
+    items = []
+    for i, stop in enumerate(walk["stops"]):
+        p = stop["plaque"]
+        leg = ""
+        if i:
+            metres = round(haversine(walk["stops"][i - 1]["plaque"], p) * ROUTE_FACTOR)
+            leg = (f'<span class="walk-leg">about '
+                   f'{metres} m from the last stop</span>'
+                   if metres < 950 else
+                   f'<span class="walk-leg">about {metres / 1000:.1f} km '
+                   f'from the last stop</span>')
+        meta = " · ".join(filter(None, [p["dates"], p["address"]]))
+        note = (f'<p class="walk-stop-note">{esc(stop["note"])}</p>'
+                if stop["note"] else "")
+        items.append(
+            f'        <li class="walk-stop">\n'
+            + (f'          {leg}\n' if leg else "")
+            + f'          <h3><a href="../../{PAGES_DIR}/{esc(p["slug"])}/">'
+            + f'{esc(p["title"])}</a></h3>\n'
+            + f'          <p class="walk-stop-meta">{esc(meta)}</p>\n'
+            + (f'          {note}\n' if note else "")
+            + '        </li>')
+    return ('      <ol class="walk-stops">\n' + "\n".join(items) + "\n      </ol>")
+
+
+def walk_structured_data(walk, url):
+    """An ItemList of the stops.
+
+    ItemList is the schema.org type that actually describes what this page is —
+    an ordered list of places — and Google reads it. Each element is the plaque
+    page's own URL, so the structured data and the visible list say the same
+    thing. Nothing here is asserted that the page does not show.
+    """
+    node = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": walk["name"],
+        "description": walk_description(walk),
+        "url": url,
+        "numberOfItems": len(walk["stops"]),
+        "itemListOrder": "https://schema.org/ItemListOrderAscending",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": i,
+                "name": stop["plaque"]["title"],
+                "url": f"{SITE}{PAGES_DIR}/{stop['plaque']['slug']}/",
+            }
+            for i, stop in enumerate(walk["stops"], start=1)
+        ],
+    }
+    return json.dumps(node, ensure_ascii=False, indent=2).replace("<", "\\u003c")
+
+
+def walk_head(title, description, url, extra=""):
+    """The shared <head> for the walk pages. Two levels down from the root."""
+    return f"""<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1456A0">
+<title>{esc(title)}</title>
+<meta name="description" content="{esc(description)}">
+<link rel="canonical" href="{esc(url)}">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="{esc(SITE_NAME)}">
+<meta property="og:url" content="{esc(url)}">
+<meta property="og:title" content="{esc(title)}">
+<meta property="og:description" content="{esc(description)}">
+<meta property="og:image" content="{esc(SITE)}assets/social/og-cover.png">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{esc(title)}">
+<meta name="twitter:description" content="{esc(description)}">
+<meta name="twitter:image" content="{esc(SITE)}assets/social/og-cover.png">
+<link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
+<link rel="manifest" href="../../manifest.json">
+<link rel="stylesheet" href="../../css/tokens.css">
+<link rel="stylesheet" href="../../css/plaque-page.css">
+{extra}"""
+
+
+def walk_footer():
+    return f"""  <footer class="sp-footer">
+    <p>Part of <a href="../../">{esc(SITE_NAME)}</a>, an interactive map of the
+       English Heritage blue plaque scheme in London.</p>
+    <p>Distances are estimated from the straight line between consecutive stops with a
+       {ROUTE_FACTOR}× allowance for street layout, and walking times assume a steady
+       pace with no stopping.</p>
+    <p>Plaque data from <a href="https://openplaques.org" rel="noopener nofollow"
+       target="_blank">OpenPlaques</a> (public domain). {esc(SITE_NAME)} is an
+       independent project and is not affiliated with or endorsed by English Heritage.</p>
+  </footer>"""
+
+
+def render_walk_page(walk, others):
+    url = f"{SITE}{WALKS_DIR}/{walk['slug']}/"
+    title = f"{walk['name']} — a self-guided blue plaque walk — {SITE_NAME}"
+    description = walk_description(walk)
+    first, last = walk["stops"][0]["plaque"], walk["stops"][-1]["plaque"]
+    waypoints = "|".join(f"{s['plaque']['lat']:.5f},{s['plaque']['lng']:.5f}"
+                         for s in walk["stops"][1:-1])
+    route = (f"https://www.google.com/maps/dir/?api=1"
+             f"&origin={first['lat']:.5f},{first['lng']:.5f}"
+             f"&destination={last['lat']:.5f},{last['lng']:.5f}"
+             + (f"&waypoints={quote(waypoints, safe='|')}" if waypoints else "")
+             + "&travelmode=walking")
+    more = "\n".join(
+        f'      <li><a href="../{esc(o["slug"])}/">{esc(o["name"])}</a>'
+        f'<span class="sp-near-meta">{esc(o["area"])} · {len(o["stops"])} stops · '
+        f'{esc(walk_distance(o["metres"]))}</span></li>'
+        for o in others)
+
+    return f"""<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+{walk_head(title, description, url,
+           '<script type="application/ld+json">\n'
+           + walk_structured_data(walk, url) + '\n</script>')}
+</head>
+<body class="sp-body">
+  <header class="sp-header">
+    <a class="sp-brand" href="../../">
+      <span class="sp-brand-disc" aria-hidden="true"></span>
+      <span>{esc(SITE_NAME)}</span>
+    </a>
+  </header>
+
+  <main class="sp-main">
+    <article class="sp-card">
+      <nav class="sp-crumbs" aria-label="Breadcrumb">
+        <a href="../../">{esc(SITE_NAME)}</a>
+        <span aria-hidden="true">›</span>
+        <a href="../">Walks</a>
+      </nav>
+      <p class="sp-eyebrow">{esc(walk["area"])}</p>
+      <h1>{esc(walk["name"])}</h1>
+      <p class="walk-tagline">{esc(walk["tagline"])}</p>
+      <p class="sp-badges">
+        <span class="sp-badge">{len(walk["stops"])} stops</span>
+        <span class="sp-badge">about {esc(walk_distance(walk["metres"]))}</span>
+        <span class="sp-badge">about {walk["minutes"]} min walking</span>
+      </p>
+      <p class="walk-intro">{esc(walk["intro"])}</p>
+      {f'<p class="walk-hint">{esc(walk["start_hint"])}</p>' if walk["start_hint"] else ''}
+
+      <a class="sp-cta" href="../../?walk={esc(walk["slug"])}">Follow this walk on the map</a>
+      <p class="walk-links">
+        <a class="sp-link" href="{esc(route)}" rel="noopener nofollow" target="_blank">Open the
+        route in Google Maps</a>
+      </p>
+    </article>
+
+    <section class="sp-route" aria-labelledby="route">
+      <h2 id="route">The route</h2>
+{walk_stops_block(walk)}
+    </section>
+
+    <section class="sp-more">
+      <h2>Other walks</h2>
+      <ul class="walk-others">
+{more}
+      </ul>
+      <p><a href="../">All self-guided walks</a> · <a href="../../">Explore the whole map</a></p>
+    </section>
+  </main>
+
+{walk_footer()}
+</body>
+</html>
+"""
+
+
+def render_walks_index(walks):
+    url = f"{SITE}{WALKS_DIR}/"
+    title = f"Self-guided London blue plaque walks — {SITE_NAME}"
+    description = truncate(
+        f"{len(walks)} curated self-guided walks past London's blue plaques — "
+        + ", ".join(w["name"] for w in walks) + ".")
+    cards = "\n".join(
+        f'      <li class="walk-card">\n'
+        f'        <h2><a href="{esc(w["slug"])}/">{esc(w["name"])}</a></h2>\n'
+        f'        <p class="walk-card-area">{esc(w["area"])}</p>\n'
+        f'        <p class="walk-card-tag">{esc(w["tagline"])}</p>\n'
+        f'        <p class="walk-card-meta">{esc(walk_summary(w))}</p>\n'
+        f'      </li>'
+        for w in walks)
+    listing = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": f"Self-guided blue plaque walks in London",
+        "url": url,
+        "description": description,
+        "isPartOf": {"@type": "WebSite", "name": SITE_NAME, "url": SITE},
+    }
+    payload = json.dumps(listing, ensure_ascii=False, indent=2).replace("<", "\\u003c")
+
+    head = walk_head(title, description, url,
+                     '<script type="application/ld+json">\n' + payload + '\n</script>')
+    # The index sits one level down, not two.
+    head = head.replace('href="../../', 'href="../')
+
+    return f"""<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+{head}
+</head>
+<body class="sp-body">
+  <header class="sp-header">
+    <a class="sp-brand" href="../">
+      <span class="sp-brand-disc" aria-hidden="true"></span>
+      <span>{esc(SITE_NAME)}</span>
+    </a>
+  </header>
+
+  <main class="sp-main cat-main">
+    <nav class="sp-crumbs" aria-label="Breadcrumb">
+      <a href="../">{esc(SITE_NAME)}</a>
+      <span aria-hidden="true">›</span>
+      <span>Walks</span>
+    </nav>
+    <p class="sp-eyebrow">London blue plaques</p>
+    <h1>Self-guided walks</h1>
+    <p class="cat-intro">London's blue plaques are not spread evenly: in a few
+       neighbourhoods they stand within a couple of hundred metres of one another,
+       close enough to string into an afternoon. These {spell(len(walks))} walks do that.
+       Each one lists its stops in walking order with the distance between them, and
+       every stop links to that plaque's page and its place on the map.</p>
+    <a class="sp-cta" href="../">Explore the whole map</a>
+
+    <ul class="walk-cards">
+{cards}
+    </ul>
+
+    <nav class="cat-nav" aria-labelledby="browse">
+      <h2 id="browse">Browse another way</h2>
+      <a href="../{CATS_DIR}/writers-literature/">Writers &amp; Literature</a>
+      <a href="../{CATS_DIR}/music/">Music</a>
+      <a href="../{CATS_DIR}/science-technology/">Science &amp; Technology</a>
+      <a href="../{CATS_DIR}/art-design/">Art &amp; Design</a>
+    </nav>
+  </main>
+
+{walk_footer().replace('href="../../"', 'href="../"')}
+</body>
+</html>
+"""
+
+
+def render_sitemap(plaques, groups, walks=()):
     """Homepage, every category page, then every plaque page.
 
-    Ordered home → category → plaque so the file mirrors the link graph. Each
+    Ordered home → walk → category → plaque so the file mirrors the link graph. Each
     URL is the page's own canonical, and duplicates are dropped rather than
     trusted not to occur.
 
@@ -663,6 +1047,8 @@ def render_sitemap(plaques, groups):
     `changefreq` either — Google ignores both.
     """
     ordered = ([SITE]
+               + ([f"{SITE}{WALKS_DIR}/"] if walks else [])
+               + [f"{SITE}{WALKS_DIR}/{w['slug']}/" for w in walks]
                + [f"{SITE}{CATS_DIR}/{CATEGORY_URL[key]}/" for key in groups]
                + [f"{SITE}{PAGES_DIR}/{p['slug']}/" for p in plaques])
     seen, urls = set(), []
@@ -760,7 +1146,22 @@ def replace_region(text, name, body):
     return text[:start + len(open_tag)] + body + text[end:]
 
 
-def update_index(out_root, plaques):
+def walk_links_region(walks):
+    """The About panel's list of walk pages, as real anchors."""
+    items = "\n".join(
+        f'          <li><a href="{WALKS_DIR}/{esc(w["slug"])}/">{esc(w["name"])}</a></li>'
+        for w in walks)
+    return ('        <ul class="about-walks">\n' + items + "\n        </ul>")
+
+
+def noscript_walks_region(walks):
+    links = ",\n      ".join(
+        f'<a href="{WALKS_DIR}/{esc(w["slug"])}/">{esc(w["name"])}</a>' for w in walks)
+    return ('    <p>Follow a self-guided walk:\n      ' + links
+            + f'.\n      <a href="{WALKS_DIR}/">All walks</a>.</p>')
+
+
+def update_index(out_root, plaques, walks=()):
     """Rewrite every generated count in index.html.
 
     Returns the path written, or None when the target root has no index.html —
@@ -777,6 +1178,9 @@ def update_index(out_root, plaques):
     for name, template in INDEX_REGIONS.items():
         text = replace_region(text, name, template.format(n=count))
     text = replace_region(text, "jsonld", jsonld_region(count, JSONLD_SUBJECTS))
+    if walks:
+        text = replace_region(text, "walk-links", walk_links_region(walks))
+        text = replace_region(text, "noscript-walks", noscript_walks_region(walks))
 
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(text)
@@ -803,15 +1207,19 @@ def render_url_map(plaques):
     }, ensure_ascii=False, indent=0, sort_keys=True) + "\n"
 
 
-def generate(out_root, plaques, clean=True):
-    """Write the plaque pages, the category pages, the URL map and the sitemap."""
+def generate(out_root, plaques, clean=True, walks=None):
+    """Write the plaque, category and walk pages, the URL map and the sitemap."""
     groups = by_category(plaques)
+    if walks is None:
+        walks = load_walks(plaques)
+    on_walk = walks_by_plaque(walks)
     pages_root = os.path.join(out_root, PAGES_DIR)
     cats_root = os.path.join(out_root, CATS_DIR)
+    walks_root = os.path.join(out_root, WALKS_DIR)
     if clean:
-        # Stale directories would otherwise outlive plaques and categories
-        # dropped from the dataset and stay in the index.
-        for root in (pages_root, cats_root):
+        # Stale directories would otherwise outlive plaques, categories and
+        # walks dropped from the data and stay in the index.
+        for root in (pages_root, cats_root, walks_root):
             if os.path.isdir(root):
                 shutil.rmtree(root)
     os.makedirs(pages_root, exist_ok=True)
@@ -819,16 +1227,25 @@ def generate(out_root, plaques, clean=True):
 
     for p in plaques:
         write(os.path.join(pages_root, p["slug"], "index.html"),
-              render_page(p, nearest(p, plaques), len(groups[p["category"]])))
+              render_page(p, nearest(p, plaques), len(groups[p["category"]]),
+                          on_walk.get(p["id"], ())))
 
     for key in groups:
         write(os.path.join(cats_root, CATEGORY_URL[key], "index.html"),
               render_category_page(key, groups, len(plaques)))
 
+    if walks:
+        os.makedirs(walks_root, exist_ok=True)
+        write(os.path.join(walks_root, "index.html"), render_walks_index(walks))
+        for walk in walks:
+            others = [w for w in walks if w["slug"] != walk["slug"]]
+            write(os.path.join(walks_root, walk["slug"], "index.html"),
+                  render_walk_page(walk, others))
+
     write(os.path.join(out_root, URL_MAP), render_url_map(plaques))
-    write(os.path.join(out_root, "sitemap.xml"), render_sitemap(plaques, groups))
-    indexed = update_index(out_root, plaques)
-    return len(plaques), len(groups), indexed
+    write(os.path.join(out_root, "sitemap.xml"), render_sitemap(plaques, groups, walks))
+    indexed = update_index(out_root, plaques, walks)
+    return len(plaques), len(groups), len(walks), indexed
 
 
 def main(argv=None):
@@ -838,6 +1255,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     plaques = load_plaques()
+    walks = load_walks(plaques)
     slugs = {p["slug"] for p in plaques}
     if len(slugs) != len(plaques):
         raise SystemExit("slug collision — refusing to overwrite pages")
@@ -848,13 +1266,17 @@ def main(argv=None):
               f"and {len(groups)} under {CATS_DIR}/ (nothing written)")
         for key, rows in groups.items():
             print(f"  {CATS_DIR}/{CATEGORY_URL[key]}/  ({len(rows)})")
+        for walk in walks:
+            print(f"  {WALKS_DIR}/{walk['slug']}/  ({walk_summary(walk)})")
         return 0
 
-    count, categories, indexed = generate(args.out, plaques)
+    count, categories, walk_count, indexed = generate(args.out, plaques, walks=walks)
     print(f"wrote {count} plaque pages under {os.path.join(args.out, PAGES_DIR)}")
     print(f"wrote {categories} category pages under {os.path.join(args.out, CATS_DIR)}")
     print(f"wrote {URL_MAP}")
-    print(f"wrote sitemap.xml with {count + categories + 1} URLs")
+    print(f"wrote {walk_count} walk pages under {os.path.join(args.out, WALKS_DIR)}")
+    print(f"wrote sitemap.xml with "
+          f"{count + categories + walk_count + (1 if walk_count else 0) + 1} URLs")
     if indexed:
         print(f"wrote the generated counts in {INDEX} ({count:,})")
     elif os.path.abspath(args.out) == os.path.abspath(ROOT):

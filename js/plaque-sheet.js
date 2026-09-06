@@ -16,6 +16,7 @@ import { esc, qs, on, delegate, thumbUrl, fmtDate, fmtNumber } from './ui.js';
 import { icon, CATEGORY_ICON } from './icons.js';
 import { trackEvent } from './analytics.js';
 import { noteFor } from './celebrate.js';
+import { walksWithPlaque, walkProgress, formatWalkDistance } from './walks.js';
 
 let sheet, actions = {}, currentId = null;
 
@@ -122,6 +123,32 @@ function collectionBlock(plaque) {
     </button>`;
 }
 
+/**
+ * "On a walk" — the cross-link from a plaque to the curated routes it is a stop
+ * on. Rendered only when there is one, so most plaques are unchanged.
+ */
+function walksBlock(plaque) {
+  const walks = walksWithPlaque(plaque.id);
+  if (!walks.length) return '';
+  return `
+    <div class="pq-walks">
+      <span class="eyebrow">${walks.length === 1 ? 'On a walk' : 'On these walks'}</span>
+      ${walks.map(walk => {
+        const p = walkProgress(walk);
+        return `
+        <button type="button" class="pq-walk" data-act="open-walk" data-walk="${esc(walk.slug)}">
+          <span class="pq-walk-main">
+            <span class="pq-walk-name">${esc(walk.name)}</span>
+            <span class="pq-walk-meta">${walk.stops.length} stops<span class="dotsep">·</span>${
+              esc(formatWalkDistance(walk.metres))}<span class="dotsep">·</span>${
+              p.found} collected</span>
+          </span>
+          ${icon('chevronR')}
+        </button>`;
+      }).join('')}
+    </div>`;
+}
+
 function linksBlock(plaque) {
   const links = [];
   if (plaque.wikipedia) {
@@ -184,6 +211,7 @@ export function renderPlaqueSheet(id = currentId) {
             state.userPos || state.verifyAnywhere ? '' : ' · +10 XP if verified on location'}</dd></div>` : ''}
       </dl>
 
+      ${walksBlock(plaque)}
       ${collectionBlock(plaque)}
       ${linksBlock(plaque)}
     </div>`;
@@ -217,6 +245,7 @@ export function initPlaqueSheet(sheetInstance, handlers) {
       case 'use-location':  actions.onUseLocation(); break;
       case 'choose-another':actions.onChooseAnother(); break;
       case 'open-category': actions.onOpenCategory(node.dataset.cat); break;
+      case 'open-walk':     actions.onOpenWalk(node.dataset.walk); break;
       default: break;
     }
   });

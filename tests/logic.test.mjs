@@ -21,6 +21,8 @@ import { evaluate as evaluateQuests, QUESTS } from '../js/quests.js';
 import { recommendNext } from '../js/recommend.js';
 import { encodeBackup, decodeBackup, mergeBackup } from '../js/backup.js';
 import { buildThemes, THEME_DEFS } from '../js/themes.js';
+import { buildWalks, walkProgress, formatWalkDistance, routeDirectionsUrl,
+         ROUTE_FACTOR } from '../js/walks.js';
 
 let passed = 0;
 const failures = [];
@@ -278,6 +280,65 @@ eq('Set Completist still locked at four',
    evaluateAchievements().find(a => a.id === 'theme_master').unlocked, false);
 state.saved.collected = {};
 store.invalidate();
+
+/* ── Curated walks ──────────────────────────────────────────────────────── */
+group('walks');
+store.setDataset(dataset);
+state.saved.collected = {};
+store.invalidate();
+
+const walkDefs = JSON.parse(readFile('../data/walks.json')).walks;
+const walks = buildWalks(walkDefs, dataset.byId);
+eq('every definition resolves against the dataset', walks.length, walkDefs.length);
+check('every walk has 4 to 8 stops',
+      walks.every(w => w.stops.length >= 4 && w.stops.length <= 8),
+      walks.map(w => `${w.slug}:${w.stops.length}`).join(' '));
+check('slugs are unique', new Set(walks.map(w => w.slug)).size === walks.length);
+check('every stop carries a note', walks.every(w => w.stops.every(s => s.note)));
+check('distance is derived, not declared',
+      walks.every(w => w.metres > 300 && w.metres < 5000),
+      walks.map(w => `${w.slug}:${Math.round(w.metres)}`).join(' '));
+check('walking time follows from the distance',
+      walks.every(w => w.minutes === Math.max(1, Math.round(w.metres / 80))));
+eq('the route factor is the one the page generator uses', ROUTE_FACTOR, 1.3);
+
+// A stop id that is not in the dataset must drop the whole walk rather than
+// render it short: a route with a hole in the middle is worse than no route.
+const broken = buildWalks(
+  [{ ...walkDefs[0], stops: [...walkDefs[0].stops, { id: 'not-a-plaque', note: 'x' }] }],
+  dataset.byId);
+eq('a walk with an unresolvable stop is dropped', broken.length, 0);
+eq('a malformed slug is rejected',
+   buildWalks([{ ...walkDefs[0], slug: '../escape' }], dataset.byId).length, 0);
+
+const sampleWalk = walks[0];
+eq('nothing is collected yet', walkProgress(sampleWalk).found, 0);
+store.collect(sampleWalk.ids[0], false);
+store.collect(sampleWalk.ids[1], true);
+const wp = walkProgress(sampleWalk);
+eq('progress is read straight from the collection', wp.found, 2);
+eq('progress knows the total', wp.total, sampleWalk.stops.length);
+check('progress is not complete yet', !wp.complete);
+sampleWalk.ids.forEach(id => store.collect(id, false));
+check('collecting every stop completes the walk', walkProgress(sampleWalk).complete);
+state.saved.collected = {};
+store.invalidate();
+
+eq('short distances are rounded to fifty metres', formatWalkDistance(920), '900 m');
+eq('longer ones get one decimal in kilometres', formatWalkDistance(1699), '1.7 km');
+
+const routeUrl = routeDirectionsUrl(sampleWalk);
+check('the route link is a walking direction request',
+      routeUrl.startsWith('https://www.google.com/maps/dir/?') &&
+      routeUrl.includes('travelmode=walking'));
+check('it starts at the first stop and ends at the last',
+      routeUrl.includes(`origin=${encodeURIComponent(`${sampleWalk.stops[0].plaque.lat},${sampleWalk.stops[0].plaque.lng}`)}`) &&
+      routeUrl.includes(`destination=${encodeURIComponent(`${sampleWalk.stops.at(-1).plaque.lat},${sampleWalk.stops.at(-1).plaque.lng}`)}`));
+eq('every stop in between is a waypoint',
+   routeUrl.split('waypoints=')[1].split('&')[0].split('|').length,
+   sampleWalk.stops.length - 2);
+// Google Maps caps a keyless directions URL at nine waypoints.
+check('no walk exceeds the waypoint limit', walks.every(w => w.stops.length - 2 <= 9));
 
 /* ── Backup links ───────────────────────────────────────────────────────── */
 group('backup');

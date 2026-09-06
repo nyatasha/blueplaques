@@ -27,7 +27,7 @@ export const state = {
   /** Transient UI state — never persisted. */
   tab: 'map',
   query: '',
-  filters: { status: 'all', categories: new Set(), fame: 'all', distance: 'all', theme: null },
+  filters: { status: 'all', categories: new Set(), fame: 'all', distance: 'all', theme: null, walk: null },
   userPos: null,          // { lat, lng, accuracy } — memory only (PRD §62)
   locationStatus: 'idle', // idle | asking | granted | denied | unavailable
   targetId: null,

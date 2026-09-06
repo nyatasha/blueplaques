@@ -84,17 +84,19 @@ function updateCta() {
 export function isFiltered() {
   const f = state.filters;
   return f.status !== 'all' || f.fame !== 'all' || f.distance !== 'all' ||
-         f.categories.size > 0 || !!f.theme;
+         f.categories.size > 0 || !!f.theme || !!f.walk;
 }
 
 export function activeFilterCount() {
   const f = state.filters;
   return (f.status !== 'all' ? 1 : 0) + (f.fame !== 'all' ? 1 : 0) +
-         (f.distance !== 'all' ? 1 : 0) + f.categories.size + (f.theme ? 1 : 0);
+         (f.distance !== 'all' ? 1 : 0) + f.categories.size +
+         (f.theme ? 1 : 0) + (f.walk ? 1 : 0);
 }
 
 export function clearFilters() {
   state.filters.theme = null;
+  state.filters.walk = null;
   state.filters.status = 'all';
   state.filters.fame = 'all';
   state.filters.distance = 'all';

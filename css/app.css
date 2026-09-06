@@ -296,12 +296,14 @@ a { color: var(--blue); }
 #about-content strong { color: var(--ink); font-weight: 600; }
 
 /* The crawlable category links, laid out as tappable pills rather than a list. */
-.about-cats {
+.about-cats,
+.about-walks {
   list-style: none;
   display: flex; flex-wrap: wrap; gap: var(--sp-2);
   margin-bottom: var(--sp-3);
 }
-.about-cats a {
+.about-cats a,
+.about-walks a {
   display: inline-flex; align-items: center;
   min-height: var(--tap);
   padding: 8px var(--sp-4);
@@ -311,7 +313,8 @@ a { color: var(--blue); }
   font-size: var(--fs-sm); font-weight: 600;
   text-decoration: none;
 }
-.about-cats a:hover { background: var(--ivory-3); }
+.about-cats a:hover,
+.about-walks a:hover { background: var(--ivory-3); }
 
 /* ── Desktop: shell becomes a fixed right-hand panel ───────────────────── */
 

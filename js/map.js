@@ -8,6 +8,7 @@
 import { MAP_START, LABEL_MIN_ZOOM, DISTANCE_FILTERS, BASEMAP } from './config.js';
 import { state, isCollected } from './state.js';
 import { distanceMetres } from './geo.js';
+import { walkBySlug } from './walks.js';
 import { esc, qs } from './ui.js';
 
 const CHECK_SVG =
@@ -129,8 +130,9 @@ export function buildMarkers() {
 
 /** The plaques that pass search + every active filter (PRD §18). */
 export function visiblePlaques() {
-  const { status, categories, fame, distance, theme } = state.filters;
+  const { status, categories, fame, distance, theme, walk } = state.filters;
   const themeIds = theme ? state.themes.find(t => t.id === theme)?.ids : null;
+  const walkIds = walk ? new Set(walkBySlug(walk)?.ids || []) : null;
   const q = state.query.trim().toLowerCase();
   const maxDistance = DISTANCE_FILTERS.find(d => d.key === distance)?.metres ?? Infinity;
   const origin = state.userPos;
@@ -138,6 +140,7 @@ export function visiblePlaques() {
   return state.plaques.filter(plaque => {
     if (q && !plaque.search.includes(q)) return false;
     if (themeIds && !themeIds.has(plaque.id)) return false;
+    if (walkIds && !walkIds.has(plaque.id)) return false;
     if (categories.size && !categories.has(plaque.category)) return false;
     if (fame === 'famous' && plaque.fame < 2) return false;
     if (fame === 'iconic' && plaque.fame < 3) return false;

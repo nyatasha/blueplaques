@@ -114,6 +114,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3.5 6.2v13.3L9 17.3l6 2.4 5.5-2.2V4.2L15 6.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 4v13.3M15 6.4v13.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
         Map
       </button>
+      <button type="button" class="tab" data-tab="walks" aria-current="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.4 4.4c1.6 0 2.4 1.5 2.2 3.4-.2 1.6-.7 2.6-.7 3.8 0 1.3-.7 2-1.9 2s-2-.7-2-2c0-1.2.3-2.2.2-3.8-.2-1.9.6-3.4 2.2-3.4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.1 15.2h3.9v2.2a1.9 1.9 0 0 1-3.9 0z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16.1 8.6c1.6 0 2.4 1.5 2.2 3.4-.2 1.6-.7 2.6-.7 3.8 0 1.3-.7 2-1.9 2s-2-.7-2-2c0-1.2.3-2.2.2-3.8-.2-1.9.6-3.4 2.2-3.4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        Walks
+      </button>
       <button type="button" class="tab" data-tab="quest" aria-current="false">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m14.9 9.1-1.6 4.2-4.2 1.6 1.6-4.2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
         Quest
@@ -174,6 +178,10 @@
     <div id="map-panel" aria-live="polite"></div>
 
     <!-- ── Screens ──────────────────────────────────────────────────── -->
+    <section id="screen-walks" class="screen" aria-label="Walks" hidden>
+      <div id="walks-body"></div>
+    </section>
+
     <section id="screen-quest" class="screen" aria-label="Quest" hidden>
       <div id="quest-body"></div>
     </section>
@@ -300,6 +308,24 @@
           this is how a crawler reaches them and, through them, every plaque
           page. Kept in step with scripts/generate_seo_pages.py by tests/seo.test.py.
         -->
+        <!--
+          Real anchors, in the initial HTML, to the generated walk pages — the
+          same contract as the category links below. Kept in step with
+          scripts/generate_seo_pages.py by tests/seo.test.py.
+        -->
+        <h2>Self-guided walks</h2>
+        <p>Four curated routes string together plaques that stand within a few streets of each
+           other, so a visit can be an afternoon out rather than a single pin. Each has its own
+           page with the stops in order, the distance and the walking time.</p>
+        <!--gen:walk-links-->
+        <ul class="about-walks">
+          <li><a href="walks/bloomsbury-writers/">Bloomsbury Writers &amp; Thinkers</a></li>
+          <li><a href="walks/chelsea-riverside/">Chelsea Riverside</a></li>
+          <li><a href="walks/mayfair-handel-to-hendrix/">Mayfair: Handel to Hendrix</a></li>
+          <li><a href="walks/hampstead-village/">Hampstead Village</a></li>
+        </ul>
+        <!--/gen:walk-links-->
+
         <h2>Browse by category</h2>
         <ul class="about-cats">
           <li><a href="categories/writers-literature/">Writers &amp; Literature</a></li>
@@ -354,6 +380,14 @@
     <p>The English Heritage blue plaque scheme commemorates notable people who lived or worked in London.
        Subjects include Freddie Mercury, John Lennon, Charles Darwin, Florence Nightingale, Karl Marx,
        Oscar Wilde, Alan Turing, Charles Dickens, Virginia Woolf, Agatha Christie and hundreds more.</p>
+    <!--gen:noscript-walks-->
+    <p>Follow a self-guided walk:
+      <a href="walks/bloomsbury-writers/">Bloomsbury Writers &amp; Thinkers</a>,
+      <a href="walks/chelsea-riverside/">Chelsea Riverside</a>,
+      <a href="walks/mayfair-handel-to-hendrix/">Mayfair: Handel to Hendrix</a>,
+      <a href="walks/hampstead-village/">Hampstead Village</a>.
+      <a href="walks/">All walks</a>.</p>
+    <!--/gen:noscript-walks-->
     <p>Browse the plaques by category:
       <a href="categories/writers-literature/">Writers &amp; Literature</a>,
       <a href="categories/art-design/">Art &amp; Design</a>,

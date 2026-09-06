@@ -22,6 +22,8 @@ collect the discoveries you make, and watch your London fill in.
   fame and context, and points you at one.
 - **Collecting** — collect a discovery on location (verified within 100 m) or
   mark one as seen from anywhere. Progress earns XP and levels.
+- **Walks** — four curated self-guided routes built from plaques already on the
+  map, each with its stops in walking order, the distance and the walking time.
 - **Quest** — five fixed goals that answer "what should I do next?".
 - **My London** — discoveries, percentage of London uncovered, level, recent
   finds, category collections and achievement badges.
@@ -67,7 +69,7 @@ Three suites, all dependency-free:
 | Suite | Runner | Covers |
 |-------|--------|--------|
 | `tests/logic.test.mjs` | JavaScriptCore (ships with macOS) | XP and levels, Haversine distances, `localStorage` robustness, derived progress, achievements, quests, recommendation ranking, dataset integrity |
-| `tests/seo.test.py` | Python 3 | slug stability and collisions, HTML and URL escaping, generated page content, canonical URLs, relative paths, the internal link graph (category, nearby), category page contents, the plaque URL map, sitemap contents |
+| `tests/seo.test.py` | Python 3 | slug stability and collisions, HTML and URL escaping, generated page content, canonical URLs, relative paths, the internal link graph (category, nearby, walks), category and walk page contents, walk definitions and derived distances, the plaque URL map, sitemap contents |
 | `tests/smoke.html` | headless Chrome via `tests/cdp.py` | boot, marker rendering, layout and touch targets at 390 px, search, the collect flow, tab navigation, filters, categories, reset, `?plaque=` deep links |
 
 `tests/cdp.py` is a small self-contained Chrome DevTools Protocol client; it
@@ -91,11 +93,11 @@ python3 scripts/classify_categories.py   # + category + category_label
 ```
 
 A fourth script turns the finished dataset into the crawlable half of the site
-— a page per plaque, a page per category, the URL map the app links with, and
-the sitemap. Run it whenever the data changes:
+— a page per plaque, a page per category, a page per curated walk, the URL map
+the app links with, and the sitemap. Run it whenever the data changes:
 
 ```bash
-python3 scripts/generate_seo_pages.py    # plaques/ + categories/ + data/plaque-urls.json + sitemap.xml
+python3 scripts/generate_seo_pages.py    # plaques/ + categories/ + walks/ + data/plaque-urls.json + sitemap.xml
 ```
 
 The share card and app icons are generated too, and committed rather than built
@@ -158,10 +160,73 @@ python3 scripts/classify_categories.py
 python3 scripts/generate_seo_pages.py
 python3 scripts/make_social_image.py
 bash tests/run.sh
-git add data/plaques.geojson plaques categories sitemap.xml index.html \
+git add data/plaques.geojson plaques categories walks sitemap.xml index.html \
   assets/social/og-cover.png \
   && git commit -m "refresh plaque data"
 ```
+
+---
+
+## Curated walks
+
+Four self-guided routes, each a hand-picked run of plaques that already exist in
+the dataset and stand close enough together to walk in an afternoon:
+
+| Walk | Area | Stops | Distance | Walking |
+|------|------|-------|----------|---------|
+| Bloomsbury Writers & Thinkers | Bloomsbury & Fitzrovia, WC1 | 8 | ~3.0 km | ~38 min |
+| Chelsea Riverside | Chelsea, SW3 & SW10 | 8 | ~1.7 km | ~21 min |
+| Mayfair: Handel to Hendrix | Mayfair & St James's, W1 & SW1 | 7 | ~2.9 km | ~36 min |
+| Hampstead Village | Hampstead, NW3 | 8 | ~2.3 km | ~28 min |
+
+`data/walks.json` is the whole definition. It holds only what is genuinely
+editorial — the slug, name, area, the copy, and the stops in walking order, each
+a plaque id and one sentence saying why to stop there:
+
+```json
+{
+  "slug": "chelsea-riverside",
+  "name": "Chelsea Riverside",
+  "area": "Chelsea, SW3 & SW10",
+  "icon": "palette",
+  "tagline": "Oscar Wilde, Bob Marley and a mile of the Thames.",
+  "intro": "Cheyne Walk and the streets running off it …",
+  "startHint": "Start near Sloane Square; finish near Chelsea Harbour …",
+  "stops": [
+    { "id": "287", "note": "Wilde lived at 34 Tite Street from 1884 until 1895 …" }
+  ]
+}
+```
+
+Adding a walk is adding one object to that array and re-running
+`scripts/generate_seo_pages.py`.
+
+**Nothing measurable is stored there.** Stop count, distance and walking time are
+derived from the plaques' own coordinates — in `js/walks.js` for the app and in
+`scripts/generate_seo_pages.py` for the pages — so a walk can never claim a
+distance the map does not support, and a data refresh re-derives all of it.
+
+Distance is the summed straight-line legs between consecutive stops multiplied
+by `ROUTE_FACTOR` (1.3), the ordinary circuity allowance for a dense urban street
+grid, and duration is that at the 80 m/min already in `js/config.js`. It is an
+estimate, so every surface says "about" and the walk pages state the derivation
+in their footer. The factor is declared once in each file and
+`tests/seo.test.py` asserts the two agree.
+
+**Progress is the collection.** A walk's progress is how many of its stops are
+already collected — there is no walk-specific state, no walk XP and no schema
+change, so collecting a plaque anywhere moves every walk it belongs to, and a
+backup link carries walk progress without knowing walks exist.
+
+In the app, **Walks** is the second tab. *Start walk* clears the filters, sets
+`state.filters.walk` — the same mechanism themed collections use — and fits the
+camera to the stops; the stops themselves are ordinary markers, so there is no
+route layer to keep in step with the map. Each stop row opens the usual plaque
+sheet, and that sheet links back to any walk the plaque is on.
+
+Stop notes are hand-written to the same standard as the Iconic notes: each is
+supported by the plaque's own inscription or is not in dispute. Nothing about a
+named person is asserted that the record does not carry.
 
 ---
 
@@ -233,11 +298,34 @@ produce. `js/data.js` loads it alongside the GeoJSON and validates the shape of
 every slug; if it is missing the rows fall back to buttons and nothing else
 changes.
 
+### Walk pages
+
+Each curated walk also has a page a crawler can read, and there is an index of
+them:
+
+```
+walks/index.html                 → https://nyatasha.github.io/blueplaques/walks/
+walks/chelsea-riverside/         → .../walks/chelsea-riverside/
+```
+
+- The whole route is in the initial HTML: the name, the area, the stop count,
+  the distance, the walking time, the introductory copy, then an `<ol>` of the
+  stops in order, each with its dates, address, a sentence of context and a link
+  to that plaque's page.
+- Structured data is an `ItemList` whose elements point at the plaque pages, so
+  the markup and the visible list say the same thing.
+- **Follow this walk on the map** points at `/?walk=<slug>`, which the app reads
+  on boot and opens on the Walks tab with the stops on the map.
+- **Open the route in Google Maps** is a keyless universal `maps/dir/` URL with
+  the intermediate stops as waypoints and `travelmode=walking`.
+- The 31 plaques that are stops on a walk link up to it from their own pages.
+  The other 970 get no walk section rather than an empty heading.
+
 ### Sitemap
 
-`sitemap.xml` is generated by the same script and lists the homepage, every
-category page, then every plaque page, de-duplicated and each at its own
-canonical URL. It carries no `lastmod`, `priority` or `changefreq`: nothing in
+`sitemap.xml` is generated by the same script and lists the homepage, the walks
+index, every walk, every category page, then every plaque page, de-duplicated
+and each at its own canonical URL. It carries no `lastmod`, `priority` or `changefreq`: nothing in
 the pipeline records when a plaque's facts last changed, and an invented date is
 worse than none.
 
@@ -251,12 +339,14 @@ serves the repository as-is.
 ```
 index.html                     app shell, SEO metadata, crawlable About copy
 manifest.json                  PWA manifest
-sitemap.xml                    generated — homepage + categories + plaque pages
+sitemap.xml                    generated — homepage + walks + categories + plaque pages
 plaques/<slug>/index.html      generated — one static page per plaque
 categories/<slug>/index.html   generated — one landing page per category
+walks/index.html               generated — the walk index
+walks/<slug>/index.html        generated — one page per curated walk
 css/
   tokens.css                   design tokens — colour, type, space, motion
-  plaque-page.css              the generated plaque and category pages
+  plaque-page.css              the generated plaque, category and walk pages
   app.css                      reset, shell layout, buttons, boot screen
   map.css                      Leaflet surface, markers, clusters, map controls
   components.css               nav, sheets, cards, badges, screens, toasts
@@ -274,6 +364,8 @@ js/
   mylondon.js                  My London tab
   quests.js / achievements.js  fixed definitions, evaluated from progress
   themes.js                    themed collections, derived from the dataset
+  walks.js                     curated walks: resolution, derived distance, progress
+  walk-screen.js               Walks tab — the index and one walk in full
   celebrate.js                 the Iconic collect moment
   share-card.js                canvas-rendered progress image
   install.js                   Add to Home Screen offer and detection
@@ -285,6 +377,7 @@ js/
   ui.js / icons.js             DOM helpers, toasts, inline SVG icons
   analytics.js                 provider-agnostic trackEvent()
 data/iconic-notes.json         hand-written notes for Iconic plaques
+data/walks.json                curated walk definitions — prose plus ordered plaque ids
 scripts/                       Python data pipeline
 tests/                         logic + smoke suites, CDP client
 data/plaques.geojson           the dataset
@@ -388,7 +481,8 @@ Two things are deliberately left unset, each in one documented place:
 
 GitHub Pages serves the repository root as-is. Push to the deployment branch
 and the site updates — the app itself has no build step. The only generated
-output is `plaques/`, `categories/`, `data/plaque-urls.json` and `sitemap.xml`;
+output is `plaques/`, `categories/`, `walks/`, `data/plaque-urls.json` and
+`sitemap.xml`;
 regenerate them with `python3 scripts/generate_seo_pages.py` whenever
 `data/plaques.geojson` changes, and commit the result.
 

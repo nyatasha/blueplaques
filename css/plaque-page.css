@@ -305,3 +305,175 @@ a.sp-link:hover { background: var(--ivory-3); }
 
 .cat-nav a:hover { background: var(--ivory-2); }
 .cat-nav-n { color: var(--ink-400); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ── Walks ─────────────────────────────────────────────────────────────────
+   The generated walk pages: an index at walks/ and one page per walk. They
+   reuse the plaque page's shell, header and footer, and add only what an
+   ordered route needs.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.walk-tagline {
+  font-family: var(--font-serif);
+  font-size: var(--fs-md);
+  color: var(--ink-600);
+  margin: 0 0 var(--sp-4);
+  line-height: 1.5;
+}
+
+.walk-intro {
+  font-size: var(--fs-base);
+  line-height: 1.7;
+  color: var(--ink-800);
+  margin: 0 0 var(--sp-3);
+}
+
+.walk-hint {
+  font-size: var(--fs-sm);
+  color: var(--ink-500);
+  margin: 0 0 var(--sp-5);
+}
+
+.walk-links { margin-top: var(--sp-3); }
+
+.sp-route { margin-top: var(--sp-6); }
+.sp-route h2 {
+  font-family: var(--font-serif); font-size: var(--fs-lg); margin: 0 0 var(--sp-2);
+}
+
+/* The ordered route. Numbers are drawn from the list counter rather than
+   written into the markup, so the HTML stays the plain <ol> a crawler reads. */
+.walk-stops {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: walk-stop;
+}
+
+.walk-stop {
+  counter-increment: walk-stop;
+  position: relative;
+  padding: var(--sp-4) 0 var(--sp-4) 44px;
+  border-top: 1px solid var(--ink-100);
+}
+.walk-stop:first-child { border-top: 0; }
+
+.walk-stop::before {
+  content: counter(walk-stop);
+  position: absolute;
+  left: 0; top: var(--sp-4);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--blue-050);
+  color: var(--blue);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.walk-stop h3 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  margin: 0;
+}
+.walk-stop h3 a { text-decoration: none; }
+.walk-stop h3 a:hover { text-decoration: underline; }
+
+.walk-stop-meta {
+  margin: 3px 0 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-400);
+}
+
+.walk-stop-note {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-600);
+  line-height: 1.6;
+}
+
+.walk-leg {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--ink-300);
+}
+
+/* The cross-link from a plaque page up to the walks it is a stop on. It looks
+   like "Plaques nearby" but carries its own class, so the two sections are
+   never confused — by a stylesheet or by a test reading the markup. */
+.sp-walks { margin-top: var(--sp-6); }
+.sp-walks h2 {
+  font-family: var(--font-serif); font-size: var(--fs-lg); margin: 0 0 var(--sp-2);
+}
+.sp-walks ul { list-style: none; margin: 0; padding: 0; }
+.sp-walks li {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  justify-content: space-between; gap: var(--sp-2);
+  padding: var(--sp-3) 0; border-top: 1px solid var(--ink-100);
+}
+.sp-walks a { font-weight: 600; text-decoration: none; }
+.sp-walks a:hover { text-decoration: underline; }
+
+.walk-others { list-style: none; margin: 0; padding: 0; }
+.walk-others li {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  justify-content: space-between; gap: var(--sp-2);
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--ink-100);
+}
+.walk-others a { font-weight: 600; text-decoration: none; }
+.walk-others a:hover { text-decoration: underline; }
+
+/* The index at walks/ */
+.walk-cards {
+  list-style: none;
+  margin: var(--sp-6) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.walk-cards .walk-card {
+  background: var(--white);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+}
+
+.walk-cards h2 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  margin: 0;
+}
+.walk-cards h2 a { text-decoration: none; }
+.walk-cards h2 a:hover { text-decoration: underline; }
+
+.walk-card-area {
+  margin: 4px 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+.walk-card-tag {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-600);
+  line-height: 1.55;
+}
+
+.walk-card-meta {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-400);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 720px) {
+  .walk-cards { grid-template-columns: 1fr 1fr; }
+}

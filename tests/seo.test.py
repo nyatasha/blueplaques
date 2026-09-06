@@ -139,6 +139,7 @@ eq("'London' alone is not a locality", gen.locality("1 High Street, London"), ""
 
 group("generated site")
 plaques = gen.load_plaques()
+walks = gen.load_walks(plaques)
 check("the dataset loaded", len(plaques) > 900, f"{len(plaques)} plaques")
 eq("every plaque has a unique slug", len({p["slug"] for p in plaques}), len(plaques))
 eq("every plaque has a unique id", len({p["id"] for p in plaques}), len(plaques))
@@ -153,7 +154,7 @@ check("categories are listed strongest first",
 
 out = tempfile.mkdtemp(prefix="seo-test-")
 try:
-    written, cats, _ = gen.generate(out, plaques)
+    written, cats, walk_count, _ = gen.generate(out, plaques)
     eq("a page was written for every plaque", written, len(plaques))
     eq("a page was written for every non-empty category", cats, len(groups))
     dirs = os.listdir(os.path.join(out, gen.PAGES_DIR))
@@ -327,8 +328,9 @@ try:
     with open(os.path.join(out, "sitemap.xml"), encoding="utf-8") as fh:
         sitemap = fh.read()
     locs = re.findall(r"<loc>([^<]+)</loc>", sitemap)
-    eq("homepage plus every category and plaque page",
-       len(locs), len(plaques) + len(groups) + 1)
+    eq("homepage, walks, categories and plaque pages",
+       len(locs),
+       len(plaques) + len(groups) + len(walks) + (1 if walks else 0) + 1)
     eq("the homepage comes first", locs[0], gen.SITE)
     eq("no URL is listed twice", len(set(locs)), len(locs))
     check("every category page is listed",
@@ -360,6 +362,142 @@ try:
 finally:
     shutil.rmtree(out, ignore_errors=True)
 
+# ── Walks ───────────────────────────────────────────────────────────────────
+#
+# Walk definitions are hand-edited, and everything measurable about a walk is
+# derived rather than typed, so what is worth asserting is that the definitions
+# still resolve, that the derivation matches the app's, and that the pages carry
+# the route in plain HTML.
+
+group("walks")
+check("walks are defined", len(walks) >= 3, f"{len(walks)} walks")
+check("every walk has 4 to 8 stops",
+      all(4 <= len(w["stops"]) <= 8 for w in walks),
+      str([(w["slug"], len(w["stops"])) for w in walks]))
+eq("walk slugs are unique", len({w["slug"] for w in walks}), len(walks))
+check("walk slugs are URL-safe",
+      all(re.fullmatch(r"[a-z0-9-]+", w["slug"]) for w in walks))
+check("every stop resolves to a plaque in the dataset",
+      all(s["plaque"]["id"] in {p["id"] for p in plaques}
+          for w in walks for s in w["stops"]))
+check("no walk repeats a stop",
+      all(len({s["plaque"]["id"] for s in w["stops"]}) == len(w["stops"]) for w in walks))
+check("every stop carries a note", all(s["note"] for w in walks for s in w["stops"]))
+# A walk is only a walk if it can be done on foot in one go. Anything much over
+# this is a day out, and the "about N minutes' walking" line would be a lie.
+check("every walk is under 5 km and under an hour on foot",
+      all(w["metres"] < 5000 and w["minutes"] < 60 for w in walks),
+      str([(w["slug"], round(w["metres"]), w["minutes"]) for w in walks]))
+check("consecutive stops are within 1.2 km of each other",
+      all(gen.haversine(w["stops"][i - 1]["plaque"], w["stops"][i]["plaque"]) < 1200
+          for w in walks for i in range(1, len(w["stops"]))))
+
+# The app derives the same numbers in js/walks.js. They cannot be imported here,
+# so the shared constants are asserted against the values that file documents.
+eq("the route factor matches js/walks.js", gen.ROUTE_FACTOR, 1.3)
+eq("the walking pace matches js/config.js", gen.WALK_METRES_PER_MIN, 80)
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..",
+                       "js", "walks.js"), encoding="utf-8") as fh:
+    walks_js = fh.read()
+check("js/walks.js declares the same route factor",
+      f"ROUTE_FACTOR = {gen.ROUTE_FACTOR}" in walks_js)
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..",
+                       "js", "config.js"), encoding="utf-8") as fh:
+    check("js/config.js declares the same walking pace",
+          f"WALK_METRES_PER_MIN = {gen.WALK_METRES_PER_MIN}" in fh.read())
+
+out2 = tempfile.mkdtemp(prefix="walks-test-")
+try:
+    gen.generate(out2, plaques, walks=walks)
+    sample_walk = walks[0]
+    with open(os.path.join(out2, gen.WALKS_DIR, sample_walk["slug"], "index.html"),
+              encoding="utf-8") as fh:
+        wp = fh.read()
+
+    group(f"walk page content — {sample_walk['name']}")
+    check("the name is the H1", f"<h1>{gen.esc(sample_walk['name'])}</h1>" in wp)
+    check("the area is in the initial HTML", gen.esc(sample_walk["area"]) in wp)
+    check("the introductory copy is in the initial HTML",
+          gen.esc(sample_walk["intro"])[:80] in wp)
+    check("the stop count, distance and duration are shown",
+          all(bit in wp for bit in (f"{len(sample_walk['stops'])} stops",
+                                    gen.walk_distance(sample_walk["metres"]),
+                                    f"{sample_walk['minutes']} min")))
+    check("the stops are an ordered list", '<ol class="walk-stops">' in wp)
+    check("every stop names its plaque and links to its page",
+          all(f'href="../../{gen.PAGES_DIR}/{s["plaque"]["slug"]}/"' in wp
+              and gen.esc(s["plaque"]["title"]) in wp for s in sample_walk["stops"]))
+    check("every stop carries its own contextual note",
+          all(gen.esc(s["note"])[:40] in wp for s in sample_walk["stops"]))
+    check("the stops appear in walking order",
+          [wp.index(f'{gen.PAGES_DIR}/{s["plaque"]["slug"]}/')
+           for s in sample_walk["stops"]]
+          == sorted(wp.index(f'{gen.PAGES_DIR}/{s["plaque"]["slug"]}/')
+                    for s in sample_walk["stops"]))
+    check("there is no client-side rendering to wait for",
+          "<script" not in wp.replace('<script type="application/ld+json">', ""))
+    check("the estimate is described rather than presented as measured",
+          "allowance for street layout" in wp)
+
+    group("walk page head")
+    check("the title names the walk and the site",
+          f"<title>{gen.esc(sample_walk['name'])}" in wp and gen.SITE_NAME in wp)
+    check("a meta description is present", 'name="description" content="' in wp)
+    canon = f'<link rel="canonical" href="{gen.SITE}{gen.WALKS_DIR}/{sample_walk["slug"]}/">'
+    check("the canonical URL is the production URL", canon in wp, canon)
+    check("Open Graph basics are present",
+          all(f'property="og:{k}"' in wp
+              for k in ("type", "title", "description", "url", "image")))
+    ld = json.loads(wp.split('application/ld+json">')[1].split("</script>")[0])
+    eq("structured data is an ItemList", ld["@type"], "ItemList")
+    eq("it lists every stop", len(ld["itemListElement"]), len(sample_walk["stops"]))
+    eq("positions run 1..n", [e["position"] for e in ld["itemListElement"]],
+       list(range(1, len(sample_walk["stops"]) + 1)))
+    check("each element points at that plaque's canonical page",
+          all(e["url"].startswith(f"{gen.SITE}{gen.PAGES_DIR}/")
+              for e in ld["itemListElement"]))
+
+    group("walk titles and descriptions are unique")
+    heads = []
+    for w in walks:
+        with open(os.path.join(out2, gen.WALKS_DIR, w["slug"], "index.html"),
+                  encoding="utf-8") as fh:
+            page = fh.read()
+        heads.append((re.search(r"<title>(.*?)</title>", page, re.S).group(1),
+                      re.search(r'name="description" content="(.*?)"', page).group(1)))
+    eq("every walk has its own title", len({t for t, _ in heads}), len(walks))
+    eq("every walk has its own meta description", len({d for _, d in heads}), len(walks))
+
+    group("the walk index and the link graph")
+    with open(os.path.join(out2, gen.WALKS_DIR, "index.html"), encoding="utf-8") as fh:
+        wi = fh.read()
+    check("the index links every walk",
+          all(f'href="{w["slug"]}/"' in wi for w in walks))
+    check("the index names every walk", all(gen.esc(w["name"]) in wi for w in walks))
+    check("the index links back to the map", 'href="../"' in wi)
+
+    # walks → plaques is asserted above; this is the return leg.
+    on_walk = gen.walks_by_plaque(walks)
+    check("a plaque on a walk is linked to it", bool(on_walk))
+    stop = walks[0]["stops"][0]["plaque"]
+    with open(os.path.join(out2, gen.PAGES_DIR, stop["slug"], "index.html"),
+              encoding="utf-8") as fh:
+        sp = fh.read()
+    check("that plaque's page links up to the walk",
+          f'href="../../{gen.WALKS_DIR}/{walks[0]["slug"]}/"' in sp)
+    off_walk = next(p for p in plaques if p["id"] not in on_walk)
+    with open(os.path.join(out2, gen.PAGES_DIR, off_walk["slug"], "index.html"),
+              encoding="utf-8") as fh:
+        check("a plaque on no walk gets no empty walk section",
+              'id="walks"' not in fh.read())
+
+    check("every walk page is in the generated sitemap",
+          all(f"<loc>{gen.SITE}{gen.WALKS_DIR}/{w['slug']}/</loc>"
+              in open(os.path.join(out2, "sitemap.xml"), encoding="utf-8").read()
+              for w in walks))
+finally:
+    shutil.rmtree(out2, ignore_errors=True)
+
 # ── The homepage is where a crawler starts ──────────────────────────────────
 
 group("homepage links into the category pages")
@@ -374,6 +512,13 @@ check("those links are plain anchors, not JavaScript",
 check("the no-JavaScript fallback carries them too",
       'href="categories/' in home.split("<noscript>")[1].split("</noscript>")[0])
 
+group("homepage links into the walk pages")
+home_walks = set(re.findall(r'href="walks/([a-z0-9-]+)/"', home))
+eq("index.html links every generated walk, and only those",
+   home_walks, {w["slug"] for w in gen.load_walks(gen.load_plaques())})
+check("the no-JavaScript fallback carries the walks too",
+      'href="walks/' in home.split("<noscript>")[1].split("</noscript>")[0])
+
 # ── What is committed is what GitHub Pages serves ───────────────────────────
 #
 # The site deploys straight from the branch: no build step runs on push, so a
@@ -385,13 +530,16 @@ committed = tempfile.mkdtemp()
 try:
     gen.generate(committed, gen.load_plaques())
     drift = []
-    for rel in (gen.URL_MAP, "sitemap.xml"):
+    for rel in (gen.URL_MAP, "sitemap.xml",
+                os.path.join(gen.WALKS_DIR, "index.html")):
         with open(os.path.join(ROOT, rel), encoding="utf-8") as a, \
              open(os.path.join(committed, rel), encoding="utf-8") as b:
             if a.read() != b.read():
                 drift.append(rel)
-    for sub in (gen.PAGES_DIR, gen.CATS_DIR):
-        want = {d for d in os.listdir(os.path.join(committed, sub))}
+    for sub in (gen.PAGES_DIR, gen.CATS_DIR, gen.WALKS_DIR):
+        # Directories only: walks/ also holds its own index.html beside them.
+        want = {d for d in os.listdir(os.path.join(committed, sub))
+                if os.path.isdir(os.path.join(committed, sub, d))}
         have = {d for d in os.listdir(os.path.join(ROOT, sub))
                 if os.path.isfile(os.path.join(ROOT, sub, d, "index.html"))}
         check(f"{sub}/ holds exactly the generated directories", want == have,
@@ -428,8 +576,11 @@ def committed_dirs(sub):
             if os.path.isfile(os.path.join(root, d, "index.html"))}
 
 
+walk_dirs = committed_dirs(gen.WALKS_DIR)
 on_disk = {
     gen.SITE,
+    *({f"{gen.SITE}{gen.WALKS_DIR}/"} if walk_dirs else set()),
+    *(f"{gen.SITE}{gen.WALKS_DIR}/{d}/" for d in walk_dirs),
     *(f"{gen.SITE}{gen.CATS_DIR}/{d}/" for d in committed_dirs(gen.CATS_DIR)),
     *(f"{gen.SITE}{gen.PAGES_DIR}/{d}/" for d in committed_dirs(gen.PAGES_DIR)),
 }

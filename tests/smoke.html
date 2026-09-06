@@ -108,7 +108,7 @@ if (lu) {
   check('counter is fully visible', counter.right <= 390.5 && counter.left >= 0, `left=${counter.left.toFixed(1)} right=${counter.right.toFixed(1)}`);
   check('about button is fully visible', about.right <= 390.5 && about.width > 0, `right=${about.right.toFixed(1)}`);
   const tabs = qa('.tab');
-  eq('three primary tabs', tabs.length, 3);
+  eq('four primary tabs', tabs.length, 4);
   check('every tab is at least 44px tall', tabs.every(t => t.getBoundingClientRect().height >= 44),
         tabs.map(t => t.getBoundingClientRect().height.toFixed(0)).join('/'));
   const cta = q('#find-next').getBoundingClientRect();
@@ -180,6 +180,84 @@ if (lu) {
   check('map controls hidden behind the quest tab',
         win.getComputedStyle(q('#map-controls')).display === 'none');
 
+  /* ── Walks ────────────────────────────────────────────────────────────── */
+  group('walks');
+  q('.tab[data-tab="walks"]').click();
+  await until(() => !q('#screen-walks').hidden);
+  check('walks screen shows', !q('#screen-walks').hidden);
+  const walkCards = qa('#walks-body .walk-card');
+  check('walks are listed', walkCards.length >= 3, `${walkCards.length} walks`);
+  check('every walk card is an anchor to its own page',
+        walkCards.every(c => c.tagName === 'A' &&
+          /^walks\/[a-z0-9-]+\/$/.test(c.getAttribute('href'))),
+        walkCards.map(c => c.getAttribute('href')).join(' '));
+  check('each card carries stops, distance and walking time',
+        qa('#walks-body .walk-meta').every(m => /stops/.test(m.textContent)
+          && /km|\bm\b/.test(m.textContent) && /min/.test(m.textContent)),
+        q('#walks-body .walk-meta')?.textContent);
+  check('the distance estimate is explained rather than asserted',
+        /allowance for street layout/.test(q('#walks-body').textContent));
+
+  walkCards[0].click();
+  await until(() => qa('#walks-body .walk-stop').length > 0);
+  const stops = qa('#walks-body .walk-stop');
+  check('the walk opens its own view', stops.length >= 4, `${stops.length} stops`);
+  check('the stops are numbered in order',
+        qa('#walks-body .walk-stop-num').map(n => n.textContent.trim())
+          .join(',') === stops.map((_, i) => String(i + 1)).join(','));
+  check('every stop links to its plaque page',
+        stops.every(r => r.tagName === 'A' &&
+          /^plaques\/[a-z0-9-]+\/$/.test(r.getAttribute('href'))),
+        stops.map(r => r.getAttribute('href')).slice(0, 3).join(' '));
+  check('every stop has a contextual note',
+        qa('#walks-body .walk-stop-note').length === stops.length);
+  check('the leg to the next stop is given',
+        qa('#walks-body .walk-leg').length === stops.length - 1);
+  check('the three headline facts are shown',
+        qa('#walks-body .walk-fact').length === 3,
+        q('#walks-body .walk-facts')?.textContent.replace(/\s+/g, ' '));
+  const routeLink = q('#walks-body [data-act="route"]');
+  check('the whole route opens in an external map',
+        /^https:\/\/www\.google\.com\/maps\/dir\//.test(routeLink?.getAttribute('href') || '')
+        && /travelmode=walking/.test(routeLink.getAttribute('href')),
+        routeLink?.getAttribute('href')?.slice(0, 70));
+  check('progress reuses the collection, not a second store',
+        /\d+ \/ \d+ stops collected/.test(q('#walks-body .walk-progress').textContent),
+        q('#walks-body .walk-progress')?.textContent.replace(/\s+/g, ' ').slice(0, 60));
+
+  // Starting the walk should put exactly its stops on the map.
+  const startedSlug = walkCards[0].getAttribute('href').split('/')[1];
+  q('#walks-body [data-act="start"]').click();
+  await until(() => lu.state.filters.walk === startedSlug, { timeout: 4000 });
+  eq('the walk filter activates', lu.state.filters.walk, startedSlug);
+  check('it returns you to the map', q('#screen-walks').hidden);
+  check('the map count names the walk', /stops/.test(q('#map-count').textContent),
+        q('#map-count').textContent);
+  check('the filter badge counts the walk', !q('#filter-badge').hidden);
+  // Clear it through the UI so the map layer is rebuilt, not just the flag.
+  lu.state.filters.walk = null;
+  q('#chips .chip[data-cat="all"]').click();
+  await until(() => q('#filter-badge').hidden, { timeout: 4000 });
+
+  // A stop opens the ordinary plaque sheet, so collecting from a walk is the
+  // same flow as collecting from the map.
+  q('.tab[data-tab="walks"]').click();
+  await until(() => qa('#walks-body .walk-stop').length > 0);
+  const firstStop = qa('#walks-body .walk-stop')[0];
+  const stopId = firstStop.dataset.id;
+  firstStop.click();
+  await until(() => q('#sheet-plaque').classList.contains('open'), { timeout: 5000 });
+  eq('a stop opens that plaque on the map', lu.state.openPlaqueId, stopId);
+  check('the plaque sheet links back to the walk',
+        !!q('#plaque-body [data-act="open-walk"]'),
+        q('#plaque-body .pq-walks')?.textContent.replace(/\s+/g, ' ').slice(0, 60));
+  q('#plaque-close').click();
+  // Leave the camera settled: the sections below start their own moves, and a
+  // fitBounds still in flight would land on top of them.
+  await sleep(700);
+
+  /* ── My London ────────────────────────────────────────────────────────── */
+  group('navigation');
   q('.tab[data-tab="mylondon"]').click();
   await until(() => !q('#screen-mylondon').hidden);
   check('my london screen shows', !q('#screen-mylondon').hidden);
@@ -361,7 +439,8 @@ if (lu) {
       check('a next discovery is chosen', !!targeted);
       check('the target is not already collected', targeted && !lu.state.saved.collected[targeted]);
       await until(() => qa('.pin-target').length > 0, { timeout: 5000 });
-      check('target marker is highlighted', qa('.pin-target').length > 0);
+      check('target marker is highlighted', qa('.pin-target').length > 0,
+            `target=${lu.state.targetId}, ${qa('.leaflet-marker-icon').length} icons`);
       check('target sheet is labelled as the next discovery',
             /Your next discovery/i.test(q('#plaque-body').textContent));
       check('walking time offered', /min/.test(q('#plaque-foot').textContent + q('#plaque-body').textContent));
@@ -676,6 +755,11 @@ if (lu) {
           qa('#about-content .about-cats a').length === 9 &&
           qa('#about-content .about-cats a').every(
             a => /^categories\/[a-z0-9-]+\/$/.test(a.getAttribute('href'))));
+    check('the About sheet links every walk as a plain anchor',
+          qa('#about-content .about-walks a').length === lu.walks().length &&
+          qa('#about-content .about-walks a').every(
+            a => /^walks\/[a-z0-9-]+\/$/.test(a.getAttribute('href'))),
+          qa('#about-content .about-walks a').map(a => a.getAttribute('href')).join(' '));
 
     group('links still behave as in-app navigation');
     check('a discovery row is reachable by keyboard',

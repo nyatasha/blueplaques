@@ -1,0 +1,173 @@
+{
+  "_comment": "Curated self-guided walks. Hand-authored, but only stop ids and prose live here: distance, walking time and stop count are derived from the dataset at build and run time (scripts/generate_seo_pages.py and js/walks.js share the same formula), so they cannot drift from the plaques. Every id must exist in data/plaques.geojson; tests/seo.test.py enforces that. Stops are listed in walking order.",
+  "walks": [
+    {
+      "slug": "bloomsbury-writers",
+      "name": "Bloomsbury Writers & Thinkers",
+      "area": "Bloomsbury & Fitzrovia, WC1",
+      "icon": "book",
+      "tagline": "Dickens, Darwin and the Bloomsbury Group in one square mile.",
+      "intro": "Bloomsbury has the densest concentration of blue plaques in London, and they are almost all people who wrote, argued or discovered something. This walk starts at the Doughty Street house where Charles Dickens wrote Oliver Twist, crosses to the Gower Street terrace where the Pre-Raphaelite Brotherhood was founded, runs through the Georgian squares the Bloomsbury Group made their own, and ends where Virginia Woolf was living when those Thursday evenings began. Charles Darwin's site, where he wrote up the Beagle voyage, is on the way.",
+      "startHint": "Start at Russell Square or Chancery Lane; finish at Warren Street.",
+      "stops": [
+        {
+          "id": "426",
+          "note": "Dickens lived here from 1837 to 1839 and wrote Oliver Twist and Nicholas Nickleby in the house. It is the only one of his London homes still standing, and is now the Charles Dickens Museum."
+        },
+        {
+          "id": "186",
+          "note": "The leader of the constitutional suffrage campaign lived and died in this house — she led the National Union of Women's Suffrage Societies for twenty years before the vote was won."
+        },
+        {
+          "id": "664",
+          "note": "Not a person but a moment: seven young artists founded the Pre-Raphaelite Brotherhood in this house in 1848, two doors from Fawcett's."
+        },
+        {
+          "id": "577",
+          "note": "The poet of Goblin Market lived and died on Torrington Square — her brother Dante Gabriel appears later on the Chelsea walk."
+        },
+        {
+          "id": "161",
+          "note": "Strachey's Eminent Victorians made him famous and made Victorian biography impossible to write straight again. Gordon Square was the Bloomsbury Group's centre of gravity."
+        },
+        {
+          "id": "307",
+          "note": "Keynes lived at number 46 for thirty years, from the Versailles conference to the founding of the IMF, four doors from Strachey."
+        },
+        {
+          "id": "559",
+          "note": "Darwin lived on this site from 1838 to 1842, the years he worked up the Beagle notebooks and first sketched natural selection. The house is gone; UCL's Biological Sciences building stands here."
+        },
+        {
+          "id": "409",
+          "note": "Woolf lived here as Virginia Stephen from 1907 to 1911, before her marriage and before her first novel — the Thursday evenings in this house are where the Bloomsbury Group began."
+        }
+      ]
+    },
+    {
+      "slug": "chelsea-riverside",
+      "name": "Chelsea Riverside",
+      "area": "Chelsea, SW3 & SW10",
+      "icon": "palette",
+      "tagline": "Oscar Wilde, Bob Marley and a mile of the Thames.",
+      "intro": "Cheyne Walk and the streets running off it hold one of the finest runs of plaques in London, and they sit almost in a straight line along the river. This walk covers a mile between Tite Street, where Oscar Wilde wrote his plays and was arrested, and the far end of Cheyne Walk. On the way it passes the house Bob Marley rented while recording Exodus, the room where penicillin's discoverer lived, and the stretch of riverfront that Whistler painted.",
+      "startHint": "Start near Sloane Square; finish near Chelsea Harbour or walk back along the Embankment.",
+      "stops": [
+        {
+          "id": "287",
+          "note": "Wilde lived at 34 Tite Street from 1884 until 1895, wrote The Importance of Being Earnest here, and was arrested here."
+        },
+        {
+          "id": "63",
+          "note": "Mary Ann Evans moved into 4 Cheyne Walk in December 1880 and died three weeks later. The house looks straight out at the river."
+        },
+        {
+          "id": "505",
+          "note": "One plaque, two poets: Dante Gabriel Rossetti and Algernon Charles Swinburne shared this house — Rossetti kept a menagerie in the garden, wombat included."
+        },
+        {
+          "id": "52362",
+          "note": "Marley rented this house in 1977 while the Wailers were in London recording Exodus and Kaya. One of the newer plaques on the walk, put up in 2019."
+        },
+        {
+          "id": "70",
+          "note": "Fleming had already found penicillin at St Mary's in 1928; he lived here in Danvers Street for the rest of his life."
+        },
+        {
+          "id": "380",
+          "note": "Gaskell was born at 93 Cheyne Walk in 1810. Her plaque is one of the oldest on this walk, put up in 1913."
+        },
+        {
+          "id": "203",
+          "note": "Whistler lived next door but one to Gaskell's birthplace, and the river outside is the one in his Nocturnes."
+        },
+        {
+          "id": "473",
+          "note": "The most radical of the Pankhursts lived at the far end of Cheyne Walk — East End organiser, anti-fascist, and eventually a citizen of Ethiopia."
+        }
+      ]
+    },
+    {
+      "slug": "mayfair-handel-to-hendrix",
+      "name": "Mayfair: Handel to Hendrix",
+      "area": "Mayfair & St James's, W1 & SW1",
+      "icon": "sparkle",
+      "tagline": "Two musicians, two centuries, one wall.",
+      "intro": "At 23 and 25 Brook Street, Jimi Hendrix and George Frideric Handel have neighbouring plaques on neighbouring houses — separated by about seven metres and two hundred and thirty years. It is the best single moment on the London plaque map, and it makes a good opening for a walk through Mayfair and St James's. From Brook Street this route runs south past the first Rolls-Royce showroom to the square where Ada Lovelace wrote the first computer program, the house Chopin left for his last public performance, and the address where Florence Nightingale spent her last fifty years.",
+      "startHint": "Start at Bond Street; finish at Green Park or Hyde Park Corner.",
+      "stops": [
+        {
+          "id": "595",
+          "note": "Hendrix lived in the top-floor flat at number 23 in 1968 and 1969, and knew he was next door to Handel. The flat is open to visitors as Handel & Hendrix in London."
+        },
+        {
+          "id": "337",
+          "note": "Handel moved into number 25 in 1723, wrote Messiah here, and died in the house in 1759. Seven metres from Hendrix's front door."
+        },
+        {
+          "id": "4866",
+          "note": "Rolls sold cars from this Conduit Street showroom from 1905, the year he met Henry Royce. He was killed flying five years later — the first Briton to die in a powered aircraft."
+        },
+        {
+          "id": "599",
+          "note": "Byron's daughter lived in St James's Square. Her notes on Babbage's Analytical Engine, published in 1843, describe what is now read as the first computer program."
+        },
+        {
+          "id": "297",
+          "note": "Chopin left this house in 1848 to play at the Guildhall — his last public performance. He died in Paris the following year."
+        },
+        {
+          "id": "22",
+          "note": "Brummell invented the modern suit and, for a while, dictated what every man in London wore. He died penniless in Caen."
+        },
+        {
+          "id": "6",
+          "note": "Nightingale lived on this site for fifty years after Scutari, running the campaign for army and hospital reform largely from her bedroom."
+        }
+      ]
+    },
+    {
+      "slug": "hampstead-village",
+      "name": "Hampstead Village",
+      "area": "Hampstead, NW3",
+      "icon": "map",
+      "tagline": "Painters and poets on the hill, ending at the Heath.",
+      "intro": "Hampstead was a village outside London when Keats and Constable lived here, and the street plan still is one — narrow, steep and walkable. This walk links eight plaques in a loop around the old village, from the house where Keats wrote Ode to a Nightingale to Well Walk, where Constable lived and painted the Heath. It is the shortest of these walks and the hilliest, and the Heath is at the end of it.",
+      "startHint": "Start at Hampstead Heath station; finish on Well Walk, a few minutes from the Heath itself.",
+      "stops": [
+        {
+          "id": "469",
+          "note": "Keats lived here from 1818 to 1820 and wrote Ode to a Nightingale in the garden. The house is open as Keats House."
+        },
+        {
+          "id": "1758",
+          "note": "The Vogue photographer and war correspondent Lee Miller lived here with the surrealist Roland Penrose; Downshire Hill was a centre of British surrealism in the 1930s."
+        },
+        {
+          "id": "474",
+          "note": "Nicholson, the most rigorous of the British abstract painters, lived and died in Pilgrims Lane."
+        },
+        {
+          "id": "105",
+          "note": "Sitwell lived in a flat in Greenhill on Hampstead High Street — the poet whose Façade was set to music by William Walton."
+        },
+        {
+          "id": "629",
+          "note": "Romney, the most fashionable portrait painter in England, built himself a studio on Holly Bush Hill in 1796 and retired to it."
+        },
+        {
+          "id": "231",
+          "note": "Du Maurier drew for Punch and wrote Trilby, which gave English the word Svengali. His granddaughter Daphne wrote Rebecca."
+        },
+        {
+          "id": "371",
+          "note": "Mansfield lived here with the critic John Middleton Murry while writing the stories that changed the English short story. She died at thirty-four."
+        },
+        {
+          "id": "165",
+          "note": "Constable took the house at 40 Well Walk in 1827 for the view: 'the dome of St Pauls in the air'. He painted the Heath and its skies from here."
+        }
+      ]
+    }
+  ]
+}
