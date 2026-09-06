@@ -152,6 +152,28 @@ a.sp-cta {
 
 a.sp-cta:hover { background: var(--blue-800); }
 
+/* The secondary of the pair — deliberately quieter than the CTA, because
+   opening the map is what these pages are for and passing the link on is the
+   bonus. Ships `hidden`; js/static-page.js reveals it only where it works. */
+.sp-share {
+  display: block;
+  width: 100%;
+  margin-top: var(--sp-2);
+  padding: 12px var(--sp-5);
+  min-height: var(--tap);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--r-pill);
+  background: var(--ivory-2);
+  color: var(--ink-800);
+  font: inherit;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.sp-share:hover:not(:disabled) { background: var(--ivory-3); }
+.sp-share:disabled { color: var(--ink-500); cursor: default; }
+
 .sp-links {
   display: flex; flex-wrap: wrap; gap: var(--sp-2);
   margin-top: var(--sp-3);

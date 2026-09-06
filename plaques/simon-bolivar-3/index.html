@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Simón Bolívar blue plaque in London — London Uncovered">
 <meta name="twitter:description" content="“Simón Bolívar 1783-1830 liberator of Latin America lodged here in 1810” Blue plaque at 4 Duke Street. Erected 2002.">
 <meta name="twitter:image" content="https://farm8.staticflickr.com/7268/7599646900_4574cbb4fb_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Simón Bolívar">
+<meta name="twitter:image:alt" content="The London blue plaque to Simón Bolívar">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Simón Bolívar"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.51607, -0.15245</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=3">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=3" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Sim%C3%B3n_Bol%C3%ADvar" rel="noopener nofollow" target="_blank">Wikipedia</a>

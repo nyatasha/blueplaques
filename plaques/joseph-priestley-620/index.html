@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Joseph Priestley blue plaque in Hackney (north wall) — London Uncovered">
 <meta name="twitter:description" content="“Joseph Priestley 1733-1804 scientist, philosopher and theologian was Minister to the Gravel Pit Meeting here…”">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/JOSEPH_PRIESTLEY_1733-1804_Scientist,_Philosopher_and_Theologian_was_Minister_to_the_Gravel_Pit_Meeting_here_in_1793-1794.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Joseph Priestley">
+<meta name="twitter:image:alt" content="The London blue plaque to Joseph Priestley">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Science & Technology",
+      "item": "https://nyatasha.github.io/blueplaques/categories/science-technology/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Joseph Priestley"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.54690, -0.05070</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=620">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=620" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Joseph_Priestley" rel="noopener nofollow" target="_blank">Wikipedia</a>

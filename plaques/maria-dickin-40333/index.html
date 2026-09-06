@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Maria Dickin blue plaque in Hackney — London Uncovered">
 <meta name="twitter:description" content="“Maria Dickin 1870-1951 Promoter of animal welfare and founder of PDSA was born here” Blue plaque at 41 Cassland Road, Hackney. Erected 2015.">
 <meta name="twitter:image" content="https://farm1.staticflickr.com/697/21906627463_73968f0015_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Maria Dickin">
+<meta name="twitter:image:alt" content="The London blue plaque to Maria Dickin">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Maria Dickin"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.54263, -0.04737</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=40333">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=40333" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Maria_Dickin" rel="noopener nofollow" target="_blank">Wikipedia</a>

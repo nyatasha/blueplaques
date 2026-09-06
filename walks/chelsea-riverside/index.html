@@ -18,6 +18,10 @@
 <meta name="twitter:title" content="Chelsea Riverside — a self-guided blue plaque walk — London Uncovered">
 <meta name="twitter:description" content="Oscar Wilde, Bob Marley and a mile of the Thames. A self-guided London walk past 8 blue plaques in Chelsea — about 1.7 km and 21 minutes on foot.">
 <meta name="twitter:image" content="https://nyatasha.github.io/blueplaques/assets/social/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Chelsea Riverside — a self-guided blue plaque walk in Chelsea, SW3 &amp; SW10, 8 stops">
+<meta name="twitter:image:alt" content="Chelsea Riverside — a self-guided blue plaque walk in Chelsea, SW3 &amp; SW10, 8 stops">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -83,8 +87,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Walks",
+      "item": "https://nyatasha.github.io/blueplaques/walks/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Chelsea Riverside"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="walk">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -110,7 +140,9 @@
       <p class="walk-intro">Cheyne Walk and the streets running off it hold one of the finest runs of plaques in London, and they sit almost in a straight line along the river. This walk covers a mile between Tite Street, where Oscar Wilde wrote his plays and was arrested, and the far end of Cheyne Walk. On the way it passes the house Bob Marley rented while recording Exodus, the room where penicillin&#x27;s discoverer lived, and the stretch of riverfront that Whistler painted.</p>
       <p class="walk-hint">Start near Sloane Square; finish near Chelsea Harbour or walk back along the Embankment.</p>
 
-      <a class="sp-cta" href="../../?walk=chelsea-riverside">Follow this walk on the map</a>
+      <a class="sp-cta" href="../../?walk=chelsea-riverside" data-track="to-app">Follow this
+         walk on the map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this walk</button>
       <p class="walk-links">
         <a class="sp-link" href="https://www.google.com/maps/dir/?api=1&amp;origin=51.48580,-0.16090&amp;destination=51.48124,-0.17685&amp;waypoints=51.48415%2C-0.16416|51.48391%2C-0.16580|51.48465%2C-0.16793|51.48290%2C-0.17244|51.48202%2C-0.17391|51.48196%2C-0.17418&amp;travelmode=walking" rel="noopener nofollow" target="_blank">Open the
         route in Google Maps</a>

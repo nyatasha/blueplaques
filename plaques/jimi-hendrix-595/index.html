@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Jimi Hendrix blue plaque in Mayfair — London Uncovered">
 <meta name="twitter:description" content="“Jimi Hendrix 1942-1970 guitarist and songwriter lived here 1968-1969” Blue plaque at 23 Brook Street, Mayfair, Westminster, W1. Erected 1997.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/JIMI_HENDRIX_1942-1970_Guitarist_and_Songwriter_lived_here_1968-1969.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Jimi Hendrix">
+<meta name="twitter:image:alt" content="The London blue plaque to Jimi Hendrix">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Music",
+      "item": "https://nyatasha.github.io/blueplaques/categories/music/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Jimi Hendrix"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.51302, -0.14609</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=595">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=595" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Jimi_Hendrix" rel="noopener nofollow" target="_blank">Wikipedia</a>

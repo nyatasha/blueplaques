@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Charles Eamer Kempe blue plaque in Westminster — London Uncovered">
 <meta name="twitter:description" content="“Charles Eamer Kempe 1837-1907 stained glass artist lived and worked here” Blue plaque at 37 Nottingham Place, Westminster, W1. Erected 1994.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/CHARLES_EAMER_KEMPE_1837-1907_Stained_glass_artist_lived_and_worked_here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Charles Eamer Kempe">
+<meta name="twitter:image:alt" content="The London blue plaque to Charles Eamer Kempe">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Art & Design",
+      "item": "https://nyatasha.github.io/blueplaques/categories/art-design/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Charles Eamer Kempe"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.52210, -0.15319</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=512">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=512" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Charles_Eamer_Kempe" rel="noopener nofollow" target="_blank">Wikipedia</a>

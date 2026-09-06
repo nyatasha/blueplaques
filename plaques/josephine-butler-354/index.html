@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Josephine Butler blue plaque in Wimbledon Common — London Uncovered">
 <meta name="twitter:description" content="“Josephine Butler 1828-1906 champion of women&#x27;s rights lived here 1890-1893” Blue plaque at 8 North View, Wimbledon Common, SW19 Merton. Erected 2001.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/Josephine_BUTLER_1828-1906_Champion_of_Women%27s_Rights_lived_here_1890-1893.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Josephine Butler">
+<meta name="twitter:image:alt" content="The London blue plaque to Josephine Butler">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Josephine Butler"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.42730, -0.23091</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=354">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=354" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Josephine_Butler" rel="noopener nofollow" target="_blank">Wikipedia</a>

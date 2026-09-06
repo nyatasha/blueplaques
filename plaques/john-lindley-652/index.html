@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="John Lindley blue plaque in The Avenue — London Uncovered">
 <meta name="twitter:description" content="“John Lindley 1799-1865 botanist and pioneer orchidologist lived here from 1836 and died here” Blue plaque at Bedford House, The Avenue, W4 Ealing.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/JOHN_LINDLEY_1799-1865_Botanist_and_Pioneer_Orchidologist_lived_here_from_1836_and_died_here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to John Lindley">
+<meta name="twitter:image:alt" content="The London blue plaque to John Lindley">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Science & Technology",
+      "item": "https://nyatasha.github.io/blueplaques/categories/science-technology/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "John Lindley"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.49680, -0.25585</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=652">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=652" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/John_Lindley" rel="noopener nofollow" target="_blank">Wikipedia</a>

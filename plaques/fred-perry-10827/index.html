@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Fred Perry blue plaque in Ealing — London Uncovered">
 <meta name="twitter:description" content="“Fred Perry 1909-1995 tennis champion lived here 1919-1935” Blue plaque at 223 Pitshanger Lane, Ealing. Erected 2012.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/FRED_PERRY_1909-1995_Tennis_Champion_lived_here_1919-1935.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Fred Perry">
+<meta name="twitter:image:alt" content="The London blue plaque to Fred Perry">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Sport",
+      "item": "https://nyatasha.github.io/blueplaques/categories/sport/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Fred Perry"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.52681, -0.30652</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=10827">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=10827" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Fred_Perry" rel="noopener nofollow" target="_blank">Wikipedia</a>

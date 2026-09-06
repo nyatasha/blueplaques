@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Thomas Wakley blue plaque in London — London Uncovered">
 <meta name="twitter:description" content="“Thomas Wakley 1795-1862 reformer and founder of &#x27;The Lancet&#x27; lived here” Blue plaque at 35 Bedford Square. Erected 1962.">
 <meta name="twitter:image" content="https://farm5.staticflickr.com/4853/32702419218_f3607bd427_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Thomas Wakley">
+<meta name="twitter:image:alt" content="The London blue plaque to Thomas Wakley">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Thomas Wakley"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.51837, -0.13073</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=532">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=532" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Thomas_Wakley" rel="noopener nofollow" target="_blank">Wikipedia</a>

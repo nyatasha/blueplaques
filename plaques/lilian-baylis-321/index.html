@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Lilian Baylis blue plaque in Lambeth — London Uncovered">
 <meta name="twitter:description" content="“Lilian Baylis 1874-1937 manager of the Old Vic and Sadlers Wells Theatres lived and died here” Blue plaque at 27 Stockwell Park Road, Lambeth, SW9.">
 <meta name="twitter:image" content="https://farm1.staticflickr.com/403/19444913293_b9e1814614_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Lilian Baylis">
+<meta name="twitter:image:alt" content="The London blue plaque to Lilian Baylis">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Film & Theatre",
+      "item": "https://nyatasha.github.io/blueplaques/categories/film-theatre/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Lilian Baylis"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.47340, -0.11755</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=321">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=321" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Lilian_Baylis" rel="noopener nofollow" target="_blank">Wikipedia</a>

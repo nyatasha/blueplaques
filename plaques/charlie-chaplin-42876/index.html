@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Charlie Chaplin blue plaque in Brixton Road — London Uncovered">
 <meta name="twitter:description" content="“Charlie Chaplin 1889-1977 Actor and Film-maker lived here in Flat 15 1908-1910” Blue plaque at Glenshaw Mansions, Brixton Road. Erected 2017.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/CHARLIE_CHAPLIN_1889-1977_Actor_and_Film-maker_lived_here_in_Flat_15_1908-1910.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Charlie Chaplin">
+<meta name="twitter:image:alt" content="The London blue plaque to Charlie Chaplin">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Film & Theatre",
+      "item": "https://nyatasha.github.io/blueplaques/categories/film-theatre/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Charlie Chaplin"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.47826, -0.11217</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=42876">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=42876" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Charlie_Chaplin" rel="noopener nofollow" target="_blank">Wikipedia</a>

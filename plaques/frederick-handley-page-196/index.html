@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Frederick Handley Page blue plaque in Westminster — London Uncovered">
 <meta name="twitter:description" content="“Sir Frederick Handley Page 1885-1962 aircraft designer and manufacturer lived here in Flat 3” Blue plaque at 18 Grosvenor Square, Westminster, W1.">
 <meta name="twitter:image" content="https://farm1.staticflickr.com/585/31837000476_ac07b681b2_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Frederick Handley Page">
+<meta name="twitter:image:alt" content="The London blue plaque to Frederick Handley Page">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Science & Technology",
+      "item": "https://nyatasha.github.io/blueplaques/categories/science-technology/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Frederick Handley Page"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.51208, -0.15223</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=196">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=196" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Frederick_Handley_Page" rel="noopener nofollow" target="_blank">Wikipedia</a>

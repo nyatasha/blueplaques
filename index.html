@@ -89,6 +89,14 @@
 
 <div id="app">
 
+  <!-- The app's only <h1>. The brand bar reads as a logo, not a heading, and
+       shrinking it to fit a phone is a visual decision that should not also
+       decide the document outline — so the heading is stated once here, where
+       a crawler and a screen reader both find it, and shown by the brand bar.
+       The <h1>s inside the Walks, Quest and My London screens are scoped to
+       those sections. -->
+  <h1 class="sr-only">London Uncovered — an interactive map of London's blue plaques</h1>
+
   <div id="map" role="application" aria-label="Map of London blue plaques"></div>
 
   <div id="shell">

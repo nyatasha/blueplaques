@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Harold Abrahams blue plaque in 2 Hodford Road — London Uncovered">
 <meta name="twitter:description" content="“Harold Abrahams 1899-1978 Olympic athlete lived here” Blue plaque at Hodford Lodge, 2 Hodford Road, Barnet, NW11. Erected 2007.">
 <meta name="twitter:image" content="https://farm9.staticflickr.com/8676/16617110875_1e88678cc7_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Harold Abrahams">
+<meta name="twitter:image:alt" content="The London blue plaque to Harold Abrahams">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Sport",
+      "item": "https://nyatasha.github.io/blueplaques/categories/sport/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Harold Abrahams"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.56600, -0.19675</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=437">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=437" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Harold_Abrahams" rel="noopener nofollow" target="_blank">Wikipedia</a>

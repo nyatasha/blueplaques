@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="John Robert Godley blue plaque in Marylebone — London Uncovered">
 <meta name="twitter:description" content="“John Robert Godley 1814–1861 Founder of Canterbury New Zealand lived and died here” Blue plaque at 48 Gloucester Place, Marylebone, W1.">
 <meta name="twitter:image" content="https://farm8.staticflickr.com/7538/16101319231_eb94f96b64_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to John Robert Godley">
+<meta name="twitter:image:alt" content="The London blue plaque to John Robert Godley">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "John Robert Godley"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -79,7 +107,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.51808, -0.15789</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=9147">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=9147" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/John_Robert_Godley" rel="noopener nofollow" target="_blank">Wikipedia</a>

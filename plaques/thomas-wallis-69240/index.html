@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Thomas Wallis blue plaque in 15 Elizabeth Street — London Uncovered">
 <meta name="twitter:description" content="“The firm headed by Thomas Wallis 1872–1953 Architect designed this building and was based here 1933–1946”">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/The_firm_headed_by_THOMAS_WALLIS_1872%E2%80%931953_Architect_designed_this_building_and_was_based_here_1933%E2%80%931946.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Thomas Wallis">
+<meta name="twitter:image:alt" content="The London blue plaque to Thomas Wallis">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -46,8 +48,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Architecture",
+      "item": "https://nyatasha.github.io/blueplaques/categories/architecture/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Thomas Wallis"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -79,7 +107,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.49293, -0.14907</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=69240">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=69240" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://openplaques.org/plaques/69240" rel="noopener nofollow" target="_blank">OpenPlaques record</a>

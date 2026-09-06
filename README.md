@@ -161,7 +161,7 @@ python3 scripts/generate_seo_pages.py
 python3 scripts/make_social_image.py
 bash tests/run.sh
 git add data/plaques.geojson plaques categories walks sitemap.xml index.html \
-  assets/social/og-cover.png \
+  404.html assets/social/og-cover.png \
   && git commit -m "refresh plaque data"
 ```
 
@@ -376,10 +376,12 @@ js/
   sheet.js                     bottom-sheet controller
   ui.js / icons.js             DOM helpers, toasts, inline SVG icons
   analytics.js                 provider-agnostic trackEvent()
+  static-page.js               the generated pages' runtime — analytics and Share
 data/iconic-notes.json         hand-written notes for Iconic plaques
 data/walks.json                curated walk definitions — prose plus ordered plaque ids
 scripts/                       Python data pipeline
-tests/                         logic + smoke suites, CDP client
+tests/                         logic, SEO, analytics and smoke suites, CDP client
+404.html                       generated; served by Pages for any unknown path
 data/plaques.geojson           the dataset
 ```
 
@@ -446,6 +448,12 @@ Other console helpers on `__lu`: `progress()`, `events()`, `open(id)`,
 Events go to [GoatCounter](https://nyatasha.goatcounter.com). Nothing is stored
 on the visitor's device — no cookies, no `localStorage`, no fingerprint — so no
 consent banner is required, and no coordinates or plaque ids are ever sent.
+
+The generated static pages are measured too, through the same adapter:
+`js/static-page.js` is their whole runtime, and it also powers their Share
+button. `tests/analytics.test.py` reads the adapter and every call site and
+fails if they disagree — an event with no case of its own would otherwise send
+successfully and silently lose whichever property made it worth recording.
 
 To check the integration locally, GoatCounter ignores `localhost` unless asked:
 

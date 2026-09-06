@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="flying bomb (V1/V2) blue plaque in Grove Road — London Uncovered">
 <meta name="twitter:description" content="“The first flying bomb on London fell here 13 June 1944” Blue plaque at Railway Bridge, Grove Road, Bow, Tower Hamlets, E3. Erected 1988.">
 <meta name="twitter:image" content="https://farm4.staticflickr.com/3913/14923473079_393e92888e_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to flying bomb (V1/V2)">
+<meta name="twitter:image:alt" content="The London blue plaque to flying bomb (V1/V2)">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -46,8 +48,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Other",
+      "item": "https://nyatasha.github.io/blueplaques/categories/other/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "flying bomb (V1/V2)"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -78,7 +106,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.52780, -0.03735</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=530">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=530" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://openplaques.org/plaques/530" rel="noopener nofollow" target="_blank">OpenPlaques record</a>

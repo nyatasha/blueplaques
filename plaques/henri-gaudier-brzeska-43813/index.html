@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Henri Gaudier-Brzeska blue plaque in Putney — London Uncovered">
 <meta name="twitter:description" content="“Henri Gaudier-Brzeska 1891-1915 Sculptor and Artist worked here 1913-1914” Blue plaque at 25 Winthorpe Road, Putney. Erected 2017.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/HENRI_GAUDIER-BRZESKA_1891-1915_Sculptor_and_Artist_worked_here_1913-1914.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Henri Gaudier-Brzeska">
+<meta name="twitter:image:alt" content="The London blue plaque to Henri Gaudier-Brzeska">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Art & Design",
+      "item": "https://nyatasha.github.io/blueplaques/categories/art-design/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Henri Gaudier-Brzeska"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.46190, -0.21050</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=43813">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=43813" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Henri_Gaudier-Brzeska" rel="noopener nofollow" target="_blank">Wikipedia</a>

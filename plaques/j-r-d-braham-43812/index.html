@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="J. R. D. Braham blue plaque in London — London Uncovered">
 <meta name="twitter:description" content="“Wing Commander J. R. D. &#x27;Bob&#x27; Braham 1920-1974 RAF Fighter Pilot lived here as a boy” Blue plaque at 139 Hendon Way.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/Wing_Commander_J.R.D._&#x27;BOB&#x27;_BRAHAM_1920-1974_RAF_Fighter_Pilot_lived_here_as_a_boy.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to J. R. D. Braham">
+<meta name="twitter:image:alt" content="The London blue plaque to J. R. D. Braham">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -46,8 +48,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "J. R. D. Braham"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -77,7 +105,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.56787, -0.20722</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=43812">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=43812" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://openplaques.org/plaques/43812" rel="noopener nofollow" target="_blank">OpenPlaques record</a>

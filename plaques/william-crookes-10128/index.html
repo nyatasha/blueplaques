@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="William Crookes blue plaque in Notting Hill — London Uncovered">
 <meta name="twitter:description" content="“Sir William Crookes 1832-1919 scientist lived here from 1880 until his death” Blue plaque at 7 Kensington Park Gardens, Notting Hill, W11. Erected 1967.">
 <meta name="twitter:image" content="https://farm66.staticflickr.com/65535/49266173203_ace7c5cb0d_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to William Crookes">
+<meta name="twitter:image:alt" content="The London blue plaque to William Crookes">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Science & Technology",
+      "item": "https://nyatasha.github.io/blueplaques/categories/science-technology/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "William Crookes"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.51139, -0.20259</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=10128">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=10128" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/William_Crookes" rel="noopener nofollow" target="_blank">Wikipedia</a>

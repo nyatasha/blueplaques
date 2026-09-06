@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Elizabeth Gaskell bronze plaque in Kensington and Chelsea — London Uncovered">
 <meta name="twitter:description" content="“Mrs Elizabeth Gaskell 1810-1865 novelist born here” Bronze plaque at 93 Cheyne Walk, Kensington and Chelsea, SW10. Erected 1913.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/Mrs_GASKELL_(1810-1865)_Novelist_Born_Here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Elizabeth Gaskell">
+<meta name="twitter:image:alt" content="The London blue plaque to Elizabeth Gaskell">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Writers & Literature",
+      "item": "https://nyatasha.github.io/blueplaques/categories/writers-literature/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Elizabeth Gaskell"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.48202, -0.17391</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=380">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=380" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Elizabeth_Gaskell" rel="noopener nofollow" target="_blank">Wikipedia</a>

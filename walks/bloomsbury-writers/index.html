@@ -18,6 +18,10 @@
 <meta name="twitter:title" content="Bloomsbury Writers &amp; Thinkers — a self-guided blue plaque walk — London Uncovered">
 <meta name="twitter:description" content="Dickens, Darwin and the Bloomsbury Group in one square mile. A self-guided London walk past 8 blue plaques in Bloomsbury &amp; Fitzrovia — about 3.0 km and 38…">
 <meta name="twitter:image" content="https://nyatasha.github.io/blueplaques/assets/social/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bloomsbury Writers &amp; Thinkers — a self-guided blue plaque walk in Bloomsbury &amp; Fitzrovia, WC1, 8 stops">
+<meta name="twitter:image:alt" content="Bloomsbury Writers &amp; Thinkers — a self-guided blue plaque walk in Bloomsbury &amp; Fitzrovia, WC1, 8 stops">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -83,8 +87,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Walks",
+      "item": "https://nyatasha.github.io/blueplaques/walks/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Bloomsbury Writers & Thinkers"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="walk">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -110,7 +140,9 @@
       <p class="walk-intro">Bloomsbury has the densest concentration of blue plaques in London, and they are almost all people who wrote, argued or discovered something. This walk starts at the Doughty Street house where Charles Dickens wrote Oliver Twist, crosses to the Gower Street terrace where the Pre-Raphaelite Brotherhood was founded, runs through the Georgian squares the Bloomsbury Group made their own, and ends where Virginia Woolf was living when those Thursday evenings began. Charles Darwin&#x27;s site, where he wrote up the Beagle voyage, is on the way.</p>
       <p class="walk-hint">Start at Russell Square or Chancery Lane; finish at Warren Street.</p>
 
-      <a class="sp-cta" href="../../?walk=bloomsbury-writers">Follow this walk on the map</a>
+      <a class="sp-cta" href="../../?walk=bloomsbury-writers" data-track="to-app">Follow this
+         walk on the map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this walk</button>
       <p class="walk-links">
         <a class="sp-link" href="https://www.google.com/maps/dir/?api=1&amp;origin=51.52347,-0.11631&amp;destination=51.52262,-0.14048&amp;waypoints=51.51989%2C-0.12965|51.52001%2C-0.13011|51.52320%2C-0.13084|51.52414%2C-0.12988|51.52441%2C-0.13013|51.52322%2C-0.13326&amp;travelmode=walking" rel="noopener nofollow" target="_blank">Open the
         route in Google Maps</a>

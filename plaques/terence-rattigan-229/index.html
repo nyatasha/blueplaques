@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Terence Rattigan blue plaque in Kensington and Chelsea — London Uncovered">
 <meta name="twitter:description" content="“Sir Terence Rattigan 1911-1977 playwright was born here” Blue plaque at 100 Cornwall Gardens, Kensington and Chelsea, SW7. Erected 2005.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/Sir_TERENCE_RATTIGAN_1911-1977_Playwright_was_born_here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Terence Rattigan">
+<meta name="twitter:image:alt" content="The London blue plaque to Terence Rattigan">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Writers & Literature",
+      "item": "https://nyatasha.github.io/blueplaques/categories/writers-literature/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Terence Rattigan"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.49670, -0.18835</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=229">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=229" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Terence_Rattigan" rel="noopener nofollow" target="_blank">Wikipedia</a>

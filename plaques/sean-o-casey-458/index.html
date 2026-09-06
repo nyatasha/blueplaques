@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Sean O&#x27;Casey blue plaque in Prince of Wales Drive — London Uncovered">
 <meta name="twitter:description" content="“Sean O&#x27;Casey 1880-1964 playwright lived here at flat No. 49”">
 <meta name="twitter:image" content="https://farm8.staticflickr.com/7778/18223456838_d303a300aa_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Sean O&#x27;Casey">
+<meta name="twitter:image:alt" content="The London blue plaque to Sean O&#x27;Casey">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Writers & Literature",
+      "item": "https://nyatasha.github.io/blueplaques/categories/writers-literature/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Sean O'Casey"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.47520, -0.15814</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=458">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=458" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Se%C3%A1n_O&#x27;Casey" rel="noopener nofollow" target="_blank">Wikipedia</a>

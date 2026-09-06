@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Bill Brandt blue plaque in Campden Hill — London Uncovered">
 <meta name="twitter:description" content="“Bill Brandt 1904-1983 Photographer lived here” Blue plaque at 4 Airlie Gardens, Campden Hill. Erected 2011.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/BILL_BRANDT_1904-1983_Photographer_lived_here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Bill Brandt">
+<meta name="twitter:image:alt" content="The London blue plaque to Bill Brandt">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Art & Design",
+      "item": "https://nyatasha.github.io/blueplaques/categories/art-design/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Bill Brandt"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.50520, -0.19824</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=4860">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=4860" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Bill_Brandt" rel="noopener nofollow" target="_blank">Wikipedia</a>

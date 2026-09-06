@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Red House, Bexleyheath blue plaque in Bexleyheath — London Uncovered">
 <meta name="twitter:description" content="“Red House built in 1859-60 by Philip Webb architect for William Morris poet and artist who lived here…” Blue plaque at Red House Lane, Bexleyheath.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/RED_HOUSE_built_in_1859-1860_by_Philip_Webb_architect_for_WILLIAM_MORRIS_poet_and_artist_who_lived_here_1860-1865.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Red House, Bexleyheath">
+<meta name="twitter:image:alt" content="The London blue plaque to Red House, Bexleyheath">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Writers & Literature",
+      "item": "https://nyatasha.github.io/blueplaques/categories/writers-literature/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Red House, Bexleyheath"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.45560, 0.13028</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=433">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=433" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Red_House,_Bexleyheath" rel="noopener nofollow" target="_blank">Wikipedia</a>

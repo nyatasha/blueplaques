@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Anna Freud blue plaque in London — London Uncovered">
 <meta name="twitter:description" content="“Anna Freud 1895-1982 pioneer of child psychoanalysis lived here 1938-1982” Blue plaque at 20 Maresfield Gardens.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/ANNA_FREUD_1895-1982_Pioneer_of_Child_Psychoanalysis_lived_here_1938-1982.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Anna Freud">
+<meta name="twitter:image:alt" content="The London blue plaque to Anna Freud">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Science & Technology",
+      "item": "https://nyatasha.github.io/blueplaques/categories/science-technology/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Anna Freud"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -79,7 +107,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.54831, -0.17755</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=2194">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=2194" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Anna_Freud" rel="noopener nofollow" target="_blank">Wikipedia</a>

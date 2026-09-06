@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Lincoln Stanhope Wainright blue plaque in Wapping Lane — London Uncovered">
 <meta name="twitter:description" content="“Lincoln Stanhope Wainright (1847-1929), Vicar of St Peter&#x27;s, London Docks, lived here 1884-1929.”">
 <meta name="twitter:image" content="https://farm4.staticflickr.com/3850/15251374312_fa5d1439dd_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Lincoln Stanhope Wainright">
+<meta name="twitter:image:alt" content="The London blue plaque to Lincoln Stanhope Wainright">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -46,8 +48,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Lincoln Stanhope Wainright"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -79,7 +107,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.50610, -0.05864</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=418">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=418" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://openplaques.org/plaques/418" rel="noopener nofollow" target="_blank">OpenPlaques record</a>

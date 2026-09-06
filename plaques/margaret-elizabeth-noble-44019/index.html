@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Margaret Elizabeth Noble blue plaque in Wimbledon — London Uncovered">
 <meta name="twitter:description" content="“Sister Nivedita (Margaret Noble) 1867-1911 Educationalist and Campaigner for Indian Independence lived here” Blue plaque at 21A High Street, Wimbledon.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/SISTER_NIVEDITA_(MARGARET_NOBLE)_1867-1911_Educationalist_and_Campaigner_for_Indian_Independence_lived_here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Margaret Elizabeth Noble">
+<meta name="twitter:image:alt" content="The London blue plaque to Margaret Elizabeth Noble">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Margaret Elizabeth Noble"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.42507, -0.21693</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=44019">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=44019" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Sister_Nivedita" rel="noopener nofollow" target="_blank">Wikipedia</a>

@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="A. E. Housman blue plaque in 17 North Road — London Uncovered">
 <meta name="twitter:description" content="“A. E. Housman 1859-1936 poet and scholar wrote “A Shropshire Lad” while living here” Blue plaque at Byron Cottage, 17 North Road, Highgate, N6 Haringey.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/A.E._HOUSMAN_1859-1936_POET_and_SCHOLAR_wrote_A_SHROPSHIRE_LAD_while_living_here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to A. E. Housman">
+<meta name="twitter:image:alt" content="The London blue plaque to A. E. Housman">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Writers & Literature",
+      "item": "https://nyatasha.github.io/blueplaques/categories/writers-literature/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "A. E. Housman"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.57230, -0.14990</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=239">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=239" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/A._E._Housman" rel="noopener nofollow" target="_blank">Wikipedia</a>

@@ -7,10 +7,12 @@
 # 1. Logic suite  — runs the game rules in JavaScriptCore (Safari's engine).
 # 2. SEO suite    — generates the static plaque pages into a temporary
 #                   directory and asserts on the HTML and the sitemap.
-# 3. Smoke suite  — drives the real app in headless Chrome and asserts on the
+# 3. Analytics    — reads the event adapter and every call site and asserts
+#                   the two agree, and that no path can identify anyone.
+# 4. Smoke suite  — drives the real app in headless Chrome and asserts on the
 #                   DOM a user would actually see.
 #
-# All three are dependency-free: JavaScriptCore ships with macOS, and both the
+# All four are dependency-free: JavaScriptCore ships with macOS, and both the
 # SEO suite and the DevTools client in tests/cdp.py are plain Python 3.
 
 set -uo pipefail
@@ -30,6 +32,10 @@ fi
 echo
 echo "── seo suite ────────────────────────────────────────────────"
 python3 tests/seo.test.py || status=1
+
+echo
+echo "── analytics suite ──────────────────────────────────────────"
+python3 tests/analytics.test.py || status=1
 
 echo
 echo "── smoke suite ──────────────────────────────────────────────"

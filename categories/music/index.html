@@ -18,6 +18,10 @@
 <meta name="twitter:title" content="Music — London blue plaques — London Uncovered">
 <meta name="twitter:description" content="All 70 London blue plaques for Music, including Bob Marley, Freddie Mercury, Benjamin Britten, Béla Bartók, Edvard Grieg, Edward Elgar.">
 <meta name="twitter:image" content="https://nyatasha.github.io/blueplaques/assets/social/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Music blue plaques in London on London Uncovered">
+<meta name="twitter:image:alt" content="Music blue plaques in London on London Uncovered">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -36,8 +40,28 @@
   }
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Music"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="category">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -54,7 +78,9 @@
     <p class="sp-eyebrow">London blue plaques</p>
     <h1>Music</h1>
     <p class="cat-intro">70 of the 1,001 English Heritage blue plaques on this map are classified as Music. The earliest was erected in 1909, the most recent in 2024. They are most concentrated in Westminster, Camden, Kensington and Chelsea and Hampstead. Every name below links to that plaque&#x27;s page, with its inscription, address and location on the map.</p>
-    <a class="sp-cta" href="../../">Explore them on the interactive map</a>
+    <a class="sp-cta" href="../../?category=music" data-track="to-app">Explore
+       Music on the interactive map</a>
+    <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
     <ul class="cat-list">
       <li class="cat-item">
@@ -338,6 +364,14 @@
         <span class="cat-meta">1916–1999 · 65 Chester Square · erected 2023</span>
       </li>
     </ul>
+
+    <nav class="cat-nav" aria-labelledby="walks">
+      <h2 id="walks">Or follow a self-guided walk</h2>
+      <a href="../../walks/bloomsbury-writers/">Bloomsbury Writers &amp; Thinkers <span class="cat-nav-n">8 stops</span></a>
+      <a href="../../walks/chelsea-riverside/">Chelsea Riverside <span class="cat-nav-n">8 stops</span></a>
+      <a href="../../walks/mayfair-handel-to-hendrix/">Mayfair: Handel to Hendrix <span class="cat-nav-n">7 stops</span></a>
+      <a href="../../walks/hampstead-village/">Hampstead Village <span class="cat-nav-n">8 stops</span></a>
+    </nav>
 
     <nav class="cat-nav" aria-labelledby="other-cats">
       <h2 id="other-cats">Other collections</h2>

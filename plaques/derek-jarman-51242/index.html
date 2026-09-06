@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Derek Jarman blue plaque in 36 Shad Thames — London Uncovered">
 <meta name="twitter:description" content="“Derek Jarman 1942-1994 Film-maker, artist and gay rights activist lived and worked here” Blue plaque at Butler&#x27;s Wharf Building, 36 Shad Thames.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/Derek_Jarman_1942-1994_Film-maker,_artist_and_gay_rights_activist_lived_and_worked_here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Derek Jarman">
+<meta name="twitter:image:alt" content="The London blue plaque to Derek Jarman">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Film & Theatre",
+      "item": "https://nyatasha.github.io/blueplaques/categories/film-theatre/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Derek Jarman"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.50346, -0.07283</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=51242">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=51242" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Derek_Jarman" rel="noopener nofollow" target="_blank">Wikipedia</a>

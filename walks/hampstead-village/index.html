@@ -18,6 +18,10 @@
 <meta name="twitter:title" content="Hampstead Village — a self-guided blue plaque walk — London Uncovered">
 <meta name="twitter:description" content="Painters and poets on the hill, ending at the Heath. A self-guided London walk past 8 blue plaques in Hampstead — about 2.3 km and 28 minutes on foot.">
 <meta name="twitter:image" content="https://nyatasha.github.io/blueplaques/assets/social/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Hampstead Village — a self-guided blue plaque walk in Hampstead, NW3, 8 stops">
+<meta name="twitter:image:alt" content="Hampstead Village — a self-guided blue plaque walk in Hampstead, NW3, 8 stops">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -83,8 +87,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Walks",
+      "item": "https://nyatasha.github.io/blueplaques/walks/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Hampstead Village"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="walk">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -110,7 +140,9 @@
       <p class="walk-intro">Hampstead was a village outside London when Keats and Constable lived here, and the street plan still is one — narrow, steep and walkable. This walk links eight plaques in a loop around the old village, from the house where Keats wrote Ode to a Nightingale to Well Walk, where Constable lived and painted the Heath. It is the shortest of these walks and the hilliest, and the Heath is at the end of it.</p>
       <p class="walk-hint">Start at Hampstead Heath station; finish on Well Walk, a few minutes from the Heath itself.</p>
 
-      <a class="sp-cta" href="../../?walk=hampstead-village">Follow this walk on the map</a>
+      <a class="sp-cta" href="../../?walk=hampstead-village" data-track="to-app">Follow this
+         walk on the map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this walk</button>
       <p class="walk-links">
         <a class="sp-link" href="https://www.google.com/maps/dir/?api=1&amp;origin=51.55561,-0.16794&amp;destination=51.55890,-0.17340&amp;waypoints=51.55639%2C-0.16950|51.55530%2C-0.17196|51.55530%2C-0.17554|51.55800%2C-0.17970|51.55931%2C-0.17942|51.56086%2C-0.17508&amp;travelmode=walking" rel="noopener nofollow" target="_blank">Open the
         route in Google Maps</a>

@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Tyburn Tree grey plaque in London — London Uncovered">
 <meta name="twitter:description" content="“The site of Tyburn Tree” Grey plaque at Edgware Road. Erected 1965.">
 <meta name="twitter:image" content="https://farm4.staticflickr.com/3841/15030476600_40c0d367f2_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Tyburn Tree">
+<meta name="twitter:image:alt" content="The London blue plaque to Tyburn Tree">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Other",
+      "item": "https://nyatasha.github.io/blueplaques/categories/other/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Tyburn Tree"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -79,7 +107,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.51332, -0.16036</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=1644">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=1644" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/The_Tyburn_Tree_(Dark_London)" rel="noopener nofollow" target="_blank">Wikipedia</a>

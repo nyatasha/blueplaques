@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Kenneth Clark blue plaque in Marylebone — London Uncovered">
 <meta name="twitter:description" content="“Sir Kenneth Clark 1903–1983 Art historian and broadcaster lived here 1934–1939” Blue plaque at 30 Portland Place, Marylebone. Erected 2021.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/Sir_KENNETH_CLARK_1903%E2%80%931983_Art_historian_and_broadcaster_lived_here_1934%E2%80%931939.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Kenneth Clark">
+<meta name="twitter:image:alt" content="The London blue plaque to Kenneth Clark">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Art & Design",
+      "item": "https://nyatasha.github.io/blueplaques/categories/art-design/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Kenneth Clark"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.51961, -0.14445</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=55642">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=55642" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Kenneth_Clark" rel="noopener nofollow" target="_blank">Wikipedia</a>

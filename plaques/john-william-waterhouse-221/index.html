@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="John William Waterhouse blue plaque in Westminster — London Uncovered">
 <meta name="twitter:description" content="“John William Waterhouse 1849-1917 painter lived here 1900-1917” Blue plaque at 10 Hall Road, Westminster, NW8. Erected 2002.">
 <meta name="twitter:image" content="https://farm5.staticflickr.com/4123/5026634950_626f5ed212_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to John William Waterhouse">
+<meta name="twitter:image:alt" content="The London blue plaque to John William Waterhouse">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Art & Design",
+      "item": "https://nyatasha.github.io/blueplaques/categories/art-design/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "John William Waterhouse"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.52960, -0.17887</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=221">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=221" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/John_William_Waterhouse" rel="noopener nofollow" target="_blank">Wikipedia</a>

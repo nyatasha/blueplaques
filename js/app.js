@@ -8,7 +8,8 @@
  */
 
 import { CATEGORY_BY_SLUG, VERIFY_RADIUS_M, VERIFY_ANYWHERE_PARAM, VERIFY_ANYWHERE_VALUE, MILESTONES,
-         LOCATION_INVITE_DELAY_MS, PLAQUE_PARAM, WALK_PARAM } from './config.js';
+         LOCATION_INVITE_DELAY_MS, PLAQUE_PARAM, WALK_PARAM,
+         CATEGORY_PARAM } from './config.js';
 import { backupUrl, pendingRestore, clearRestoreFromUrl, COMFORTABLE_URL_LENGTH } from './backup.js';
 import { loadPlaques } from './data.js';
 import * as store from './state.js';
@@ -20,7 +21,8 @@ import { initFilters, openFilters, refreshFilters, activeFilterCount, clearFilte
 import { initPlaqueSheet, openPlaque, renderPlaqueSheet, currentPlaqueId } from './plaque-sheet.js';
 import { initQuestScreen, renderQuest } from './quest-screen.js';
 import { initWalkScreen, renderWalks, showWalk } from './walk-screen.js';
-import { loadWalks, walkBySlug, allWalks } from './walks.js';
+import { loadWalks, walkBySlug, allWalks, walksWithPlaque,
+         walkProgress } from './walks.js';
 import { initMyLondon, renderMyLondon, showSegment } from './mylondon.js';
 import { syncUnlocks } from './achievements.js';
 import { celebrateIconic, loadIconicNotes, noteFor } from './celebrate.js';
@@ -272,6 +274,7 @@ function handleCollect(plaque, wantsVerified) {
     // Bookkeeping happens now; only the toasts wait behind the card.
     const earned = recordUnlocks();
     recordMilestones();
+    recordWalkCompletions(plaque);
     celebrateIconic(plaque, result.xp).then(() => {
       showUnlockToasts(earned);
       warnIfNotPersisted();
@@ -288,6 +291,7 @@ function handleCollect(plaque, wantsVerified) {
     });
     celebrateUnlocks();
     recordMilestones();
+    recordWalkCompletions(plaque);
     warnIfNotPersisted();
     maybeOfferInstall();
   }
@@ -325,6 +329,27 @@ function recordMilestones() {
   if (!newly.length) return;
   newly.forEach(m => trackEvent('milestone', { count: m }));
   store.setSetting('firedMilestones', [...fired, ...newly]);
+}
+
+/**
+ * Announces a walk finished by the discovery just collected.
+ *
+ * A walk has no state of its own — completing one is simply having collected
+ * all of its stops — so there is nothing to watch. This looks only at the
+ * walks the collected plaque is on, which is at most one or two, and records
+ * each announcement in settings so a reload or a restored backup cannot
+ * report the same walk twice. The same shape as recordMilestones(), for the
+ * same reason: GoatCounter cannot aggregate per visitor, so the app has to
+ * say when a threshold is crossed.
+ */
+function recordWalkCompletions(plaque) {
+  const done = store.getSetting('finishedWalks') || [];
+  const newly = walksWithPlaque(plaque.id)
+    .filter(w => !done.includes(w.slug) && walkProgress(w).complete)
+    .map(w => w.slug);
+  if (!newly.length) return;
+  newly.forEach(slug => trackEvent('walk_completed', { walk: slug }));
+  store.setSetting('finishedWalks', [...done, ...newly]);
 }
 
 /**
@@ -786,7 +811,7 @@ function applyRestore(restore) {
 
 /* ── Navigation helpers used by several screens ────────────────────────── */
 
-function openCategoryOnMap(slug) {
+function openCategoryOnMap(slug, { from = 'collection' } = {}) {
   if (!CATEGORY_BY_SLUG.has(slug)) return;
   state.filters.categories.clear();
   state.filters.categories.add(slug);
@@ -796,7 +821,7 @@ function openCategoryOnMap(slug) {
   setTab('map');
   closeAllSheets();
   refresh();
-  trackEvent('category_selected', { category: slug, from: 'collection' });
+  trackEvent('category_selected', { category: slug, from });
   announce(`${CATEGORY_BY_SLUG.get(slug).label} — showing uncollected discoveries.`);
 }
 
@@ -875,6 +900,18 @@ function openDeepLinkedWalk() {
   openWalkOnMap(walk);
   setTab('walks');
   showWalk(walk.slug);
+  return true;
+}
+
+/**
+ * `?category=<slug>` — the deep link the generated static category pages point
+ * back at. Someone arriving from a search result for "London music blue
+ * plaques" lands on the music plaques rather than on all 1,001 of them.
+ */
+function openDeepLinkedCategory() {
+  const slug = new URLSearchParams(location.search).get(CATEGORY_PARAM);
+  if (!slug || !CATEGORY_BY_SLUG.has(slug)) return false;
+  openCategoryOnMap(slug, { from: 'deep-link' });
   return true;
 }
 
@@ -1064,7 +1101,8 @@ async function boot() {
   // would open underneath it.
   const restore = pendingRestore();
   if (restore) offerRestore(restore);
-  else if (!openDeepLinkedPlaque() && !openDeepLinkedWalk()) maybeInviteLocation();
+  else if (!openDeepLinkedPlaque() && !openDeepLinkedWalk()
+           && !openDeepLinkedCategory()) maybeInviteLocation();
   qs('#total-count').textContent = fmtNumber(state.plaques.length);
   // Whatever the boot path settled on — a `?walk=` deep link opens the Walks
   // tab, everything else stays on the map.

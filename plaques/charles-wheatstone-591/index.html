@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Charles Wheatstone blue plaque in Regent&#x27;s Park — London Uncovered">
 <meta name="twitter:description" content="“Sir Charles Wheatstone 1802-1875 scientist and inventor lived here” Blue plaque at 19 Park Crescent, Regent&#x27;s Park. Erected 1981.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/SIR_CHARLES_WHEATSTONE_1802-1875_Scientist_and_Inventor_lived_here_-_post_2020_restoration.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Charles Wheatstone">
+<meta name="twitter:image:alt" content="The London blue plaque to Charles Wheatstone">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Science & Technology",
+      "item": "https://nyatasha.github.io/blueplaques/categories/science-technology/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Charles Wheatstone"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.52281, -0.14689</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=591">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=591" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Charles_Wheatstone" rel="noopener nofollow" target="_blank">Wikipedia</a>

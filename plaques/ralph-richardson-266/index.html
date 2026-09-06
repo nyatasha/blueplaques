@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Ralph Richardson blue plaque in Hampstead Lane — London Uncovered">
 <meta name="twitter:description" content="“Sir Ralph Richardson 1902-1983 actor lived here 1944-1968” Blue plaque at Bedegar&#x27;s Lea, Hampstead Lane, Barnet, NW3. Erected 2009.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/Sir_Ralph_Richardson_1902-1983_actor_lived_here_1944-1968.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Ralph Richardson">
+<meta name="twitter:image:alt" content="The London blue plaque to Ralph Richardson">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Film & Theatre",
+      "item": "https://nyatasha.github.io/blueplaques/categories/film-theatre/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Ralph Richardson"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.57052, -0.17411</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=266">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=266" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Ralph_Richardson" rel="noopener nofollow" target="_blank">Wikipedia</a>

@@ -935,6 +935,111 @@ group('deep link');
   }
 }
 
+/* ── Deep link from a static category page (?category=<slug>) ───────────── */
+group('category deep link');
+{
+  frame.src = 'about:blank';
+  await until(() => !frame.contentWindow?.__lu, { timeout: 8000 });
+  frame.src = '/index.html?category=music';
+  const cat = await until(() => frame.contentWindow?.__lu &&
+                                frame.contentDocument?.getElementById('boot')?.hidden,
+                          { timeout: 40000 });
+  check('the app boots with ?category= in the URL', !!cat);
+
+  if (cat) {
+    const win5 = frame.contentWindow;
+    const doc5 = frame.contentDocument;
+    eq('the map is filtered to that category alone',
+       [...win5.__lu.state.filters.categories].join(','), 'music');
+    eq('it landed on the map, not a screen', doc5.body.dataset.tab, 'map');
+    check('the category chip reads as pressed',
+          doc5.querySelector('#chips .chip[data-cat="music"]')
+              ?.getAttribute('aria-pressed') === 'true');
+    check('the arrival is recorded as a deep link, not a card tap',
+          win5.__lu.events().some(e => e.name === 'category_selected'
+                                    && e.properties.from === 'deep-link'));
+    check('the path sent carries the category',
+          win5.__lu.events().some(e => e.path === 'category/music'));
+  }
+
+  // An unknown slug must leave an ordinary app rather than an empty map.
+  frame.src = 'about:blank';
+  await until(() => !frame.contentWindow?.__lu, { timeout: 8000 });
+  frame.src = '/index.html?category=not-a-category';
+  const okCat = await until(() => frame.contentWindow?.__lu &&
+                                  frame.contentDocument?.getElementById('boot')?.hidden,
+                            { timeout: 40000 });
+  check('an unknown category still boots the app', !!okCat);
+  if (okCat) {
+    eq('no filter was applied',
+       frame.contentWindow.__lu.state.filters.categories.size, 0);
+    check('the map still rendered markers',
+          frame.contentDocument.querySelectorAll('.leaflet-marker-icon').length > 10);
+  }
+}
+
+/* ── The walk funnel: opened → started → completed ───────────────────────── */
+group('walk analytics');
+{
+  frame.src = 'about:blank';
+  await until(() => !frame.contentWindow?.__lu, { timeout: 8000 });
+  frame.src = '/index.html';
+  const app = await until(() => frame.contentWindow?.__lu &&
+                                frame.contentDocument?.getElementById('boot')?.hidden,
+                          { timeout: 40000 });
+  check('the app booted for the walk checks', !!app);
+
+  if (app) {
+    const win6 = frame.contentWindow;
+    const doc6 = frame.contentDocument;
+    const walk = win6.__lu.walks()[0];
+    check('there is a walk to follow', !!walk);
+
+    // Nothing has been touched yet, so the map event is still unfired.
+    check('no map interaction is claimed before one happens',
+          !win6.__lu.events().some(e => e.name === 'map_interacted'));
+    doc6.getElementById('map').dispatchEvent(
+      new win6.PointerEvent('pointerdown', { bubbles: true }));
+    check('the first touch of the map is recorded',
+          win6.__lu.events().some(e => e.path === 'map-interact'));
+    doc6.getElementById('map').dispatchEvent(
+      new win6.PointerEvent('pointerdown', { bubbles: true }));
+    eq('and only the first — it is a share of arrivals, not a gesture count',
+       win6.__lu.events().filter(e => e.name === 'map_interacted').length, 1);
+
+    doc6.querySelector('#tabbar .tab[data-tab="walks"]').click();
+    await until(() => doc6.querySelector('#walks-body .walk-card'), { timeout: 8000 });
+    check('opening the tab is recorded',
+          win6.__lu.events().some(e => e.path === 'walk/index'));
+
+    doc6.querySelector(`#walks-body [data-walk="${walk.slug}"]`).click();
+    await until(() => doc6.querySelector('#walks-body [data-act="start"]'), { timeout: 8000 });
+    check('opening a walk names which one',
+          win6.__lu.events().some(e => e.path === `walk/open/${walk.slug}`));
+    check('the walk offers a share of its own',
+          !!doc6.querySelector('#walks-body [data-act="share"]'));
+
+    doc6.querySelector('#walks-body [data-act="start"]').click();
+    check('starting it names which one',
+          win6.__lu.events().some(e => e.path === `walk/start/${walk.slug}`));
+
+    // Completion has no state of its own — it is the last stop being collected.
+    check('a walk is not reported complete before it is',
+          !win6.__lu.events().some(e => e.name === 'walk_completed'));
+    walk.ids.forEach(id => win6.__lu.collect(id, false));
+    check('collecting the last stop completes the walk',
+          win6.__lu.events().some(e => e.path === `walk/done/${walk.slug}`));
+    eq('and it is announced exactly once',
+       win6.__lu.events().filter(e => e.name === 'walk_completed').length, 1);
+
+    // A reload must not announce it again — the same guard the milestones use.
+    const finished = win6.__lu.state.saved.settings.finishedWalks || [];
+    check('the completion is remembered so a reload cannot double-count it',
+          finished.includes(walk.slug), JSON.stringify(finished));
+    win6.__lu.reset();
+  }
+}
+
 } catch (err) {
   failed++;
   lines.push(`<span class="fail">  THREW</span> ${err && err.stack ? err.stack : err}`);

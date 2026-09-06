@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Benjamin Disraeli brown plaque in Westminster — London Uncovered">
 <meta name="twitter:description" content="“Benjamin Disraeli Earl of Beaconsfield 1804-1881 died here” Brown plaque at 19 Curzon Street, Westminster, W1. Erected 1908.">
 <meta name="twitter:image" content="https://farm1.staticflickr.com/711/32470703865_e42585d0c1_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Benjamin Disraeli">
+<meta name="twitter:image:alt" content="The London blue plaque to Benjamin Disraeli">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Benjamin Disraeli"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.50631, -0.15054</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=453">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=453" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Benjamin_Disraeli" rel="noopener nofollow" target="_blank">Wikipedia</a>

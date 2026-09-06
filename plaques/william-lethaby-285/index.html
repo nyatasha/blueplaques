@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="William Lethaby blue plaque in Southampton Row — London Uncovered">
 <meta name="twitter:description" content="“William Richard Lethaby 1857-1931 architect and first principal of this school in 1896 to 1911”">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/WILLIAM_RICHARD_LETHABY_1857-1931_ARCHITECT_and_first_principal_of_this_School_in_1896-1911.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to William Lethaby">
+<meta name="twitter:image:alt" content="The London blue plaque to William Lethaby">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Architecture",
+      "item": "https://nyatasha.github.io/blueplaques/categories/architecture/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "William Lethaby"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.51950, -0.12174</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=285">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=285" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/William_Lethaby" rel="noopener nofollow" target="_blank">Wikipedia</a>

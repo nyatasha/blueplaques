@@ -4,9 +4,10 @@
 # sitemap Google acts on is tests/seo.test.py — which, until this workflow, ran
 # only when somebody remembered to type `bash tests/run.sh`.
 #
-# The SEO suite is plain Python 3 with no dependencies, so it runs anywhere. The
-# logic and smoke suites in tests/run.sh are deliberately not here: they need
-# JavaScriptCore and Chrome respectively and stay a local, pre-push step.
+# The SEO and analytics suites are plain Python 3 with no dependencies, so they
+# run anywhere. The logic and smoke suites in tests/run.sh are deliberately not
+# here: they need JavaScriptCore and Chrome respectively and stay a local,
+# pre-push step.
 
 name: SEO
 
@@ -37,6 +38,13 @@ jobs:
       # regressed to a handful of URLs, fails here rather than in Search Console.
       - name: SEO suite
         run: python3 tests/seo.test.py
+
+      # Also dependency-free Python: it reads js/analytics.js and every call
+      # site as text. An event whose name has no case in the adapter reports as
+      # an unlabelled path and nothing complains at runtime, so it is caught
+      # here instead of by noticing a dashboard row that never fills in.
+      - name: Analytics taxonomy
+        run: python3 tests/analytics.test.py
 
       - name: Summarise the sitemap
         if: always()

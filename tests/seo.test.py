@@ -50,6 +50,23 @@ def eq(name, actual, expected):
     check(name, actual == expected, f"expected {expected!r}, got {actual!r}")
 
 
+def content_scripts(text):
+    """Every <script> on a page that is neither structured data nor the
+    deferred runtime module.
+
+    The rule these pages are held to is that their *content* is in the initial
+    HTML — not that they carry no script. `js/static-page.js` is a module, so
+    it cannot block rendering, and everything it does (analytics, the Share
+    button) is additive to a page that is already complete. Anything else
+    appearing here would mean content had moved behind JavaScript.
+    """
+    stripped = re.sub(r'<script type="application/ld\+json">.*?</script>', "",
+                      text, flags=re.S)
+    stripped = re.sub(r'<script type="module" src="(?:\.\./)*js/static-page\.js">'
+                      r'</script>', "", stripped)
+    return re.findall(r"<script[^>]*>", stripped)
+
+
 # ── Slugs ───────────────────────────────────────────────────────────────────
 
 group("slugs")
@@ -178,8 +195,16 @@ try:
     check("the category is in the initial HTML", gen.esc(sample["category_label"]) in page)
     check("the photo is embedded as an img", 'class="sp-figure"' in page)
     check("the OpenPlaques record is linked", sample["source"] in page)
-    check("there is no client-side rendering to wait for",
-          "<script" not in page.replace('<script type="application/ld+json">', ""))
+    eq("nothing but structured data and the deferred runtime script",
+       content_scripts(page), [])
+    check("the runtime is loaded as a deferred module",
+          '<script type="module" src="../../js/static-page.js"></script>' in page)
+    check("the page declares its kind for analytics",
+          '<body class="sp-body" data-page="plaque">' in page)
+    check("the map link is marked as the measured conversion",
+          'class="sp-cta" href="../../?plaque=' in page and 'data-track="to-app"' in page)
+    check("the Share button ships inert, for the runtime to reveal",
+          'data-track="share" hidden' in page)
 
     group("head")
     check("the title names the plaque and the site",
@@ -276,13 +301,19 @@ try:
               lambda k, t: re.search(r'name="description" content="[^"]{40,}"', t))
     cat_check("each intro states how many plaques it holds",
               lambda k, t: f"{len(groups[k]):,} of the {len(plaques):,}" in t)
-    cat_check("each links back to the interactive map",
-              lambda k, t: 'class="sp-cta" href="../../"' in t)
+    cat_check("each links into the map filtered to its own category",
+              lambda k, t: f'class="sp-cta" href="../../?category={k}" '
+                           f'data-track="to-app"' in t)
+    cat_check("each links sideways to the walks",
+              lambda k, t: all(f'href="../../{gen.WALKS_DIR}/{w["slug"]}/"' in t
+                               for w in walks))
     cat_check("each links sideways to the other collections",
               lambda k, t: all(f'href="../{gen.CATEGORY_URL[o]}/"' in t
                                for o in groups if o != k))
     cat_check("none needs JavaScript to render its list",
-              lambda k, t: "<script" not in t.replace('<script type="application/ld+json">', ""))
+              lambda k, t: content_scripts(t) == [])
+    cat_check("each declares its kind for analytics",
+              lambda k, t: '<body class="sp-body" data-page="category">' in t)
     cat_check("no path is rooted at the domain",
               lambda k, t: not re.search(r'(?:href|src)="/(?!/)', t))
 
@@ -434,8 +465,14 @@ try:
            for s in sample_walk["stops"]]
           == sorted(wp.index(f'{gen.PAGES_DIR}/{s["plaque"]["slug"]}/')
                     for s in sample_walk["stops"]))
-    check("there is no client-side rendering to wait for",
-          "<script" not in wp.replace('<script type="application/ld+json">', ""))
+    eq("nothing but structured data and the deferred runtime script",
+       content_scripts(wp), [])
+    check("the page declares its kind for analytics",
+          '<body class="sp-body" data-page="walk">' in wp)
+    check("the map link is marked as the measured conversion",
+          f'href="../../?walk={sample_walk["slug"]}" data-track="to-app"' in wp)
+    check("a walk can be passed on from its own page",
+          'data-track="share" hidden>Share this walk<' in wp)
     check("the estimate is described rather than presented as measured",
           "allowance for street layout" in wp)
 
@@ -602,6 +639,74 @@ check("every URL is an absolute canonical production URL",
 check("the committed sitemap parses as XML",
       (lambda: __import__("xml.etree.ElementTree", fromlist=["ElementTree"])
        .fromstring(committed_sitemap) is not None)())
+
+group("breadcrumbs")
+
+
+def crumbs_of(text):
+    """The BreadcrumbList node on a page, or None."""
+    for block in re.findall(r'<script type="application/ld\+json">(.*?)</script>',
+                            text, flags=re.S):
+        node = json.loads(block)
+        if node.get("@type") == "BreadcrumbList":
+            return node
+    return None
+
+
+def trail_of(text):
+    node = crumbs_of(text)
+    return [(i["name"], i.get("item")) for i in node["itemListElement"]] if node else None
+
+
+with open(os.path.join(ROOT, gen.PAGES_DIR, plaques[0]["slug"], "index.html"),
+          encoding="utf-8") as fh:
+    committed_plaque = fh.read()
+with open(os.path.join(ROOT, gen.CATS_DIR,
+                       gen.CATEGORY_URL[plaques[0]["category"]], "index.html"),
+          encoding="utf-8") as fh:
+    committed_cat = fh.read()
+with open(os.path.join(ROOT, gen.WALKS_DIR, walks[0]["slug"], "index.html"),
+          encoding="utf-8") as fh:
+    committed_walk = fh.read()
+
+eq("a plaque page's trail is site › category › plaque",
+   trail_of(committed_plaque),
+   [(gen.SITE_NAME, gen.SITE),
+    (plaques[0]["category_label"],
+     f"{gen.SITE}{gen.CATS_DIR}/{plaques[0]['category_url']}/"),
+    (plaques[0]["title"], None)])
+eq("a walk page's trail is site › walks › walk",
+   trail_of(committed_walk),
+   [(gen.SITE_NAME, gen.SITE), ("Walks", f"{gen.SITE}{gen.WALKS_DIR}/"),
+    (walks[0]["name"], None)])
+check("a category page carries a trail too", trail_of(committed_cat) is not None)
+check("only the last crumb omits its URL — it is the page itself",
+      all(all(url for _, url in trail[:-1]) and trail[-1][1] is None
+          for trail in (trail_of(committed_plaque), trail_of(committed_cat),
+                        trail_of(committed_walk))))
+check("every crumb the structured data claims is a link the page shows",
+      all(f'href="{href}"' in committed_plaque
+          for href in ("../../", f"../../{gen.CATS_DIR}/"
+                                  f"{plaques[0]['category_url']}/")))
+
+group("404")
+with open(os.path.join(ROOT, "404.html"), encoding="utf-8") as fh:
+    not_found = fh.read()
+check("the page exists and says what happened",
+      "<h1>That page is not here</h1>" in not_found)
+check("it is excluded from the index", '<meta name="robots" content="noindex">' in not_found)
+check("it is not in the sitemap", f"{gen.SITE}404.html" not in committed_sitemap)
+check("every link is root-absolute — it is served from any depth",
+      not re.search(r'(?:href|src)="(?!/|https?:|#)', not_found),
+      str(re.findall(r'(?:href|src)="(?!/|https?:|#)[^"]*"', not_found)[:3]))
+check("it offers a way back to the map",
+      f'class="sp-cta" href="/{gen.PAGES_ROOT}"' in not_found)
+check("it links to every walk",
+      all(f'href="/{gen.PAGES_ROOT}{gen.WALKS_DIR}/{w["slug"]}/"' in not_found
+          for w in walks))
+check("it links to every category",
+      all(f'href="/{gen.PAGES_ROOT}{gen.CATS_DIR}/{u}/"' in not_found
+          for u in gen.CATEGORY_URL.values()))
 
 group("deployment")
 with open(os.path.join(ROOT, "robots.txt"), encoding="utf-8") as fh:

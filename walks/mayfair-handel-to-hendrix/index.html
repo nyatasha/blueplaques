@@ -18,6 +18,10 @@
 <meta name="twitter:title" content="Mayfair: Handel to Hendrix — a self-guided blue plaque walk — London Uncovered">
 <meta name="twitter:description" content="Two musicians, two centuries, one wall. A self-guided London walk past 7 blue plaques in Mayfair &amp; St James&#x27;s — about 2.9 km and 36 minutes on foot.">
 <meta name="twitter:image" content="https://nyatasha.github.io/blueplaques/assets/social/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Mayfair: Handel to Hendrix — a self-guided blue plaque walk in Mayfair &amp; St James&#x27;s, W1 &amp; SW1, 7 stops">
+<meta name="twitter:image:alt" content="Mayfair: Handel to Hendrix — a self-guided blue plaque walk in Mayfair &amp; St James&#x27;s, W1 &amp; SW1, 7 stops">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -77,8 +81,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Walks",
+      "item": "https://nyatasha.github.io/blueplaques/walks/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Mayfair: Handel to Hendrix"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="walk">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -104,7 +134,9 @@
       <p class="walk-intro">At 23 and 25 Brook Street, Jimi Hendrix and George Frideric Handel have neighbouring plaques on neighbouring houses — separated by about seven metres and two hundred and thirty years. It is the best single moment on the London plaque map, and it makes a good opening for a walk through Mayfair and St James&#x27;s. From Brook Street this route runs south past the first Rolls-Royce showroom to the square where Ada Lovelace wrote the first computer program, the house Chopin left for his last public performance, and the address where Florence Nightingale spent her last fifty years.</p>
       <p class="walk-hint">Start at Bond Street; finish at Green Park or Hyde Park Corner.</p>
 
-      <a class="sp-cta" href="../../?walk=mayfair-handel-to-hendrix">Follow this walk on the map</a>
+      <a class="sp-cta" href="../../?walk=mayfair-handel-to-hendrix" data-track="to-app">Follow this
+         walk on the map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this walk</button>
       <p class="walk-links">
         <a class="sp-link" href="https://www.google.com/maps/dir/?api=1&amp;origin=51.51302,-0.14609&amp;destination=51.50806,-0.15294&amp;waypoints=51.51304%2C-0.14600|51.51249%2C-0.14176|51.50740%2C-0.13628|51.50593%2C-0.13933|51.50709%2C-0.14836&amp;travelmode=walking" rel="noopener nofollow" target="_blank">Open the
         route in Google Maps</a>

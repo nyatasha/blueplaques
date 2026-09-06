@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Mahatma Gandhi blue plaque in Powis Road — London Uncovered">
 <meta name="twitter:description" content="“Mahatma Gandhi 1869-1948 stayed here in 1931” Blue plaque at Kingsley Hall, Powis Road, Tower Hamlets, E3. Erected 1954.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/MAHATMA_GANDHI_1869-1948_stayed_here_in_1931.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Mahatma Gandhi">
+<meta name="twitter:image:alt" content="The London blue plaque to Mahatma Gandhi">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Mahatma Gandhi"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.52650, -0.01453</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=319">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=319" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Mahatma_Gandhi" rel="noopener nofollow" target="_blank">Wikipedia</a>

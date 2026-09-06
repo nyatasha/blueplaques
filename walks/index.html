@@ -18,6 +18,10 @@
 <meta name="twitter:title" content="Self-guided London blue plaque walks — London Uncovered">
 <meta name="twitter:description" content="4 curated self-guided walks past London&#x27;s blue plaques — Bloomsbury Writers &amp; Thinkers, Chelsea Riverside, Mayfair: Handel to Hendrix, Hampstead Village.">
 <meta name="twitter:image" content="https://nyatasha.github.io/blueplaques/assets/social/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="London Uncovered — self-guided London blue plaque walks">
+<meta name="twitter:image:alt" content="London Uncovered — self-guided London blue plaque walks">
 <link rel="icon" href="../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../manifest.json">
 <link rel="stylesheet" href="../css/tokens.css">
@@ -36,8 +40,28 @@
   }
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Walks"
+    }
+  ]
+}
+</script>
+<script type="module" src="../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="walks-index">
   <header class="sp-header">
     <a class="sp-brand" href="../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -58,7 +82,8 @@
        close enough to string into an afternoon. These four walks do that.
        Each one lists its stops in walking order with the distance between them, and
        every stop links to that plaque's page and its place on the map.</p>
-    <a class="sp-cta" href="../">Explore the whole map</a>
+    <a class="sp-cta" href="../" data-track="to-app">Explore the whole map</a>
+    <button type="button" class="sp-share" data-track="share" hidden>Share these walks</button>
 
     <ul class="walk-cards">
       <li class="walk-card">

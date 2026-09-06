@@ -10,6 +10,7 @@ import { state, isCollected } from './state.js';
 import { distanceMetres } from './geo.js';
 import { walkBySlug } from './walks.js';
 import { esc, qs } from './ui.js';
+import { trackEvent } from './analytics.js';
 
 const CHECK_SVG =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5 10 17l8.5-9.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -97,8 +98,37 @@ export function initMap(handleSelect) {
 
   map.on('zoomend', syncZoomClass);
   syncZoomClass();
+  watchForFirstGesture();
   return map;
 }
+
+const GESTURES = ['pointerdown', 'wheel', 'touchstart'];
+
+/**
+ * Records the first deliberate touch of the map — a drag, a pinch, a wheel, a
+ * tap on a marker.
+ *
+ * Bound to the container's input events rather than to Leaflet's `moveend`,
+ * because the app moves the camera itself constantly: a deep link, "find my
+ * next discovery" and every walk fit the map programmatically, and each of
+ * those would otherwise look like engagement that nobody performed.
+ *
+ * Fires at most once per page load, so the number reads as *what share of
+ * arrivals touched the map at all* — the step between landing and opening a
+ * plaque that the funnel was previously missing — rather than as a count of
+ * gestures, which would say nothing and cost a beacon per pan.
+ */
+function watchForFirstGesture() {
+  const container = map.getContainer();
+  const once = () => {
+    trackEvent('map_interacted');
+    for (const type of GESTURES) container.removeEventListener(type, once);
+  };
+  for (const type of GESTURES) {
+    container.addEventListener(type, once, { passive: true });
+  }
+}
+
 
 function syncZoomClass() {
   qs('#map')?.classList.toggle('zoomed-out', map.getZoom() < LABEL_MIN_ZOOM);

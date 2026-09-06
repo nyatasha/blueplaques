@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Leonard Huxley blue plaque in Hampstead — London Uncovered">
 <meta name="twitter:description" content="“Leonard Huxley 1860-1933 Julian Huxley 1887-1975 Aldous Huxley 1894-1963 Men of Science and Letters lived here”">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/LEONARD_HUXLEY_1860-1933_JULIAN_HUXLEY_1887-1975_ALDOUS_HUXLEY_1894-1963_Men_of_Science_and_Letters_lived_here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Leonard Huxley">
+<meta name="twitter:image:alt" content="The London blue plaque to Leonard Huxley">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Science & Technology",
+      "item": "https://nyatasha.github.io/blueplaques/categories/science-technology/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Leonard Huxley"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.55420, -0.18822</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=24">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=24" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Leonard_Huxley_(writer)" rel="noopener nofollow" target="_blank">Wikipedia</a>

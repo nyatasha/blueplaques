@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="William Beveridge blue plaque in Campden Hill — London Uncovered">
 <meta name="twitter:description" content="“Sir William Beveridge 1879-1963 Architect of the Welfare State lived here 1914-1921” Blue plaque at 27 Bedford Gardens, Campden Hill. Erected 2018.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/SIR_WILLIAM_BEVERIDGE_1879-1963_Architect_of_the_Welfare_State_lived_here_1914-1921.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to William Beveridge">
+<meta name="twitter:image:alt" content="The London blue plaque to William Beveridge">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "William Beveridge"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.50625, -0.19558</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=50780">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=50780" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/William_Beveridge" rel="noopener nofollow" target="_blank">Wikipedia</a>

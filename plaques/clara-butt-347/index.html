@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Clara Butt blue plaque in Camden — London Uncovered">
 <meta name="twitter:description" content="“Dame Clara Butt 1873-1936 singer lived here 1901-1929” Blue plaque at 7 Harley Road, Camden, NW3. Erected 1969.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/Dame_CLARA_BUTT_1873-1937_SINGER_lived_here_1901-1929.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Clara Butt">
+<meta name="twitter:image:alt" content="The London blue plaque to Clara Butt">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Music",
+      "item": "https://nyatasha.github.io/blueplaques/categories/music/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Clara Butt"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.54092, -0.16953</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=347">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=347" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Clara_Butt" rel="noopener nofollow" target="_blank">Wikipedia</a>

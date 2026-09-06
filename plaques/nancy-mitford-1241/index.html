@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Nancy Mitford blue plaque in London — London Uncovered">
 <meta name="twitter:description" content="“Nancy Mitford 1904-1973 writer worked here 1942-1945” Blue plaque at 10 Curzon Street.">
 <meta name="twitter:image" content="https://farm4.staticflickr.com/3933/32917240056_4e46d0d172_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Nancy Mitford">
+<meta name="twitter:image:alt" content="The London blue plaque to Nancy Mitford">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Writers & Literature",
+      "item": "https://nyatasha.github.io/blueplaques/categories/writers-literature/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Nancy Mitford"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -79,7 +107,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.50698, -0.14639</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=1241">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=1241" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Nancy_Mitford" rel="noopener nofollow" target="_blank">Wikipedia</a>

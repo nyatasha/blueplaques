@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Herman Melville blue plaque in London — London Uncovered">
 <meta name="twitter:description" content="“Herman Melville 1819-1891 Author of Moby Dick lived here in 1849” Blue plaque at 25 Craven Street.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/HERMAN_MELVILLE_1819-1891_Author_of_Moby_Dick_lived_here_in_1849.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Herman Melville">
+<meta name="twitter:image:alt" content="The London blue plaque to Herman Melville">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Writers & Literature",
+      "item": "https://nyatasha.github.io/blueplaques/categories/writers-literature/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Herman Melville"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -79,7 +107,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.50709, -0.12408</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=1570">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=1570" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Herman_Melville" rel="noopener nofollow" target="_blank">Wikipedia</a>

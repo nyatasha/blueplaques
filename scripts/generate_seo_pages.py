@@ -69,6 +69,10 @@ PAGES_DIR = "plaques"          # relative to the site root
 CATS_DIR = "categories"        # relative to the site root
 WALKS_DIR = "walks"            # relative to the site root
 URL_MAP = os.path.join("data", "plaque-urls.json")
+# The path GitHub Pages serves the project under, taken from SITE so the two
+# can never disagree. 404.html is served for arbitrary paths, so every link on
+# it has to be root-absolute rather than relative — this is that prefix.
+PAGES_ROOT = SITE.split("/", 3)[3]
 SLUG_MAX = 60                  # characters before the id suffix
 NEARBY = 5                     # internal links per page
 DESC_MAX = 155
@@ -462,10 +466,80 @@ def walks_block(walks):
             '      </section>\n')
 
 
+# ── Shared page furniture ───────────────────────────────────────────────────
+#
+# Everything below is written identically onto every generated page, so it
+# lives here rather than in four format strings that would drift apart.
+
+
+def runtime_script(depth):
+    """The one script these pages load — analytics and the Share button.
+
+    `depth` is how many directories down from the site root the page sits, so
+    the module resolves from `plaques/x/`, `categories/x/`, `walks/x/` and
+    `walks/` alike. It is a module, so it is deferred by definition: the page
+    is complete and readable before it runs, and complete without it.
+    """
+    return f'<script type="module" src="{"../" * depth}js/static-page.js"></script>'
+
+
+def share_button(label="Share this page"):
+    """Hidden until js/static-page.js reveals it.
+
+    A Share button that does nothing is worse than no Share button, and these
+    pages are deliberately readable with JavaScript off — so the markup ships
+    inert and the runtime turns it on.
+    """
+    return (f'<button type="button" class="sp-share" data-track="share" hidden>'
+            f'{esc(label)}</button>')
+
+
+def breadcrumb_data(trail):
+    """BreadcrumbList JSON-LD mirroring the crumbs the page already shows.
+
+    Only ever built from the same trail the visible <nav> renders, so the
+    structured data cannot claim a path the page does not offer. The last item
+    is the page itself and carries no URL, which is what Google expects.
+    """
+    return json.dumps({
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": i, "name": name,
+             **({"item": url} if url else {})}
+            for i, (name, url) in enumerate(trail, start=1)
+        ],
+    }, ensure_ascii=False, indent=2).replace("<", "\\u003c")
+
+
+def jsonld(payload):
+    return ('<script type="application/ld+json">\n' + payload + '\n</script>')
+
+
+def social_image_meta(alt):
+    """`og:image` dimensions and alt text for the shared 1200×630 cover.
+
+    Several scrapers (Slack and WhatsApp among them) render a preview faster,
+    or at all, when the dimensions are declared; the alt text is what a screen
+    reader announces on a shared card.
+    """
+    return (f'<meta property="og:image:width" content="1200">\n'
+            f'<meta property="og:image:height" content="630">\n'
+            f'<meta property="og:image:alt" content="{esc(alt)}">\n'
+            f'<meta name="twitter:image:alt" content="{esc(alt)}">')
+
+
 def render_page(p, neighbours, siblings, on_walks=()):
     url = f"{SITE}{PAGES_DIR}/{p['slug']}/"
     description = meta_description(p)
     og_image = safe_url(thumb(p["photo"], 1200)) or esc(f"{SITE}assets/social/og-cover.png")
+    image_alt = (f"The London blue plaque to {p['title']}"
+                 if p["photo"] else
+                 f"{SITE_NAME} — an interactive map of London's blue plaques")
+    # The same trail the visible crumbs render, so the two cannot disagree.
+    crumb_trail = [(SITE_NAME, SITE),
+                   (p["category_label"], f"{SITE}{CATS_DIR}/{p['category_url']}/"),
+                   (p["title"], None)]
     map_link = f"../../?plaque={quote(p['id'], safe='')}"
     badges = [f'<span class="sp-badge">{esc(p["category_label"])}</span>']
     if p["fame"] >= 3:
@@ -500,6 +574,8 @@ def render_page(p, neighbours, siblings, on_walks=()):
 <meta name="twitter:title" content="{esc(page_title(p))}">
 <meta name="twitter:description" content="{esc(description)}">
 <meta name="twitter:image" content="{og_image}">
+<meta property="og:image:alt" content="{esc(image_alt)}">
+<meta name="twitter:image:alt" content="{esc(image_alt)}">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -507,8 +583,10 @@ def render_page(p, neighbours, siblings, on_walks=()):
 <script type="application/ld+json">
 {structured_data(p, url)}
 </script>
+{jsonld(breadcrumb_data(crumb_trail))}
+{runtime_script(2)}
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -523,7 +601,8 @@ def render_page(p, neighbours, siblings, on_walks=()):
 {subtitle}      <p class="sp-badges">{''.join(badges)}</p>
 {photo_block(p)}{inscription}{rows_block(p)}
 
-      <a class="sp-cta" href="{esc(map_link)}">View on interactive map</a>
+      <a class="sp-cta" href="{esc(map_link)}" data-track="to-app">View on interactive map</a>
+      {share_button()}
 
 {links_block(p)}
     </article>
@@ -609,7 +688,27 @@ def category_nav_block(current, groups):
             + "\n".join(links) + "\n    </nav>")
 
 
-def render_category_page(key, groups, total):
+def category_walks_block(walks):
+    """A category page's way sideways into the walks.
+
+    Category and walk pages were previously two disconnected halves of the
+    site: nothing linked one to the other, so a crawler — or a reader — landing
+    on "Music" had no route to the Mayfair walk that half of it is on. This is
+    the missing edge, and it is the same four links on each category page, so
+    it is framed as what it is: the site's walks, not walks *in* this category.
+    """
+    if not walks:
+        return ""
+    items = "\n".join(
+        f'      <a href="../../{WALKS_DIR}/{esc(w["slug"])}/">{esc(w["name"])} '
+        f'<span class="cat-nav-n">{len(w["stops"])} stops</span></a>'
+        for w in walks)
+    return ('    <nav class="cat-nav" aria-labelledby="walks">\n'
+            '      <h2 id="walks">Or follow a self-guided walk</h2>\n'
+            + items + "\n    </nav>\n")
+
+
+def render_category_page(key, groups, total, walks=()):
     rows = groups[key]
     label = CATEGORY_LABELS[key]
     url = f"{SITE}{CATS_DIR}/{CATEGORY_URL[key]}/"
@@ -645,6 +744,7 @@ def render_category_page(key, groups, total):
 <meta name="twitter:title" content="{esc(title)}">
 <meta name="twitter:description" content="{esc(description)}">
 <meta name="twitter:image" content="{esc(SITE)}assets/social/og-cover.png">
+{social_image_meta(f"{label} blue plaques in London on {SITE_NAME}")}
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -652,8 +752,10 @@ def render_category_page(key, groups, total):
 <script type="application/ld+json">
 {payload}
 </script>
+{jsonld(breadcrumb_data([(SITE_NAME, SITE), (label, None)]))}
+{runtime_script(2)}
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="category">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -670,10 +772,13 @@ def render_category_page(key, groups, total):
     <p class="sp-eyebrow">London blue plaques</p>
     <h1>{esc(label)}</h1>
     <p class="cat-intro">{esc(category_intro(label, rows, total))}</p>
-    <a class="sp-cta" href="../../">Explore them on the interactive map</a>
+    <a class="sp-cta" href="../../?category={esc(key)}" data-track="to-app">Explore
+       {esc(label)} on the interactive map</a>
+    {share_button()}
 
 {category_rows_block(rows)}
 
+{category_walks_block(walks)}
 {category_nav_block(key, groups)}
   </main>
 
@@ -842,7 +947,7 @@ def walk_structured_data(walk, url):
     return json.dumps(node, ensure_ascii=False, indent=2).replace("<", "\\u003c")
 
 
-def walk_head(title, description, url, extra=""):
+def walk_head(title, description, url, extra="", image_alt=""):
     """The shared <head> for the walk pages. Two levels down from the root."""
     return f"""<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -861,6 +966,7 @@ def walk_head(title, description, url, extra=""):
 <meta name="twitter:title" content="{esc(title)}">
 <meta name="twitter:description" content="{esc(description)}">
 <meta name="twitter:image" content="{esc(SITE)}assets/social/og-cover.png">
+{social_image_meta(image_alt or f"{SITE_NAME} — self-guided London blue plaque walks")}
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -903,10 +1009,15 @@ def render_walk_page(walk, others):
 <html lang="en-GB">
 <head>
 {walk_head(title, description, url,
-           '<script type="application/ld+json">\n'
-           + walk_structured_data(walk, url) + '\n</script>')}
+           jsonld(walk_structured_data(walk, url)) + "\n"
+           + jsonld(breadcrumb_data([(SITE_NAME, SITE),
+                                     ("Walks", f"{SITE}{WALKS_DIR}/"),
+                                     (walk["name"], None)])) + "\n"
+           + runtime_script(2),
+           image_alt=f"{walk['name']} — a self-guided blue plaque walk in "
+                     f"{walk['area']}, {len(walk['stops'])} stops")}
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="walk">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -932,7 +1043,9 @@ def render_walk_page(walk, others):
       <p class="walk-intro">{esc(walk["intro"])}</p>
       {f'<p class="walk-hint">{esc(walk["start_hint"])}</p>' if walk["start_hint"] else ''}
 
-      <a class="sp-cta" href="../../?walk={esc(walk["slug"])}">Follow this walk on the map</a>
+      <a class="sp-cta" href="../../?walk={esc(walk["slug"])}" data-track="to-app">Follow this
+         walk on the map</a>
+      {share_button("Share this walk")}
       <p class="walk-links">
         <a class="sp-link" href="{esc(route)}" rel="noopener nofollow" target="_blank">Open the
         route in Google Maps</a>
@@ -984,8 +1097,11 @@ def render_walks_index(walks):
     payload = json.dumps(listing, ensure_ascii=False, indent=2).replace("<", "\\u003c")
 
     head = walk_head(title, description, url,
-                     '<script type="application/ld+json">\n' + payload + '\n</script>')
-    # The index sits one level down, not two.
+                     jsonld(payload) + "\n"
+                     + jsonld(breadcrumb_data([(SITE_NAME, SITE), ("Walks", None)]))
+                     + "\n" + runtime_script(1))
+    # The index sits one level down, not two. The runtime script was already
+    # written at the right depth, so only the stylesheet and icon hrefs move.
     head = head.replace('href="../../', 'href="../')
 
     return f"""<!DOCTYPE html>
@@ -993,7 +1109,7 @@ def render_walks_index(walks):
 <head>
 {head}
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="walks-index">
   <header class="sp-header">
     <a class="sp-brand" href="../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -1014,7 +1130,8 @@ def render_walks_index(walks):
        close enough to string into an afternoon. These {spell(len(walks))} walks do that.
        Each one lists its stops in walking order with the distance between them, and
        every stop links to that plaque's page and its place on the map.</p>
-    <a class="sp-cta" href="../">Explore the whole map</a>
+    <a class="sp-cta" href="../" data-track="to-app">Explore the whole map</a>
+    {share_button("Share these walks")}
 
     <ul class="walk-cards">
 {cards}
@@ -1030,6 +1147,74 @@ def render_walks_index(walks):
   </main>
 
 {walk_footer().replace('href="../../"', 'href="../"')}
+</body>
+</html>
+"""
+
+
+def render_404(walks, groups):
+    """The page GitHub Pages serves for any path that does not exist.
+
+    Without one the site answers a mistyped or retired plaque URL with GitHub's
+    own 404, which carries no branding, no way back and no links — a dead end
+    for a visitor and a dead end for a crawler that followed a stale link. This
+    one is a real page of the site: it says what happened and hands back the
+    map, the walks and every category.
+
+    `noindex` because a soft 404 in the index is worse than none, and it is
+    deliberately absent from the sitemap.
+    """
+    cats = "\n".join(
+        f'      <a href="/{PAGES_ROOT}{CATS_DIR}/{esc(CATEGORY_URL[key])}/">'
+        f'{esc(CATEGORY_LABELS[key])} <span class="cat-nav-n">{len(rows):,}</span></a>'
+        for key, rows in groups.items())
+    walk_links = "\n".join(
+        f'      <a href="/{PAGES_ROOT}{WALKS_DIR}/{esc(w["slug"])}/">{esc(w["name"])} '
+        f'<span class="cat-nav-n">{len(w["stops"])} stops</span></a>'
+        for w in walks)
+    return f"""<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1456A0">
+<title>Page not found — {esc(SITE_NAME)}</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="That page is not here. Explore London's blue plaques on the map, or browse by category or walk.">
+<link rel="icon" href="/{PAGES_ROOT}assets/app-icons/icon-192.png" sizes="192x192">
+<link rel="stylesheet" href="/{PAGES_ROOT}css/tokens.css">
+<link rel="stylesheet" href="/{PAGES_ROOT}css/plaque-page.css">
+</head>
+<body class="sp-body">
+  <header class="sp-header">
+    <a class="sp-brand" href="/{PAGES_ROOT}">
+      <span class="sp-brand-disc" aria-hidden="true"></span>
+      <span>{esc(SITE_NAME)}</span>
+    </a>
+  </header>
+
+  <main class="sp-main cat-main">
+    <p class="sp-eyebrow">404</p>
+    <h1>That page is not here</h1>
+    <p class="cat-intro">The link may be old, or mistyped. Everything else is still
+       here: the map, the walks and every category are below.</p>
+    <a class="sp-cta" href="/{PAGES_ROOT}">Explore the map</a>
+
+    <nav class="cat-nav" aria-labelledby="walks-404">
+      <h2 id="walks-404">Self-guided walks</h2>
+{walk_links}
+    </nav>
+
+    <nav class="cat-nav" aria-labelledby="cats-404">
+      <h2 id="cats-404">Browse by category</h2>
+{cats}
+    </nav>
+  </main>
+
+  <footer class="sp-footer">
+    <p>Part of <a href="/{PAGES_ROOT}">{esc(SITE_NAME)}</a>, an interactive map of the
+       English Heritage blue plaque scheme in London.</p>
+  </footer>
 </body>
 </html>
 """
@@ -1232,7 +1417,7 @@ def generate(out_root, plaques, clean=True, walks=None):
 
     for key in groups:
         write(os.path.join(cats_root, CATEGORY_URL[key], "index.html"),
-              render_category_page(key, groups, len(plaques)))
+              render_category_page(key, groups, len(plaques), walks))
 
     if walks:
         os.makedirs(walks_root, exist_ok=True)
@@ -1243,6 +1428,7 @@ def generate(out_root, plaques, clean=True, walks=None):
                   render_walk_page(walk, others))
 
     write(os.path.join(out_root, URL_MAP), render_url_map(plaques))
+    write(os.path.join(out_root, "404.html"), render_404(walks, groups))
     write(os.path.join(out_root, "sitemap.xml"), render_sitemap(plaques, groups, walks))
     indexed = update_index(out_root, plaques, walks)
     return len(plaques), len(groups), len(walks), indexed
@@ -1275,6 +1461,7 @@ def main(argv=None):
     print(f"wrote {categories} category pages under {os.path.join(args.out, CATS_DIR)}")
     print(f"wrote {URL_MAP}")
     print(f"wrote {walk_count} walk pages under {os.path.join(args.out, WALKS_DIR)}")
+    print("wrote 404.html")
     print(f"wrote sitemap.xml with "
           f"{count + categories + walk_count + (1 if walk_count else 0) + 1} URLs")
     if indexed:

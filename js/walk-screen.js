@@ -11,7 +11,8 @@ import { allWalks, walkBySlug, walkProgress, formatWalkDistance,
          routeDirectionsUrl, ROUTE_FACTOR } from './walks.js';
 import { state, isCollected } from './state.js';
 import { distanceMetres, formatDistance } from './geo.js';
-import { qs, esc, delegate, plaqueRow, opensElsewhere, fmtNumber } from './ui.js';
+import { qs, esc, delegate, plaqueRow, opensElsewhere, fmtNumber,
+         toast } from './ui.js';
 import { icon } from './icons.js';
 import { trackEvent } from './analytics.js';
 
@@ -116,6 +117,10 @@ function renderWalk(walk) {
        href="${esc(routeDirectionsUrl(walk))}" target="_blank" rel="noopener" data-act="route">
       ${icon('navigate')} Open the route in Google Maps
     </a>
+    <button type="button" class="btn btn-ghost btn-block btn-sm"
+            style="margin-top:var(--sp-2)" data-act="share">
+      ${icon('share')} Share this walk
+    </button>
 
     <div class="section-head"><span class="eyebrow">The route</span>
       <span class="level-xp">${walk.stops.length} stops</span></div>
@@ -124,6 +129,34 @@ function renderWalk(walk) {
     <p class="walk-note">Distances are estimated from the straight line between consecutive stops
       with a ${ROUTE_FACTOR}× allowance for street layout. This walk has a
       <a href="walks/${esc(walk.slug)}/">page of its own</a> you can share or read offline.</p>`;
+}
+
+/* ── Sharing ───────────────────────────────────────────────────────────── */
+
+/**
+ * Shares the walk's *own page*, not the app.
+ *
+ * The app URL says nothing to someone who has never opened it — a bare link to
+ * a map is not an invitation. The static walk page is the artefact worth
+ * passing on: it names the walk, its area, its stop count, its distance and
+ * every stop, and it renders in a chat preview because it carries the metadata
+ * to do so. So the share text restates the same facts the page's own
+ * description carries, and the link goes to the page.
+ */
+async function shareWalk(walk) {
+  if (!walk) return;
+  trackEvent('walk_shared', { walk: walk.slug });
+  const url = new URL(`walks/${walk.slug}/`, location.href).href;
+  const title = `${walk.name} — a self-guided London blue plaque walk`;
+  const text = `${walk.name}: a self-guided walk past ${walk.stops.length} blue plaques in `
+    + `${walk.area} — about ${formatWalkDistance(walk.metres)} and ${walk.minutes} minutes on foot.`;
+  try {
+    if (navigator.share) await navigator.share({ title, text, url });
+    else {
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      toast({ eyebrow: 'Copied', title: 'Walk link copied', iconName: 'check', gold: false });
+    }
+  } catch { /* dismissed, or the clipboard was refused — neither is an error */ }
 }
 
 /* ── Shell ─────────────────────────────────────────────────────────────── */
@@ -164,6 +197,7 @@ export function initWalkScreen(handlerMap) {
       case 'back':   showWalk(null); break;
       case 'start':  handlers.onStartWalk(walkBySlug(openSlug)); break;
       case 'route':  trackEvent('walk_directions', { walk: openSlug }); break;
+      case 'share':  shareWalk(walkBySlug(openSlug)); break;
       default: break;
     }
   });

@@ -72,12 +72,37 @@ function describe(name, props = {}) {
     case 'directions_clicked': return ['directions',   'Directions opened'];
     case 'wikipedia_clicked':  return ['wikipedia',    'Wikipedia opened'];
 
-    case 'quest_opened':       return ['quest/open', 'Quest opened'];
-    case 'quest_completed':    return [`quest/done/${props.quest}`, `Quest complete · ${props.quest}`];
     case 'achievement_unlocked': return [`achievement/${props.achievement}`, `Achievement · ${props.achievement}`];
     case 'my_london_opened':   return ['my-london', 'My London opened'];
     case 'share_clicked':      return ['share',     'Share tapped'];
     case 'share_mode':         return [`share/${props.mode}`, `Shared as ${props.mode}`];
+
+    // Quests are all live from the first load — there is no "start" to record.
+    // Tapping a quest card is the intent signal, so the id is kept.
+    case 'quest_opened':       return [`quest/open/${props.quest}`, `Quest opened · ${props.quest}`];
+    case 'quest_completed':    return [`quest/done/${props.quest}`, `Quest complete · ${props.quest}`];
+
+    // Walks. The slug is the dimension worth keeping — there are four of them,
+    // they are editorial choices, and knowing which one people follow is the
+    // whole question. Opened → started → completed is the walk funnel.
+    case 'walks_opened':       return ['walk/index',                   'Walks tab opened'];
+    case 'walk_opened':        return [`walk/open/${props.walk}`,      `Walk opened · ${props.walk}`];
+    case 'walk_started':       return [`walk/start/${props.walk}`,     `Walk started · ${props.walk}`];
+    case 'walk_completed':     return [`walk/done/${props.walk}`,      `Walk complete · ${props.walk}`];
+    case 'walk_directions':    return [`walk/route/${props.walk}`,     `Walk route opened · ${props.walk}`];
+    case 'walk_shared':        return [`walk/share/${props.walk}`,     `Walk shared · ${props.walk}`];
+
+    // First deliberate touch of the map — pan, zoom or a marker tap. Fired at
+    // most once per page load, so it reads as "share of arrivals who engaged
+    // with the map at all" rather than as a volume of gestures.
+    case 'map_interacted':     return ['map-interact', 'Map interacted with'];
+
+    // The generated static pages (plaques, categories, walks) — where search
+    // traffic lands. `kind` is the page type, never the subject: which page was
+    // read is already the GoatCounter pageview path.
+    case 'static_page_view':   return [`page/${props.kind}`,       `Static page · ${props.kind}`];
+    case 'static_to_app':      return [`open-app/${props.kind}`,   `Opened the map from a ${props.kind} page`];
+    case 'static_share':       return [`share/page/${props.kind}`, `Shared a ${props.kind} page`];
 
     case 'install_prompt_shown': return [props.manual ? 'install/opened' : 'install/offered',
                                         props.manual ? 'Home Screen opened from My London' : 'Home Screen offered'];
@@ -131,13 +156,27 @@ function loadScript(allowLocal) {
  * return-visit metric works without any tracking identifier.
  */
 export function initAnalytics(visit = {}) {
-  if (ENDPOINT) {
-    // GoatCounter ignores localhost by default. `?gc=local` opts in so the
-    // integration can be verified before deploying.
-    const allowLocal = new URLSearchParams(location.search).get('gc') === 'local';
-    loadScript(allowLocal);
-  }
+  loadProvider();
   trackEvent('page_view', visit);
+}
+
+/**
+ * Start the provider without claiming an app page view.
+ *
+ * The generated static pages use this: they want the automatic pageview (which
+ * is what tells us a plaque page was read at all) and their own page-type
+ * event, but `visit/new` vs `visit/returning` is a statement about the app's
+ * saved progress, which a static page has no business reading.
+ *
+ * Idempotent — the second call is a no-op.
+ */
+let loaded = false;
+export function loadProvider() {
+  if (loaded || !ENDPOINT) return;
+  loaded = true;
+  // GoatCounter ignores localhost by default. `?gc=local` opts in so the
+  // integration can be verified before deploying.
+  loadScript(new URLSearchParams(location.search).get('gc') === 'local');
 }
 
 /**

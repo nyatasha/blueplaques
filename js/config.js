@@ -42,6 +42,15 @@ export const PLAQUE_PARAM = 'plaque';
  */
 export const WALK_PARAM = 'walk';
 
+/**
+ * Deep link from a generated static category page: `/?category=<slug>` opens
+ * the map filtered to that category. The slug is the app's own — `writers`,
+ * not the page's URL segment `writers-literature` — so the app never has to
+ * know how the generator spells its directory names. An unknown slug is
+ * ignored and the app boots normally.
+ */
+export const CATEGORY_PARAM = 'category';
+
 /** Reported GPS accuracy worse than this is not trusted for verification. */
 export const MAX_TRUSTED_ACCURACY_M = 250;
 

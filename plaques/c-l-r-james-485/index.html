@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="C. L. R. James blue plaque in Brixton — London Uncovered">
 <meta name="twitter:description" content="“C. L. R. James 1901-1989 West Indian writer and political activist lived and died here” Blue plaque at 165 Railton Road, Brixton, Lambeth, SE24.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/C.L.R._JAMES_1901-1989_West_Indian_Writer_and_Political_Activist_lived_and_died_here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to C. L. R. James">
+<meta name="twitter:image:alt" content="The London blue plaque to C. L. R. James">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "C. L. R. James"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.45670, -0.10598</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=485">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=485" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/C._L._R._James" rel="noopener nofollow" target="_blank">Wikipedia</a>

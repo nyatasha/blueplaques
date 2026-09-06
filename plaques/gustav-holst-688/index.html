@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Gustav Holst blue plaque in Brook Green — London Uncovered">
 <meta name="twitter:description" content="“Gustav Holst 1874-1934 composer wrote The Planets and taught here” Blue plaque at St Paul&#x27;s Girls&#x27; School, Brook Green, Hammersmith and Fulham, W8.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/GUSTAV_HOLST_1874-1934_Composer_wrote_The_Planets_and_taught_here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Gustav Holst">
+<meta name="twitter:image:alt" content="The London blue plaque to Gustav Holst">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Music",
+      "item": "https://nyatasha.github.io/blueplaques/categories/music/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Gustav Holst"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.49560, -0.21924</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=688">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=688" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Gustav_Holst" rel="noopener nofollow" target="_blank">Wikipedia</a>

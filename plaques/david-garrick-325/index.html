@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="David Garrick blue plaque in Hampton Court Road — London Uncovered">
 <meta name="twitter:description" content="“David Garrick 1717-1779 actor lived here” Blue plaque at Garrick&#x27;s Villa, Hampton Court Road, Richmond-upon-Thames. Erected 1970.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/David_Garrick_1717-1779_Actor_lived_here.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to David Garrick">
+<meta name="twitter:image:alt" content="The London blue plaque to David Garrick">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Film & Theatre",
+      "item": "https://nyatasha.github.io/blueplaques/categories/film-theatre/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "David Garrick"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.41250, -0.35886</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=325">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=325" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/David_Garrick" rel="noopener nofollow" target="_blank">Wikipedia</a>

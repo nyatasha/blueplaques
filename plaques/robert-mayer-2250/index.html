@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Robert Mayer blue plaque in London — London Uncovered">
 <meta name="twitter:description" content="“Sir Robert Mayer 1879-1985 philanthropist and patron of music lived here in flat no. 31” Blue plaque at 2 Mansfield Street.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/SIR_ROBERT_MAYER_1879-1985_Philanthropist_and_Patron_of_Music_lived_here_in_flat_No.31.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Robert Mayer">
+<meta name="twitter:image:alt" content="The London blue plaque to Robert Mayer">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Robert Mayer"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -79,7 +107,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.51860, -0.14578</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=2250">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=2250" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Robert_Mayer_(philanthropist)" rel="noopener nofollow" target="_blank">Wikipedia</a>

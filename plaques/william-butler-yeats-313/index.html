@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="William Butler Yeats blue plaque in Camden — London Uncovered">
 <meta name="twitter:description" content="“William Butler Yeats 1865-1939 Irish poet and dramatist lived here” Blue plaque at 23 Fitzroy Road, Camden, NW1. Erected 1957.">
 <meta name="twitter:image" content="https://farm8.staticflickr.com/7616/16537865267_3764728b80_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to William Butler Yeats">
+<meta name="twitter:image:alt" content="The London blue plaque to William Butler Yeats">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Writers & Literature",
+      "item": "https://nyatasha.github.io/blueplaques/categories/writers-literature/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "William Butler Yeats"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.54020, -0.15445</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=313">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=313" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/W._B._Yeats" rel="noopener nofollow" target="_blank">Wikipedia</a>

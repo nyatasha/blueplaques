@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Archibald Hill blue plaque in Highgate — London Uncovered">
 <meta name="twitter:description" content="“A. V. Hill 1886-1977 Physiologist lived here 1923-1967” Blue plaque at 16 Bishopswood Road, Highgate. Erected 2015.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/A._V._HILL_1886%E2%80%931977_Physiologist_lived_here_1923_%E2%80%93_1967.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Archibald Hill">
+<meta name="twitter:image:alt" content="The London blue plaque to Archibald Hill">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Science & Technology",
+      "item": "https://nyatasha.github.io/blueplaques/categories/science-technology/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Archibald Hill"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.57375, -0.15849</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=40254">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=40254" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Archibald_Hill" rel="noopener nofollow" target="_blank">Wikipedia</a>

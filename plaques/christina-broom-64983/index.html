@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Christina Broom blue plaque in Fulham — London Uncovered">
 <meta name="twitter:description" content="“Christina Broom 1862–1939 Photographer lived and worked here from 1913” Blue plaque at 92 Munster Road, Fulham. Erected 2024.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/CHRISTINA_BROOM_1862%E2%80%931939_Photographer_lived_and_worked_here_from_1913.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Christina Broom">
+<meta name="twitter:image:alt" content="The London blue plaque to Christina Broom">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -46,8 +48,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Art & Design",
+      "item": "https://nyatasha.github.io/blueplaques/categories/art-design/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Christina Broom"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -78,7 +106,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.47475, -0.20783</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=64983">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=64983" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://openplaques.org/plaques/64983" rel="noopener nofollow" target="_blank">OpenPlaques record</a>

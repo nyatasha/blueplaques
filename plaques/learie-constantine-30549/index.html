@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Learie Constantine blue plaque in Earls Court — London Uncovered">
 <meta name="twitter:description" content="“Sir Learie Constantine 1901-1971 West Indian cricketer and statesman lived here 1949-1954” Blue plaque at 101 Lexham Gardens, Earls Court. Erected 2013.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/Sir_LEARIE_CONSTANTINE_1901-1971_West_Indian_Cricketer_and_Statesman_lived_here_1949-1954.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Learie Constantine">
+<meta name="twitter:image:alt" content="The London blue plaque to Learie Constantine">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Sport",
+      "item": "https://nyatasha.github.io/blueplaques/categories/sport/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Learie Constantine"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.49566, -0.19439</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=30549">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=30549" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Learie_Constantine" rel="noopener nofollow" target="_blank">Wikipedia</a>

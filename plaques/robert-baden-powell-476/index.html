@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Robert Baden-Powell blue plaque in Kensington and Chelsea — London Uncovered">
 <meta name="twitter:description" content="“Robert Baden-Powell 1857-1941 Chief Scout of the World lived here” Blue plaque at 9 Hyde Park Gate, Kensington and Chelsea, SW7. Erected 1972.">
 <meta name="twitter:image" content="https://farm9.staticflickr.com/8614/15810783823_7a14716045_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to Robert Baden-Powell">
+<meta name="twitter:image:alt" content="The London blue plaque to Robert Baden-Powell">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Politics & Society",
+      "item": "https://nyatasha.github.io/blueplaques/categories/politics-society/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Robert Baden-Powell"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.50090, -0.18147</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=476">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=476" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Robert_Baden-Powell,_1st_Baron_Baden-Powell" rel="noopener nofollow" target="_blank">Wikipedia</a>

@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="George Romney blue plaque in Camden — London Uncovered">
 <meta name="twitter:description" content="“George Romney (1734-1802), painter, lived here.” Blue plaque at 5 Holly Bush Hill, Camden, NW3. Erected 1908.">
 <meta name="twitter:image" content="https://farm5.staticflickr.com/4019/4624432829_d3964fb7c5_z.jpg">
+<meta property="og:image:alt" content="The London blue plaque to George Romney">
+<meta name="twitter:image:alt" content="The London blue plaque to George Romney">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Art & Design",
+      "item": "https://nyatasha.github.io/blueplaques/categories/art-design/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "George Romney"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.55800, -0.17970</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=629">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=629" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/George_Romney_(painter)" rel="noopener nofollow" target="_blank">Wikipedia</a>

@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Innes Pearse blue plaque in Peckham — London Uncovered">
 <meta name="twitter:description" content="“Dr. Innes Pearse 1889-1978 and Dr. George Scott Williamson 1884-1953 founded the Pioneer Health Centre here…” Blue plaque at 142 Queens Road, Peckham.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/Dr._INNES_PEARSE_1889-1978_and_Dr._GEORGE_SCOTT_WILLIAMSON_1884-1953_founded_the_Pioneer_Health_Centre_here_in_1926.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Innes Pearse">
+<meta name="twitter:image:alt" content="The London blue plaque to Innes Pearse">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Science & Technology",
+      "item": "https://nyatasha.github.io/blueplaques/categories/science-technology/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Innes Pearse"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.47300, -0.05417</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=3181">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=3181" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Innes_Hope_Pearse" rel="noopener nofollow" target="_blank">Wikipedia</a>

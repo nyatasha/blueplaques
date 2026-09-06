@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Robert Bevan blue plaque in Camden — London Uncovered">
 <meta name="twitter:description" content="“Robert Polhill Bevan 1865-1925 Camden Town Group painter lived here 1900-1925” Blue plaque at 14 Adamson Road, Camden, NW3. Erected 1999.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/ROBERT_POLHILL_BEVAN_1865-1925_Camden_Town_Group_Painter_lived_here_1900-1925.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Robert Bevan">
+<meta name="twitter:image:alt" content="The London blue plaque to Robert Bevan">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Art & Design",
+      "item": "https://nyatasha.github.io/blueplaques/categories/art-design/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Robert Bevan"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.54500, -0.17198</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=670">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=670" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Robert_Bevan_(artist)" rel="noopener nofollow" target="_blank">Wikipedia</a>

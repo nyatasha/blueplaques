@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Mary Kingsley blue plaque in London — London Uncovered">
 <meta name="twitter:description" content="“Mary Kingsley 1862-1900 traveller and ethnologist lived here as a child” Blue plaque at 22 Southwood Lane, N6 Haringey. Erected 1975.">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/MARY_KINGSLEY_1862-1900_Traveller_and_ethnologist_lived_here_as_a_child.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Mary Kingsley">
+<meta name="twitter:image:alt" content="The London blue plaque to Mary Kingsley">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Science & Technology",
+      "item": "https://nyatasha.github.io/blueplaques/categories/science-technology/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Mary Kingsley"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -80,7 +108,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.57160, -0.14882</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=522">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=522" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Mary_Kingsley" rel="noopener nofollow" target="_blank">Wikipedia</a>

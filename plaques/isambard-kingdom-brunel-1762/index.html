@@ -18,6 +18,8 @@
 <meta name="twitter:title" content="Isambard Kingdom Brunel blue plaque in Westferry Road — London Uncovered">
 <meta name="twitter:description" content="“The Great Eastern (launched 1858) largest steamship of the century was built here by I.K. Brunel and J. Scott…”">
 <meta name="twitter:image" content="https://commons.wikimedia.org/wiki/Special:FilePath/THE_GREAT_EASTERN_(_launched_1858_)_largest_steamship_of_the_century_was_built_here_by_I.K._Brunel_and_J.Scott_Russell.jpg?width=1200">
+<meta property="og:image:alt" content="The London blue plaque to Isambard Kingdom Brunel">
+<meta name="twitter:image:alt" content="The London blue plaque to Isambard Kingdom Brunel">
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
 <link rel="stylesheet" href="../../css/tokens.css">
@@ -47,8 +49,34 @@
   ]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "London Uncovered",
+      "item": "https://nyatasha.github.io/blueplaques/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Science & Technology",
+      "item": "https://nyatasha.github.io/blueplaques/categories/science-technology/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Isambard Kingdom Brunel"
+    }
+  ]
+}
+</script>
+<script type="module" src="../../js/static-page.js"></script>
 </head>
-<body class="sp-body">
+<body class="sp-body" data-page="plaque">
   <header class="sp-header">
     <a class="sp-brand" href="../../">
       <span class="sp-brand-disc" aria-hidden="true"></span>
@@ -78,7 +106,8 @@
         <div class="sp-row"><dt>Coordinates</dt><dd>51.48840, -0.01900</dd></div>
       </dl>
 
-      <a class="sp-cta" href="../../?plaque=1762">View on interactive map</a>
+      <a class="sp-cta" href="../../?plaque=1762" data-track="to-app">View on interactive map</a>
+      <button type="button" class="sp-share" data-track="share" hidden>Share this page</button>
 
       <nav class="sp-links" aria-label="Sources">
         <a class="sp-link" href="https://en.wikipedia.org/wiki/Isambard_Kingdom_Brunel" rel="noopener nofollow" target="_blank">Wikipedia</a>
