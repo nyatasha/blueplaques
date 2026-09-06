@@ -98,11 +98,29 @@ def esc(value):
     return html.escape("" if value is None else str(value), quote=True)
 
 
-def safe_url(url):
-    """Return an escaped absolute http(s) URL, or '' for anything else.
+# Anything outside printable ASCII cannot appear in a URI at all. `%` and the
+# hex digits are inside this range, so an already-encoded URL is left alone and
+# nothing is ever encoded twice.
+URL_MUST_ENCODE = re.compile(r"[^\x21-\x7e]")
+
+
+def percent_encode(component):
+    """Percent-encode the characters a URI may not carry literally.
+
+    Photo file names in the dataset contain en-dashes and accented letters, and
+    a few carry spaces. A browser guesses at those, but `og:image` and the
+    JSON-LD `image`/`sameAs` values are read by crawlers that do not, so the
+    URL has to leave here already valid. Reserved characters keep their meaning:
+    only what is genuinely illegal is touched.
+    """
+    return URL_MUST_ENCODE.sub(lambda m: quote(m.group(), safe=""), component)
+
+
+def clean_url(url):
+    """Return a valid absolute http(s) URL, or '' for anything else.
 
     The dataset is public and third-party, so a `javascript:` or `data:` value
-    must never reach an href or src.
+    must never reach an href, a src, or a JSON-LD node.
     """
     if not url:
         return ""
@@ -112,7 +130,14 @@ def safe_url(url):
         return ""
     if parts.scheme not in ("http", "https") or not parts.netloc:
         return ""
-    return esc(parts.geturl())
+    return parts._replace(path=percent_encode(parts.path),
+                          query=percent_encode(parts.query),
+                          fragment=percent_encode(parts.fragment)).geturl()
+
+
+def safe_url(url):
+    """`clean_url`, escaped for a quoted attribute value."""
+    return esc(clean_url(url))
 
 
 def slugify(title, plaque_id):
@@ -288,10 +313,10 @@ def structured_data(p, url):
         node["address"] = {"@type": "PostalAddress",
                            "streetAddress": p["address"], "addressLocality": "London",
                            "addressCountry": "GB"}
-    if p["photo"].startswith(("http://", "https://")):
-        node["image"] = thumb(p["photo"], 800)
-    sameas = [u for u in (p["wikipedia"], p["source"])
-              if u.startswith(("http://", "https://"))]
+    image = clean_url(thumb(p["photo"], 800))
+    if image:
+        node["image"] = image
+    sameas = [u for u in (clean_url(p["wikipedia"]), clean_url(p["source"])) if u]
     if sameas:
         node["sameAs"] = sameas
     # </script> can never appear: the payload is escaped for the script context.

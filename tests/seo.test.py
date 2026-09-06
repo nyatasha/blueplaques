@@ -8,6 +8,7 @@ Generates the whole site into a temporary directory, so nothing here touches
 the committed pages. Dependency-free: standard library only.
 """
 
+import json
 import os
 import re
 import shutil
@@ -81,6 +82,40 @@ eq("data: URLs are refused", gen.safe_url("data:text/html,<script>"), "")
 eq("protocol-relative URLs are refused", gen.safe_url("//evil.example/x"), "")
 eq("http(s) URLs pass through, escaped for an attribute",
    gen.safe_url('https://e.org/a?b=1&c="x"'), "https://e.org/a?b=1&amp;c=&quot;x&quot;")
+
+# 47 of the dataset's photo URLs carry an en-dash or other non-ASCII character
+# straight from the file name. Browsers guess at those, but og:image and the
+# JSON-LD `image`/`sameAs` values are read by crawlers that do not, so the
+# generator has to hand out a URL that is already valid.
+eq("non-ASCII in the path is percent-encoded",
+   gen.safe_url("https://commons.wikimedia.org/wiki/Special:FilePath/A_1872\u20131913.jpg"),
+   "https://commons.wikimedia.org/wiki/Special:FilePath/A_1872%E2%80%931913.jpg")
+eq("non-ASCII in the query is percent-encoded too",
+   gen.safe_url("https://e.org/a?name=Fran\u00e7ois"),
+   "https://e.org/a?name=Fran%C3%A7ois")
+eq("a space becomes %20, not a broken attribute",
+   gen.safe_url("https://e.org/a b.jpg"), "https://e.org/a%20b.jpg")
+eq("an already-encoded URL is not encoded twice",
+   gen.safe_url("https://e.org/%27OUIDA%27_1839.jpg?width=800"),
+   "https://e.org/%27OUIDA%27_1839.jpg?width=800")
+eq("reserved characters keep their meaning",
+   gen.safe_url("https://e.org/a/b?x=1&y=2#f"), "https://e.org/a/b?x=1&amp;y=2#f")
+
+# The JSON-LD node is built from the same fields as the visible page but does
+# not pass through an attribute, so it needs its own check that it is fed the
+# validated, encoded URL rather than the raw dataset value.
+_ld = json.loads(gen.structured_data({
+    "title": "T", "inscription": "", "address": "", "year": "", "lat": 51.5, "lng": -0.1,
+    "photo": "https://commons.wikimedia.org/wiki/Special:FilePath/A_1872\u20131913.jpg",
+    "wikipedia": "https://en.wikipedia.org/wiki/Fran\u00e7ois_Guizot",
+    "source": "javascript:alert(1)",
+}, "https://nyatasha.github.io/blueplaques/plaques/t-1/"))
+eq("JSON-LD image is percent-encoded",
+   _ld["image"],
+   "https://commons.wikimedia.org/wiki/Special:FilePath/A_1872%E2%80%931913.jpg")
+eq("JSON-LD sameAs is percent-encoded",
+   _ld["sameAs"], ["https://en.wikipedia.org/wiki/Fran%C3%A7ois_Guizot"])
+check("JSON-LD drops a javascript: source", "javascript:" not in str(_ld))
 
 group("category URLs")
 eq("the URL comes from the label, not the internal key",
@@ -338,6 +373,52 @@ check("those links are plain anchors, not JavaScript",
       "javascript:" not in home)
 check("the no-JavaScript fallback carries them too",
       'href="categories/' in home.split("<noscript>")[1].split("</noscript>")[0])
+
+# ── What is committed is what GitHub Pages serves ───────────────────────────
+#
+# The site deploys straight from the branch: no build step runs on push, so a
+# dataset edit without a regeneration ships stale pages and a stale sitemap and
+# nothing else would notice. Regenerate into a temporary tree and compare.
+
+group("the committed site matches the generator")
+committed = tempfile.mkdtemp()
+try:
+    gen.generate(committed, gen.load_plaques())
+    drift = []
+    for rel in (gen.URL_MAP, "sitemap.xml"):
+        with open(os.path.join(ROOT, rel), encoding="utf-8") as a, \
+             open(os.path.join(committed, rel), encoding="utf-8") as b:
+            if a.read() != b.read():
+                drift.append(rel)
+    for sub in (gen.PAGES_DIR, gen.CATS_DIR):
+        want = {d for d in os.listdir(os.path.join(committed, sub))}
+        have = {d for d in os.listdir(os.path.join(ROOT, sub))
+                if os.path.isfile(os.path.join(ROOT, sub, d, "index.html"))}
+        check(f"{sub}/ holds exactly the generated directories", want == have,
+              f"missing {sorted(want - have)[:3]}, extra {sorted(have - want)[:3]}")
+        for d in sorted(want & have):
+            with open(os.path.join(ROOT, sub, d, "index.html"), encoding="utf-8") as a, \
+                 open(os.path.join(committed, sub, d, "index.html"), encoding="utf-8") as b:
+                if a.read() != b.read():
+                    drift.append(f"{sub}/{d}/index.html")
+    check("every committed page is byte-for-byte what the generator writes",
+          not drift, f"{len(drift)} stale: {drift[:3]}")
+finally:
+    shutil.rmtree(committed, ignore_errors=True)
+
+group("deployment")
+with open(os.path.join(ROOT, "robots.txt"), encoding="utf-8") as fh:
+    robots = fh.read()
+check("robots.txt disallows nothing", "Disallow:" not in robots
+      or all(not l.split(":", 1)[1].strip()
+             for l in robots.splitlines() if l.startswith("Disallow:")))
+check("robots.txt points at the sitemap on the project site",
+      f"Sitemap: {gen.SITE}sitemap.xml" in robots)
+# Pages runs Jekyll over a branch deploy unless this file is present, and Jekyll
+# silently drops any path beginning with an underscore. Nothing generated starts
+# with one today, but the tree is committed output and should be served verbatim.
+check(".nojekyll makes Pages serve the tree verbatim",
+      os.path.isfile(os.path.join(ROOT, ".nojekyll")))
 
 print()
 if failed:
