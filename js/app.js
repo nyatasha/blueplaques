@@ -194,7 +194,8 @@ function renderMapPanel(visible) {
   host.innerHTML = discoveryList(rows, {
     // "In this view" is a claim about the whole filtered set, so it counts all
     // of it. The other two headings name the rows themselves, so they count
-    // those: 935 beside "Iconic Londoners" answered a different question.
+    // those: the whole-dataset total beside "Iconic Londoners" answered a
+    // different question.
     heading: located ? 'Near you' : searching ? 'In this view' : 'Iconic Londoners',
     count: searching && !located ? visible.length : rows.length,
     emptyText: 'Nothing matches the current filters.',

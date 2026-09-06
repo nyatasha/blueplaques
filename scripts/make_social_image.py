@@ -9,11 +9,13 @@ Usage:
     python3 scripts/make_social_image.py
 """
 
+import json
 import os
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "assets", "social", "og-cover.png")
+DATA = os.path.join(ROOT, "data", "plaques.geojson")
 
 W, H, SS = 1200, 630, 3          # supersample for clean curves and type
 IVORY = (247, 245, 240)
@@ -44,6 +46,12 @@ def plaque(draw, cx, cy, r, fill=BLUE, ring=(255, 255, 255), ring_w=None):
                  outline=ring, width=w)
 
 
+def plaque_count():
+    """Read the count off the dataset — never type it into the card by hand."""
+    with open(DATA, encoding="utf-8") as fh:
+        return len(json.load(fh)["features"])
+
+
 def main():
     img = Image.new("RGB", (W * SS, H * SS), IVORY)
     d = ImageDraw.Draw(img)
@@ -69,7 +77,7 @@ def main():
 
     # A small rule, then the factual line that carries the search keywords.
     d.rectangle([x, 470 * SS, (x + 62 * SS), 474 * SS], fill=GOLD)
-    d.text((x, 500 * SS), "935 English Heritage blue plaques  ·  Interactive map",
+    d.text((x, 500 * SS), f"{plaque_count():,} English Heritage blue plaques  ·  Interactive map",
            font=f_meta, fill=INK_SOFT)
 
     plaque(d, x + 15 * SS, 118 * SS, 26 * SS)

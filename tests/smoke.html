@@ -258,7 +258,9 @@ if (lu) {
         `${q('#map-count').textContent} vs ${musicTotal}`);
   qa('#chips .chip')[0].click();
   await until(() => qa('#chips .chip')[0].getAttribute('aria-pressed') === 'true');
-  check('All chip restores the full set', /935|\d{3} discoveries/.test(q('#map-count').textContent));
+  check('All chip restores the full set',
+        q('#map-count').textContent.includes(lu.state.plaques.length.toLocaleString('en-GB')),
+        `${q('#map-count').textContent} vs ${lu.state.plaques.length}`);
 
   /* ── About ────────────────────────────────────────────────────────────── */
   group('about & seo');

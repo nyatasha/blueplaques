@@ -232,6 +232,23 @@ OVERRIDES: dict[str, str] = {
     "319":  "politics",  # Mahatma Gandhi (second plaque)
     "9720": "politics",  # Harold Moody — physician, but commemorated as a
                          # campaigner for racial equality
+
+    # Early scheme plaques (Society of Arts, LCC), added when the colour filter
+    # was dropped. The rules were tuned on modern plaques whose roles are stated
+    # plainly; these use older wording that trips them.
+    "463":  "art",          # Thomas Chippendale — "cabinet maker" scores on
+                            # "cabinet"; furniture design, not government
+    "1973": "science",      # Henry Cavendish — "natural philosopher" is the
+                            # 18th-century word for physicist
+    "704":  "politics",     # Bow Street — lead subject is Sir John Fielding,
+                            # magistrate; the inscription also names his
+                            # novelist brother, which pulls it to writers
+    "5":    "politics",     # Arthur Onslow — Speaker of the House of Commons
+    "450":  "film-theatre", # Samuel Phelps — "tragedian" i.e. actor-manager
+    "249":  "science",      # Hugh Willoughby — navigator; exploration sits in
+                            # Science & Technology (decision-log #11)
+    "348":  "politics",     # Benjamin Franklin — inscription is bare dates, so
+                            # nothing scores; commemorated here as a statesman
 }
 
 # ── Matching ─────────────────────────────────────────────────────────────────

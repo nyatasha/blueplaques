@@ -35,6 +35,8 @@ function toPlaque(feature) {
     wikipedia: p.wikipedia || '',
     roles: p.lead_roles || '',
     source: p.openplaques_url || '',
+    /** The plaque's actual colour. The scheme's early plaques are not blue. */
+    colour: p.colour || '',
     fame: Number(p.fame) || 0,
     views: Number(p.views) || 0,
     category: slug,

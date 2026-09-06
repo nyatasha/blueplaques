@@ -1,8 +1,8 @@
 # London Uncovered
 
-A mobile-first London exploration game built on an interactive map of every
-English Heritage blue plaque in the city. Explore the map, find plaques near
-you, collect the discoveries you make, and watch your London fill in.
+A mobile-first London exploration game built on an interactive map of the
+English Heritage blue plaque scheme. Explore the map, find plaques near you,
+collect the discoveries you make, and watch your London fill in.
 
 **Live site:** https://nyatasha.github.io/blueplaques/
 
@@ -12,7 +12,7 @@ you, collect the discoveries you make, and watch your London fill in.
 
 ## What it does
 
-- **Map** — all English Heritage blue plaques in London, clustered, with
+- **Map** — the English Heritage scheme's London plaques, clustered, with
   markers that show fame tier and whether you have collected them.
 - **Search** — people, places and categories, with grouped suggestions.
 - **Categories** — every plaque is classified into one of nine top-level
@@ -98,8 +98,9 @@ the sitemap. Run it whenever the data changes:
 python3 scripts/generate_seo_pages.py    # plaques/ + categories/ + data/plaque-urls.json + sitemap.xml
 ```
 
-The share card and app icons are generated too, but only when the branding
-changes — they are committed, not built per deploy:
+The share card and app icons are generated too, and committed rather than built
+per deploy. The card carries the plaque count, which it reads from the dataset,
+so re-run it after a data refresh as well as after a branding change:
 
 ```bash
 python3 scripts/make_social_image.py     # assets/social/og-cover.png
@@ -110,6 +111,30 @@ fetch plaques → add fame → classify categories → data/plaques.geojson
                                                        ↓
                                         generate SEO pages → deploy
 ```
+
+`generate_seo_pages.py` also rewrites the plaque count in `index.html` — in the
+Twitter description, the JSON-LD and the `<noscript>` block — from the dataset
+it just read. Those numbers live inside `<!--gen:NAME-->…<!--/gen:NAME-->`
+regions and must not be edited by hand; a refresh would overwrite them anyway.
+
+### What the dataset covers
+
+Every plaque in the [OpenPlaques London
+datapull](https://openplaques.org/posts/data) of **14 December 2025** (accessed
+2026-09-06) tagged into the scheme administered by English Heritage — 1,001
+rows, whatever colour the plaque is. The scheme's early plaques are brown
+terracotta, stone, bronze, black, grey, white and green, and selecting on
+`colour == "blue"` used to discard 76 of them (decision-log #24).
+
+This is **not** every plaque of the scheme that exists: Wikipedia's [list of
+English Heritage blue
+plaques](https://en.wikipedia.org/wiki/List_of_English_Heritage_blue_plaques_in_London)
+gives 1,018 (accessed 2026-09-06), so the dump itself trails the scheme by
+roughly 17. Nor is it every plaque in London — the same dump holds 3,781 across
+some 200 erecting bodies. Rows we do not ship are written to
+`docs/data-quality/excluded-rows.csv` with a reason, one line each, so the
+shipped count plus the excluded count always equals the dump. That report is an
+internal QA artefact — `docs/` is not tracked, and it is not served.
 
 Useful flags while working on the classifier:
 
@@ -131,8 +156,10 @@ python3 scripts/fetch_plaques.py
 python3 scripts/add_fame.py
 python3 scripts/classify_categories.py
 python3 scripts/generate_seo_pages.py
+python3 scripts/make_social_image.py
 bash tests/run.sh
-git add data/plaques.geojson plaques categories sitemap.xml \
+git add data/plaques.geojson plaques categories sitemap.xml index.html \
+  assets/social/og-cover.png \
   && git commit -m "refresh plaque data"
 ```
 

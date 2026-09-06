@@ -153,7 +153,7 @@ check("categories are listed strongest first",
 
 out = tempfile.mkdtemp(prefix="seo-test-")
 try:
-    written, cats = gen.generate(out, plaques)
+    written, cats, _ = gen.generate(out, plaques)
     eq("a page was written for every plaque", written, len(plaques))
     eq("a page was written for every non-empty category", cats, len(groups))
     dirs = os.listdir(os.path.join(out, gen.PAGES_DIR))

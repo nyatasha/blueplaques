@@ -198,6 +198,20 @@ def haversine(a, b):
 
 # ── Dataset ─────────────────────────────────────────────────────────────────
 
+# The scheme is called the blue plaque scheme, but a quarter of its earliest
+# plaques are brown terracotta, stone, bronze, black, grey, white or green.
+# Naming the collection "blue plaques" is right; calling John Keats's brown
+# terracotta roundel a blue plaque is not, so a page about one plaque uses the
+# colour the dataset records for it.
+KNOWN_COLOURS = {"blue", "brown", "black", "stone", "grey", "bronze", "white", "green"}
+
+
+def plaque_noun(p):
+    """"blue plaque" / "brown plaque" — what this one plaque should be called."""
+    colour = p.get("colour", "")
+    return f"{colour} plaque" if colour in KNOWN_COLOURS else "plaque"
+
+
 def load_plaques(path=DATA):
     with open(path, encoding="utf-8") as fh:
         geojson = json.load(fh)
@@ -236,6 +250,7 @@ def load_plaques(path=DATA):
             "roles": (props.get("lead_roles") or "").strip(),
             "source": (props.get("openplaques_url") or "").strip(),
             "fame": int(props.get("fame") or 0),
+            "colour": (props.get("colour") or "").strip().lower(),
             "category": category,
             "category_label": props.get("category_label") or CATEGORY_LABELS[category],
             "lat": lat,
@@ -273,7 +288,7 @@ def nearest(plaque, plaques, count=NEARBY):
 
 def page_title(p):
     where = f" in {p['locality']}" if p["locality"] else " in London"
-    return f"{p['title']} blue plaque{where} — {SITE_NAME}"
+    return f"{p['title']} {plaque_noun(p)}{where} — {SITE_NAME}"
 
 
 def meta_description(p):
@@ -286,9 +301,9 @@ def meta_description(p):
     if p["inscription"]:
         parts.append(f"\u201c{truncate(p['inscription'], 110)}\u201d")
     if p["address"]:
-        parts.append(f"Blue plaque at {p['address']}.")
+        parts.append(f"{plaque_noun(p).capitalize()} at {p['address']}.")
     elif not p["inscription"]:
-        parts.append(f"English Heritage blue plaque for {p['title']} in London.")
+        parts.append(f"English Heritage {plaque_noun(p)} for {p['title']} in London.")
     if p["year"]:
         parts.append(f"Erected {p['year']}.")
 
@@ -302,7 +317,7 @@ def structured_data(p, url):
     node = {
         "@context": "https://schema.org",
         "@type": "Place",
-        "name": f"{p['title']} blue plaque",
+        "name": f"{p['title']} {plaque_noun(p)}",
         "url": url,
         "geo": {"@type": "GeoCoordinates",
                 "latitude": round(p["lat"], 5), "longitude": round(p["lng"], 5)},
@@ -380,7 +395,7 @@ def nearby_block(p, neighbours):
             f'          <li><a href="../{esc(n["slug"])}/">{esc(n["title"])}</a>'
             f'<span class="sp-near-meta">{esc(meta)}</span></li>')
     return ('      <section class="sp-near" aria-labelledby="nearby">\n'
-            '        <h2 id="nearby">Blue plaques nearby</h2>\n'
+            '        <h2 id="nearby">Plaques nearby</h2>\n'
             '        <ul>\n' + "\n".join(items) + '\n        </ul>\n'
             '      </section>\n')
 
@@ -394,7 +409,7 @@ def photo_block(p):
                f'<a href="{credit}" rel="noopener nofollow" target="_blank">OpenPlaques</a>'
                f'</figcaption>') if credit else ""
     return (f'      <figure class="sp-figure">\n'
-            f'        <img src="{src}" width="800" alt="The blue plaque for '
+            f'        <img src="{src}" width="800" alt="The {plaque_noun(p)} for '
             f'{esc(p["title"])}" loading="lazy" decoding="async">\n'
             f'        {caption}\n      </figure>\n')
 
@@ -465,7 +480,7 @@ def render_page(p, neighbours, siblings):
 
   <main class="sp-main">
     <article class="sp-card">
-{crumbs_block(p)}      <p class="sp-eyebrow">London blue plaque</p>
+{crumbs_block(p)}      <p class="sp-eyebrow">London {plaque_noun(p)}</p>
       <h1>{esc(p['title'])}</h1>
 {subtitle}      <p class="sp-badges">{''.join(badges)}</p>
 {photo_block(p)}{inscription}{rows_block(p)}
@@ -478,8 +493,8 @@ def render_page(p, neighbours, siblings):
 {nearby_block(p, neighbours)}{category_block(p, siblings)}  </main>
 
   <footer class="sp-footer">
-    <p>Part of <a href="../../">{esc(SITE_NAME)}</a>, an interactive map of every
-       English Heritage blue plaque in London.</p>
+    <p>Part of <a href="../../">{esc(SITE_NAME)}</a>, an interactive map of the
+       English Heritage blue plaque scheme in London.</p>
     <p>Plaque data from <a href="https://openplaques.org" rel="noopener nofollow"
        target="_blank">OpenPlaques</a> (public domain). {esc(SITE_NAME)} is an
        independent project and is not affiliated with or endorsed by English Heritage.</p>
@@ -625,8 +640,8 @@ def render_category_page(key, groups, total):
   </main>
 
   <footer class="sp-footer">
-    <p>Part of <a href="../../">{esc(SITE_NAME)}</a>, an interactive map of every
-       English Heritage blue plaque in London.</p>
+    <p>Part of <a href="../../">{esc(SITE_NAME)}</a>, an interactive map of the
+       English Heritage blue plaque scheme in London.</p>
     <p>Plaque data from <a href="https://openplaques.org" rel="noopener nofollow"
        target="_blank">OpenPlaques</a> (public domain). {esc(SITE_NAME)} is an
        independent project and is not affiliated with or endorsed by English Heritage.</p>
@@ -659,6 +674,113 @@ def render_sitemap(plaques, groups):
     return ('<?xml version="1.0" encoding="UTF-8"?>\n'
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
             f"{body}\n</urlset>\n")
+
+
+# ── Generated counts in index.html ──────────────────────────────────────────
+# The plaque count used to be typed by hand into the meta description, the
+# JSON-LD and the <noscript> block, so a dataset change quietly made all three
+# wrong (decision-log #26). Each is now a region delimited by HTML comments and
+# rewritten here from the dataset. The markers are comments, so index.html at
+# rest is still a valid page that can be served directly.
+
+INDEX = "index.html"
+
+INDEX_REGIONS = {
+    "count": '{n}',
+
+    "twitter-description":
+        '  <meta name="twitter:description" content="Explore {n} English Heritage '
+        'blue plaques in London. Find discoveries near you and collect the stories '
+        'you uncover.">',
+
+    "noscript-intro":
+        '    <p>An interactive map of {n} English Heritage blue plaques in London. '
+        'JavaScript is required to view the map.</p>',
+}
+
+
+def jsonld_region(count, subjects):
+    """The WebApplication + Dataset block. Two counts, one source of truth."""
+    payload = {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": SITE_NAME,
+        "alternateName": "London Blue Plaques Map",
+        "url": SITE,
+        "description": (
+            f"Interactive map of {count} English Heritage blue plaques in London. "
+            "Explore by category, find blue plaques near you and collect the "
+            "discoveries you make."
+        ),
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {"@type": "Offer", "price": "0", "priceCurrency": "GBP"},
+        "about": {
+            "@type": "Dataset",
+            "name": "English Heritage Blue Plaques London",
+            "description": (
+                f"{count} English Heritage blue plaques in London with locations, "
+                "inscriptions, erected dates, categories and Wikipedia links. "
+                f"Subjects include {subjects} and hundreds more."
+            ),
+            "spatialCoverage": {"@type": "Place", "name": "London",
+                                "addressCountry": "GB"},
+            "license": "https://opendatacommons.org/licenses/pddl/",
+            "isBasedOn": {"@type": "WebSite", "name": "OpenPlaques",
+                          "url": "https://openplaques.org"},
+        },
+    }
+    body = json.dumps(payload, ensure_ascii=False, indent=2)
+    body = "\n".join("  " + line for line in body.split("\n"))
+    return ('  <script type="application/ld+json">\n'
+            f"{body}\n"
+            "  </script>")
+
+
+# Named in the JSON-LD dataset description. Hand-picked for recognisability, not
+# derived — fame ranking would reshuffle the sentence on every refresh.
+JSONLD_SUBJECTS = ("Freddie Mercury, John Lennon, Charles Darwin, Florence "
+                   "Nightingale, Karl Marx, Oscar Wilde, Alan Turing, Charles "
+                   "Dickens, Virginia Woolf, Jimi Hendrix")
+
+
+def replace_region(text, name, body):
+    """Swap the content between <!--gen:name--> and <!--/gen:name-->."""
+    open_tag, close_tag = f"<!--gen:{name}-->", f"<!--/gen:{name}-->"
+    start, end = text.find(open_tag), text.find(close_tag)
+    if start < 0 or end < 0 or end < start:
+        raise SystemExit(f"index.html has no <!--gen:{name}--> region")
+    inner = text[start + len(open_tag):end]
+    if inner.startswith("\n"):
+        # A region on its own lines: keep the newlines and whatever indentation
+        # the closing marker sits at, so rewriting does not reflow the file.
+        indent = inner[inner.rfind("\n") + 1:]
+        body = f"\n{body}\n{indent}"
+    return text[:start + len(open_tag)] + body + text[end:]
+
+
+def update_index(out_root, plaques):
+    """Rewrite every generated count in index.html.
+
+    Returns the path written, or None when the target root has no index.html —
+    which is the case when the generator writes into a scratch directory under
+    test. `main()` insists on it for a real build.
+    """
+    path = os.path.join(out_root, INDEX)
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as fh:
+        text = fh.read()
+
+    count = f"{len(plaques):,}"
+    for name, template in INDEX_REGIONS.items():
+        text = replace_region(text, name, template.format(n=count))
+    text = replace_region(text, "jsonld", jsonld_region(count, JSONLD_SUBJECTS))
+
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(text)
+    return path
 
 
 # ── Entry point ─────────────────────────────────────────────────────────────
@@ -705,7 +827,8 @@ def generate(out_root, plaques, clean=True):
 
     write(os.path.join(out_root, URL_MAP), render_url_map(plaques))
     write(os.path.join(out_root, "sitemap.xml"), render_sitemap(plaques, groups))
-    return len(plaques), len(groups)
+    indexed = update_index(out_root, plaques)
+    return len(plaques), len(groups), indexed
 
 
 def main(argv=None):
@@ -727,11 +850,15 @@ def main(argv=None):
             print(f"  {CATS_DIR}/{CATEGORY_URL[key]}/  ({len(rows)})")
         return 0
 
-    count, categories = generate(args.out, plaques)
+    count, categories, indexed = generate(args.out, plaques)
     print(f"wrote {count} plaque pages under {os.path.join(args.out, PAGES_DIR)}")
     print(f"wrote {categories} category pages under {os.path.join(args.out, CATS_DIR)}")
     print(f"wrote {URL_MAP}")
     print(f"wrote sitemap.xml with {count + categories + 1} URLs")
+    if indexed:
+        print(f"wrote the generated counts in {INDEX} ({count:,})")
+    elif os.path.abspath(args.out) == os.path.abspath(ROOT):
+        raise SystemExit(f"{INDEX} is missing from {args.out} — counts not written")
     return 0
 
 

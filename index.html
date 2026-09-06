@@ -25,7 +25,9 @@
   <!-- Twitter -->
   <meta name="twitter:card"        content="summary_large_image">
   <meta name="twitter:title"       content="London Uncovered — London Blue Plaques Map">
-  <meta name="twitter:description" content="Explore all 935 English Heritage blue plaques in London. Find discoveries near you and collect the stories you uncover.">
+  <!--gen:twitter-description-->
+  <meta name="twitter:description" content="Explore 1,001 English Heritage blue plaques in London. Find discoveries near you and collect the stories you uncover.">
+  <!--/gen:twitter-description-->
   <meta name="twitter:image"       content="https://nyatasha.github.io/blueplaques/assets/social/og-cover.png">
   <meta name="twitter:image:alt"   content="London Uncovered — a blue plaque on a warm ivory ground, above the line: discover the stories hiding around you.">
 
@@ -38,6 +40,7 @@
   <meta name="apple-mobile-web-app-title" content="London Uncovered">
 
   <!-- Structured data -->
+  <!--gen:jsonld-->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -45,21 +48,34 @@
     "name": "London Uncovered",
     "alternateName": "London Blue Plaques Map",
     "url": "https://nyatasha.github.io/blueplaques/",
-    "description": "Interactive map of all 935 English Heritage blue plaques in London. Explore by category, find blue plaques near you and collect the discoveries you make.",
+    "description": "Interactive map of 1,001 English Heritage blue plaques in London. Explore by category, find blue plaques near you and collect the discoveries you make.",
     "applicationCategory": "TravelApplication",
     "operatingSystem": "Any",
     "browserRequirements": "Requires JavaScript",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "GBP"
+    },
     "about": {
       "@type": "Dataset",
       "name": "English Heritage Blue Plaques London",
-      "description": "All 935 English Heritage blue plaques in London with locations, inscriptions, erected dates, categories and Wikipedia links. Subjects include Freddie Mercury, John Lennon, Charles Darwin, Florence Nightingale, Karl Marx, Oscar Wilde, Alan Turing, Charles Dickens, Virginia Woolf, Jimi Hendrix and hundreds more.",
-      "spatialCoverage": { "@type": "Place", "name": "London", "addressCountry": "GB" },
+      "description": "1,001 English Heritage blue plaques in London with locations, inscriptions, erected dates, categories and Wikipedia links. Subjects include Freddie Mercury, John Lennon, Charles Darwin, Florence Nightingale, Karl Marx, Oscar Wilde, Alan Turing, Charles Dickens, Virginia Woolf, Jimi Hendrix and hundreds more.",
+      "spatialCoverage": {
+        "@type": "Place",
+        "name": "London",
+        "addressCountry": "GB"
+      },
       "license": "https://opendatacommons.org/licenses/pddl/",
-      "isBasedOn": { "@type": "WebSite", "name": "OpenPlaques", "url": "https://openplaques.org" }
+      "isBasedOn": {
+        "@type": "WebSite",
+        "name": "OpenPlaques",
+        "url": "https://openplaques.org"
+      }
     }
   }
   </script>
+  <!--/gen:jsonld-->
 
   <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -263,8 +279,13 @@
         <h2>What are blue plaques?</h2>
         <p>The <strong>English Heritage blue plaque scheme</strong> has commemorated notable people in London since 1866
            and is the oldest scheme of its kind in the world. A plaque marks a building where someone lived or worked.
-           This map covers <strong id="total-count">935</strong> English Heritage blue plaques across London, from
-           Westminster and Chelsea to Hampstead, Brixton and Bow.</p>
+           This map covers <strong id="total-count"><!--gen:count-->1,001<!--/gen:count--></strong> plaques from the
+           English Heritage scheme across London, from Westminster and Chelsea to Hampstead, Brixton and Bow —
+           including the early brown, stone and bronze ones put up before blue became the standard.
+           That is every scheme plaque in the
+           <a href="https://openplaques.org/posts/data" rel="noopener">OpenPlaques London dataset</a> of
+           14 December 2025 (accessed 6 September 2026). Wikipedia’s list of the scheme runs to 1,018, so a few
+           of the most recent plaques are not here yet.</p>
 
         <h2>Who you will find</h2>
         <p>Plaques mark the homes and workplaces of writers, artists, scientists, performers, musicians, architects,
@@ -327,7 +348,9 @@
 <noscript>
   <div style="padding:28px 22px;max-width:44rem;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.6">
     <h1 style="font-size:1.4rem;margin-bottom:.6rem">London Uncovered — London Blue Plaques Map</h1>
-    <p>An interactive map of all 935 English Heritage blue plaques in London. JavaScript is required to view the map.</p>
+    <!--gen:noscript-intro-->
+    <p>An interactive map of 1,001 English Heritage blue plaques in London. JavaScript is required to view the map.</p>
+    <!--/gen:noscript-intro-->
     <p>The English Heritage blue plaque scheme commemorates notable people who lived or worked in London.
        Subjects include Freddie Mercury, John Lennon, Charles Darwin, Florence Nightingale, Karl Marx,
        Oscar Wilde, Alan Turing, Charles Dickens, Virginia Woolf, Agatha Christie and hundreds more.</p>

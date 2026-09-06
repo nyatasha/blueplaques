@@ -109,6 +109,11 @@ export const THEME_DEFS = [
     tagline: 'Literary squares and disreputable streets.',
     match: p => /bloomsbury|fitzrovia|\bsoho\b/i.test(p.address),
   },
+  {
+    id: 'before-blue', name: 'Before It Was Blue', icon: 'palette',
+    tagline: 'The scheme’s earliest plaques — brown, stone, bronze and black.',
+    match: p => Boolean(p.colour) && p.colour !== 'blue',
+  },
 ];
 
 /**
