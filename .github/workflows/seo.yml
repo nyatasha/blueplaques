@@ -1,0 +1,97 @@
+# The site deploys straight from this branch: GitHub Pages serves the tree
+# verbatim, and no build step runs on push. That makes the committed output the
+# deployed output, so the only thing standing between a stale dataset edit and a
+# sitemap Google acts on is tests/seo.test.py — which, until this workflow, ran
+# only when somebody remembered to type `bash tests/run.sh`.
+#
+# The SEO suite is plain Python 3 with no dependencies, so it runs anywhere. The
+# logic and smoke suites in tests/run.sh are deliberately not here: they need
+# JavaScriptCore and Chrome respectively and stay a local, pre-push step.
+
+name: SEO
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: generated pages and sitemap
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Asserts that every committed page is byte-for-byte what the generator
+      # writes, and that sitemap.xml lists exactly the pages committed beside
+      # it — so a regeneration that was never committed, or a sitemap that
+      # regressed to a handful of URLs, fails here rather than in Search Console.
+      - name: SEO suite
+        run: python3 tests/seo.test.py
+
+      - name: Summarise the sitemap
+        if: always()
+        run: |
+          committed=$(grep -c '<loc>' sitemap.xml)
+          pages=$(find plaques categories -name index.html | wc -l)
+          {
+            echo "| | count |"
+            echo "|---|---|"
+            echo "| URLs in sitemap.xml | $committed |"
+            echo "| Generated pages on disk | $pages |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deployed:
+    name: deployed sitemap matches the branch
+    # A push only repairs production once Pages has served it. This job is the
+    # answer to "the sitemap was fixed in the repo weeks ago and production
+    # never caught up": it polls the live file and reports what is actually
+    # being served. It warns rather than fails, because Pages deploy timing is
+    # outside this workflow's control and a red X for slow propagation would
+    # train people to ignore it.
+    needs: static
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Poll the live sitemap
+        run: |
+          set -uo pipefail
+          url=https://nyatasha.github.io/blueplaques/sitemap.xml
+          want=$(grep -c '<loc>' sitemap.xml)
+          echo "committed sitemap lists $want URLs"
+
+          # grep -c always prints a count, 0 included, so an unreachable URL
+          # reads as zero URLs served rather than as an empty variable.
+          live=0
+          for attempt in $(seq 1 10); do
+            live=$(curl -sS --max-time 30 -H 'Cache-Control: no-cache' "$url" \
+                   | grep -c '<loc>')
+            echo "attempt $attempt: live sitemap lists $live URLs"
+            [ "$live" = "$want" ] && break
+            sleep 45
+          done
+
+          {
+            echo "| | count |"
+            echo "|---|---|"
+            echo "| URLs committed | $want |"
+            echo "| URLs served at $url | $live |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$live" != "$want" ]; then
+            echo "::warning::the deployed sitemap lists $live URLs, the branch lists $want — Pages may still be publishing, or the deploy did not run"
+          else
+            echo "the deployed sitemap matches the branch"
+          fi

@@ -406,6 +406,52 @@ try:
 finally:
     shutil.rmtree(committed, ignore_errors=True)
 
+# ── The committed sitemap is the one Google fetches ─────────────────────────
+#
+# The check above compares sitemap.xml with a fresh generator run, which fails
+# on any drift at all. This one asks the narrower question directly of the file
+# on disk, without consulting the generator: does the committed sitemap list
+# the pages that are committed beside it? A sitemap that regressed to a handful
+# of URLs — the state this site shipped in before the static layer landed — is
+# invisible to a byte comparison if the generator is what regressed, and it is
+# the failure that costs the most, because Google acts on it silently.
+
+group("the committed sitemap covers the committed pages")
+with open(os.path.join(ROOT, "sitemap.xml"), encoding="utf-8") as fh:
+    committed_sitemap = fh.read()
+committed_locs = re.findall(r"<loc>([^<]+)</loc>", committed_sitemap)
+
+
+def committed_dirs(sub):
+    root = os.path.join(ROOT, sub)
+    return {d for d in os.listdir(root)
+            if os.path.isfile(os.path.join(root, d, "index.html"))}
+
+
+on_disk = {
+    gen.SITE,
+    *(f"{gen.SITE}{gen.CATS_DIR}/{d}/" for d in committed_dirs(gen.CATS_DIR)),
+    *(f"{gen.SITE}{gen.PAGES_DIR}/{d}/" for d in committed_dirs(gen.PAGES_DIR)),
+}
+listed = set(committed_locs)
+
+# A tiny sitemap beside a large tree is the specific regression this guards, so
+# say so in its own check rather than leaving it to the set comparison, whose
+# failure detail truncates to three entries.
+check("the sitemap is not a small subset of the pages committed beside it",
+      len(listed) >= len(on_disk),
+      f"{len(listed)} URLs listed, {len(on_disk)} pages on disk")
+check("every committed page is listed in the sitemap", on_disk <= listed,
+      f"{len(on_disk - listed)} unlisted, e.g. {sorted(on_disk - listed)[:3]}")
+check("the sitemap lists nothing that is not committed", listed <= on_disk,
+      f"{len(listed - on_disk)} phantom, e.g. {sorted(listed - on_disk)[:3]}")
+eq("no URL is listed twice", len(listed), len(committed_locs))
+check("every URL is an absolute canonical production URL",
+      all(u.startswith(gen.SITE) for u in committed_locs))
+check("the committed sitemap parses as XML",
+      (lambda: __import__("xml.etree.ElementTree", fromlist=["ElementTree"])
+       .fromstring(committed_sitemap) is not None)())
+
 group("deployment")
 with open(os.path.join(ROOT, "robots.txt"), encoding="utf-8") as fh:
     robots = fh.read()
