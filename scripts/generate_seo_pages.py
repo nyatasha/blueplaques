@@ -63,19 +63,66 @@ ROOT = os.path.dirname(SCRIPT_DIR)
 DATA = os.path.join(ROOT, "data", "plaques.geojson")
 WALKS_DATA = os.path.join(ROOT, "data", "walks.json")
 
-SITE = "https://nyatasha.github.io/blueplaques/"
+# The production origin and the path GitHub Pages serves this project under,
+# kept as separate pieces so no URL is ever built by pasting one string that
+# may end in "/" onto another that may begin with one. Everything absolute goes
+# through site_path()/site_url()/site_file()/site_file_path() below; nothing
+# concatenates these two by hand. Search Console discovered a plaque URL with an empty segment
+# between the project prefix and `plaques/` — a doubled slash. To a crawler
+# that is a separate, duplicate URL, so it has to be impossible for this
+# generator to emit rather than merely absent from today's output. check_urls()
+# below is the gate that keeps it that way (decision-log #42).
+SITE_ORIGIN = "https://nyatasha.github.io"
+SITE_PATH = "/blueplaques"
 SITE_NAME = "London Uncovered"
 PAGES_DIR = "plaques"          # relative to the site root
 CATS_DIR = "categories"        # relative to the site root
 WALKS_DIR = "walks"            # relative to the site root
 URL_MAP = os.path.join("data", "plaque-urls.json")
-# The path GitHub Pages serves the project under, taken from SITE so the two
-# can never disagree. 404.html is served for arbitrary paths, so every link on
-# it has to be root-absolute rather than relative — this is that prefix.
-PAGES_ROOT = SITE.split("/", 3)[3]
 SLUG_MAX = 60                  # characters before the id suffix
 NEARBY = 5                     # internal links per page
 DESC_MAX = 155
+
+
+def site_path(*segments):
+    """Root-absolute path to a directory under the project: `/blueplaques/a/b/`.
+
+    Segments are stripped of their own slashes before being joined on single
+    ones, so a constant that carries a trailing slash and one that carries a
+    leading slash can no longer meet and produce an empty path segment. Empty
+    segments are dropped, so site_path() is the site root itself.
+
+    404.html is served for arbitrary paths, so every link on it has to be
+    root-absolute rather than relative; this builds those.
+    """
+    parts = [SITE_PATH] + list(segments)
+    joined = "/".join(part for part in
+                      (str(s).strip("/") for s in parts) if part)
+    return f"/{joined}/" if joined else "/"
+
+
+def site_file_path(*segments):
+    """Root-absolute path to a file under the project, which takes no trailing
+    slash: `/blueplaques/css/tokens.css`."""
+    return site_path(*segments).rstrip("/")
+
+
+def site_url(*segments):
+    """The canonical production URL of a page, e.g. the value of its <link
+    rel="canonical">. Directories keep their trailing slash."""
+    return SITE_ORIGIN + site_path(*segments)
+
+
+def site_file(*segments):
+    """The same for a file — an image, the sitemap — which takes no trailing
+    slash."""
+    return site_url(*segments).rstrip("/")
+
+
+SITE = site_url()              # the homepage, trailing slash included
+# The project prefix without its leading slash, for the root-absolute hrefs on
+# 404.html. Derived from site_path() so the two can never disagree.
+PAGES_ROOT = site_path().lstrip("/")
 
 # Straight-line legs understate a walk; 1.3 is the ordinary circuity allowance
 # for a dense urban street grid, and every distance and duration a walk page
@@ -530,15 +577,16 @@ def social_image_meta(alt):
 
 
 def render_page(p, neighbours, siblings, on_walks=()):
-    url = f"{SITE}{PAGES_DIR}/{p['slug']}/"
+    url = site_url(PAGES_DIR, p["slug"])
     description = meta_description(p)
-    og_image = safe_url(thumb(p["photo"], 1200)) or esc(f"{SITE}assets/social/og-cover.png")
+    og_image = (safe_url(thumb(p["photo"], 1200))
+                or esc(site_file("assets", "social", "og-cover.png")))
     image_alt = (f"The London blue plaque to {p['title']}"
                  if p["photo"] else
                  f"{SITE_NAME} — an interactive map of London's blue plaques")
     # The same trail the visible crumbs render, so the two cannot disagree.
     crumb_trail = [(SITE_NAME, SITE),
-                   (p["category_label"], f"{SITE}{CATS_DIR}/{p['category_url']}/"),
+                   (p["category_label"], site_url(CATS_DIR, p["category_url"])),
                    (p["title"], None)]
     map_link = f"../../?plaque={quote(p['id'], safe='')}"
     badges = [f'<span class="sp-badge">{esc(p["category_label"])}</span>']
@@ -711,7 +759,7 @@ def category_walks_block(walks):
 def render_category_page(key, groups, total, walks=()):
     rows = groups[key]
     label = CATEGORY_LABELS[key]
-    url = f"{SITE}{CATS_DIR}/{CATEGORY_URL[key]}/"
+    url = site_url(CATS_DIR, CATEGORY_URL[key])
     title = f"{label} — London blue plaques — {SITE_NAME}"
     description = category_description(label, rows)
     listing = {
@@ -738,12 +786,12 @@ def render_category_page(key, groups, total, walks=()):
 <meta property="og:url" content="{esc(url)}">
 <meta property="og:title" content="{esc(title)}">
 <meta property="og:description" content="{esc(description)}">
-<meta property="og:image" content="{esc(SITE)}assets/social/og-cover.png">
+<meta property="og:image" content="{esc(site_file('assets', 'social', 'og-cover.png'))}">
 <meta property="og:locale" content="en_GB">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{esc(title)}">
 <meta name="twitter:description" content="{esc(description)}">
-<meta name="twitter:image" content="{esc(SITE)}assets/social/og-cover.png">
+<meta name="twitter:image" content="{esc(site_file('assets', 'social', 'og-cover.png'))}">
 {social_image_meta(f"{label} blue plaques in London on {SITE_NAME}")}
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
@@ -939,7 +987,7 @@ def walk_structured_data(walk, url):
                 "@type": "ListItem",
                 "position": i,
                 "name": stop["plaque"]["title"],
-                "url": f"{SITE}{PAGES_DIR}/{stop['plaque']['slug']}/",
+                "url": site_url(PAGES_DIR, stop["plaque"]["slug"]),
             }
             for i, stop in enumerate(walk["stops"], start=1)
         ],
@@ -960,12 +1008,12 @@ def walk_head(title, description, url, extra="", image_alt=""):
 <meta property="og:url" content="{esc(url)}">
 <meta property="og:title" content="{esc(title)}">
 <meta property="og:description" content="{esc(description)}">
-<meta property="og:image" content="{esc(SITE)}assets/social/og-cover.png">
+<meta property="og:image" content="{esc(site_file('assets', 'social', 'og-cover.png'))}">
 <meta property="og:locale" content="en_GB">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{esc(title)}">
 <meta name="twitter:description" content="{esc(description)}">
-<meta name="twitter:image" content="{esc(SITE)}assets/social/og-cover.png">
+<meta name="twitter:image" content="{esc(site_file('assets', 'social', 'og-cover.png'))}">
 {social_image_meta(image_alt or f"{SITE_NAME} — self-guided London blue plaque walks")}
 <link rel="icon" href="../../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../../manifest.json">
@@ -988,7 +1036,7 @@ def walk_footer():
 
 
 def render_walk_page(walk, others):
-    url = f"{SITE}{WALKS_DIR}/{walk['slug']}/"
+    url = site_url(WALKS_DIR, walk["slug"])
     title = f"{walk['name']} — a self-guided blue plaque walk — {SITE_NAME}"
     description = walk_description(walk)
     first, last = walk["stops"][0]["plaque"], walk["stops"][-1]["plaque"]
@@ -1011,7 +1059,7 @@ def render_walk_page(walk, others):
 {walk_head(title, description, url,
            jsonld(walk_structured_data(walk, url)) + "\n"
            + jsonld(breadcrumb_data([(SITE_NAME, SITE),
-                                     ("Walks", f"{SITE}{WALKS_DIR}/"),
+                                     ("Walks", site_url(WALKS_DIR)),
                                      (walk["name"], None)])) + "\n"
            + runtime_script(2),
            image_alt=f"{walk['name']} — a self-guided blue plaque walk in "
@@ -1073,7 +1121,7 @@ def render_walk_page(walk, others):
 
 
 def render_walks_index(walks):
-    url = f"{SITE}{WALKS_DIR}/"
+    url = site_url(WALKS_DIR)
     title = f"Self-guided London blue plaque walks — {SITE_NAME}"
     description = truncate(
         f"{len(walks)} curated self-guided walks past London's blue plaques — "
@@ -1165,11 +1213,11 @@ def render_404(walks, groups):
     deliberately absent from the sitemap.
     """
     cats = "\n".join(
-        f'      <a href="/{PAGES_ROOT}{CATS_DIR}/{esc(CATEGORY_URL[key])}/">'
+        f'      <a href="{site_path(CATS_DIR, CATEGORY_URL[key])}">'
         f'{esc(CATEGORY_LABELS[key])} <span class="cat-nav-n">{len(rows):,}</span></a>'
         for key, rows in groups.items())
     walk_links = "\n".join(
-        f'      <a href="/{PAGES_ROOT}{WALKS_DIR}/{esc(w["slug"])}/">{esc(w["name"])} '
+        f'      <a href="{site_path(WALKS_DIR, w["slug"])}">{esc(w["name"])} '
         f'<span class="cat-nav-n">{len(w["stops"])} stops</span></a>'
         for w in walks)
     return f"""<!DOCTYPE html>
@@ -1181,13 +1229,13 @@ def render_404(walks, groups):
 <title>Page not found — {esc(SITE_NAME)}</title>
 <meta name="robots" content="noindex">
 <meta name="description" content="That page is not here. Explore London's blue plaques on the map, or browse by category or walk.">
-<link rel="icon" href="/{PAGES_ROOT}assets/app-icons/icon-192.png" sizes="192x192">
-<link rel="stylesheet" href="/{PAGES_ROOT}css/tokens.css">
-<link rel="stylesheet" href="/{PAGES_ROOT}css/plaque-page.css">
+<link rel="icon" href="{site_file_path('assets', 'app-icons', 'icon-192.png')}" sizes="192x192">
+<link rel="stylesheet" href="{site_file_path('css', 'tokens.css')}">
+<link rel="stylesheet" href="{site_file_path('css', 'plaque-page.css')}">
 </head>
 <body class="sp-body">
   <header class="sp-header">
-    <a class="sp-brand" href="/{PAGES_ROOT}">
+    <a class="sp-brand" href="{site_path()}">
       <span class="sp-brand-disc" aria-hidden="true"></span>
       <span>{esc(SITE_NAME)}</span>
     </a>
@@ -1198,7 +1246,7 @@ def render_404(walks, groups):
     <h1>That page is not here</h1>
     <p class="cat-intro">The link may be old, or mistyped. Everything else is still
        here: the map, the walks and every category are below.</p>
-    <a class="sp-cta" href="/{PAGES_ROOT}">Explore the map</a>
+    <a class="sp-cta" href="{site_path()}">Explore the map</a>
 
     <nav class="cat-nav" aria-labelledby="walks-404">
       <h2 id="walks-404">Self-guided walks</h2>
@@ -1212,7 +1260,7 @@ def render_404(walks, groups):
   </main>
 
   <footer class="sp-footer">
-    <p>Part of <a href="/{PAGES_ROOT}">{esc(SITE_NAME)}</a>, an interactive map of the
+    <p>Part of <a href="{site_path()}">{esc(SITE_NAME)}</a>, an interactive map of the
        English Heritage blue plaque scheme in London.</p>
   </footer>
 </body>
@@ -1231,11 +1279,11 @@ def render_sitemap(plaques, groups, walks=()):
     changed, and an invented date is worse than none. No `priority` or
     `changefreq` either — Google ignores both.
     """
-    ordered = ([SITE]
-               + ([f"{SITE}{WALKS_DIR}/"] if walks else [])
-               + [f"{SITE}{WALKS_DIR}/{w['slug']}/" for w in walks]
-               + [f"{SITE}{CATS_DIR}/{CATEGORY_URL[key]}/" for key in groups]
-               + [f"{SITE}{PAGES_DIR}/{p['slug']}/" for p in plaques])
+    ordered = ([site_url()]
+               + ([site_url(WALKS_DIR)] if walks else [])
+               + [site_url(WALKS_DIR, w["slug"]) for w in walks]
+               + [site_url(CATS_DIR, CATEGORY_URL[key]) for key in groups]
+               + [site_url(PAGES_DIR, p["slug"]) for p in plaques])
     seen, urls = set(), []
     for u in ordered:
         if u not in seen:
@@ -1367,6 +1415,7 @@ def update_index(out_root, plaques, walks=()):
         text = replace_region(text, "walk-links", walk_links_region(walks))
         text = replace_region(text, "noscript-walks", noscript_walks_region(walks))
 
+    check_urls(INDEX, text)
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(text)
     return path
@@ -1374,7 +1423,42 @@ def update_index(out_root, plaques, walks=()):
 
 # ── Entry point ─────────────────────────────────────────────────────────────
 
+# An absolute URL whose path contains an empty segment, or a root-absolute
+# href/src that does. `//` is legal only right after the scheme, and a
+# protocol-relative href="//host/..." is not something this generator writes,
+# so either shape is a bug.
+ABSOLUTE_URL_RE = re.compile(r'''https?://[^\s"'<>()]+''')
+ROOTED_REF_RE = re.compile(r"(?:href|src)=\"(/[^\"]*)\"")
+
+
+def malformed_urls(text):
+    """Every URL in `text` that carries a doubled slash in its path."""
+    bad = set()
+    for url in ABSOLUTE_URL_RE.findall(text):
+        if "//" in url.split("://", 1)[1]:
+            bad.add(url)
+    bad.update(ref for ref in ROOTED_REF_RE.findall(text) if "//" in ref)
+    return sorted(bad)
+
+
+def check_urls(name, text):
+    """Refuse to write a page or sitemap carrying a malformed URL.
+
+    This is the build-time gate, not a cleanup pass: nothing is rewritten, the
+    run fails. A silent `.replace("//", "/")` here would also eat `https://`
+    and would hide whichever concatenation reintroduced the bug.
+    """
+    bad = malformed_urls(text)
+    if bad:
+        raise SystemExit(
+            f"{name}: {len(bad)} malformed URL(s) with an empty path segment — "
+            + ", ".join(bad[:5]) + (" …" if len(bad) > 5 else ""))
+    return text
+
+
 def write(path, text):
+    rel = os.path.relpath(path, ROOT)
+    check_urls(path if rel.startswith("..") else rel, text)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(text)

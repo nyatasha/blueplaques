@@ -39,6 +39,19 @@ jobs:
       - name: SEO suite
         run: python3 tests/seo.test.py
 
+      # The SEO suite asserts this too, from inside Python. Asking the same
+      # question of the tree as plain text costs a second and covers anything
+      # the suite does not read, including a file edited by hand after a run.
+      # Search Console found /blueplaques//plaques/<slug>/ once; an empty path
+      # segment is a duplicate URL to a crawler, so it fails the build now.
+      - name: No production URL has an empty path segment
+        run: |
+          if grep -rIn --exclude-dir=.git 'nyatasha\.github\.io/blueplaques//' . ; then
+            echo "::error::a generated URL contains the project prefix followed by an empty path segment — build every URL with site_url()/site_path() in scripts/generate_seo_pages.py"
+            exit 1
+          fi
+          echo "no production URL has an empty path segment"
+
       # Also dependency-free Python: it reads js/analytics.js and every call
       # site as text. An event whose name has no case in the adapter reports as
       # an unlabelled path and nothing complains at runtime, so it is caught

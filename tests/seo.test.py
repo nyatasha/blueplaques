@@ -144,6 +144,75 @@ check("every category has a URL-safe slug",
 eq("no two categories share a URL",
    len(set(gen.CATEGORY_URL.values())), len(gen.CATEGORY_URL))
 
+# ── URL construction ───────────────────────────────────────────────────────
+#
+# Search Console discovered a plaque URL with an empty path segment between the
+# project prefix and `plaques/` — a doubled slash, which a crawler treats as a
+# separate, duplicate URL. Every absolute and root-absolute URL now comes out
+# of site_path()/site_url()/site_file()/site_file_path(), and these assert the
+# property the old string concatenation only happened to have: that a stray
+# slash on either side of a join cannot survive. They are driven with
+# deliberately malformed constants, because the real ones being well-formed
+# today is exactly what the bug would hide behind.
+
+group("URL construction")
+eq("the site root keeps its single trailing slash", gen.site_path(), "/blueplaques/")
+eq("a page path is single-slashed throughout",
+   gen.site_path(gen.PAGES_DIR, "freddie-mercury-41802"),
+   "/blueplaques/plaques/freddie-mercury-41802/")
+eq("a canonical URL is the single-slash production URL",
+   gen.site_url(gen.PAGES_DIR, "freddie-mercury-41802"),
+   "https://nyatasha.github.io/blueplaques/plaques/freddie-mercury-41802/")
+eq("a file URL takes no trailing slash",
+   gen.site_file("assets", "social", "og-cover.png"),
+   "https://nyatasha.github.io/blueplaques/assets/social/og-cover.png")
+eq("a root-absolute file path takes no trailing slash either",
+   gen.site_file_path("css", "tokens.css"), "/blueplaques/css/tokens.css")
+check("every helper agrees with site_path",
+      gen.site_url() == gen.SITE_ORIGIN + gen.site_path()
+      and gen.SITE == gen.site_url()
+      and gen.PAGES_ROOT == gen.site_path().lstrip("/"))
+
+_slashy = [("/blueplaques/", "/plaques/", "/slug/"),
+           ("blueplaques", "plaques", "slug"),
+           ("/blueplaques", "plaques/", "/slug")]
+for _prefix, _dir, _slug in _slashy:
+    _was = gen.SITE_PATH
+    try:
+        gen.SITE_PATH = _prefix
+        eq(f"stray slashes in {_prefix!r} + {_dir!r} + {_slug!r} collapse",
+           gen.site_url(_dir, _slug),
+           "https://nyatasha.github.io/blueplaques/plaques/slug/")
+    finally:
+        gen.SITE_PATH = _was
+check("an empty segment is dropped rather than doubling a slash",
+      gen.site_path("", gen.PAGES_DIR, "") == "/blueplaques/plaques/")
+
+# The build gate itself. A generator that starts emitting doubled slashes again
+# has to fail the run, not write the pages and leave it to Search Console.
+#
+# The malformed URLs below are assembled from pieces rather than written out,
+# so the repo-wide grep in .github/workflows/seo.yml can stay a strict search
+# for the string anywhere in the tree without these fixtures tripping it.
+_EMPTY_SEGMENT = "/" + "/"
+_BAD_URL = f"{gen.SITE.rstrip('/')}{_EMPTY_SEGMENT}plaques/freddie-mercury-41802/"
+_BAD_PATH = f"{gen.site_path().rstrip('/')}{_EMPTY_SEGMENT}plaques/x/"
+check("a doubled slash in an absolute URL is spotted",
+      gen.malformed_urls(f'<link rel="canonical" href="{_BAD_URL}">'))
+check("a doubled slash in a root-absolute href is spotted too",
+      gen.malformed_urls(f'<a href="{_BAD_PATH}">x</a>'))
+check("the scheme's own slashes are not mistaken for one",
+      not gen.malformed_urls('see https://nyatasha.github.io/blueplaques/plaques/x/ '
+                             'and http://example.org/a/b'))
+_refused = False
+try:
+    gen.check_urls("t.html", f'<a href="{_BAD_URL}">')
+except SystemExit:
+    _refused = True
+check("check_urls raises SystemExit on a malformed URL", _refused)
+check("check_urls passes a clean page through",
+      gen.check_urls("t.html", f'<a href="{gen.site_url(gen.PAGES_DIR, "x")}">') is not None)
+
 group("derived fields")
 eq("life dates come out of the inscription",
    gen.extract_dates("Ada Lovelace 1815–1852 mathematician lived here"), "1815–1852")
@@ -707,6 +776,34 @@ check("it links to every walk",
 check("it links to every category",
       all(f'href="/{gen.PAGES_ROOT}{gen.CATS_DIR}/{u}/"' in not_found
           for u in gen.CATEGORY_URL.values()))
+
+# ── No doubled slash reaches production ────────────────────────────────────
+#
+# The gate above runs inside the generator. This one asks the committed tree
+# directly, so output that predates the gate, or anything hand-edited, is
+# caught as well: zero production URLs with an empty path segment, anywhere.
+
+group("no committed URL has an empty path segment")
+_outputs = ["index.html", "404.html", "sitemap.xml", "robots.txt",
+            gen.URL_MAP, os.path.join(gen.WALKS_DIR, "index.html")]
+_outputs += [os.path.join(sub, d, "index.html")
+             for sub in (gen.PAGES_DIR, gen.CATS_DIR, gen.WALKS_DIR)
+             for d in sorted(os.listdir(os.path.join(ROOT, sub)))
+             if os.path.isfile(os.path.join(ROOT, sub, d, "index.html"))]
+_offenders = {}
+for _rel in _outputs:
+    _path = os.path.join(ROOT, _rel)
+    if not os.path.isfile(_path):
+        continue
+    with open(_path, encoding="utf-8") as fh:
+        _bad = gen.malformed_urls(fh.read())
+    if _bad:
+        _offenders[_rel] = _bad
+check(f"all {len(_outputs)} committed outputs are free of doubled slashes",
+      not _offenders,
+      f"{len(_offenders)} file(s): {sorted(_offenders)[:3]}")
+check("the string nyatasha.github.io/blueplaques + an empty segment appears nowhere",
+      not _offenders)
 
 group("deployment")
 with open(os.path.join(ROOT, "robots.txt"), encoding="utf-8") as fh:

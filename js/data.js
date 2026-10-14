@@ -76,10 +76,15 @@ async function loadPlaqueUrls(url = URL_MAP) {
     const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) return new Map();
     const { base, slugs } = await res.json();
-    if (!SLUG_RE.test(String(base).replace(/\/$/, '')) || !slugs) return new Map();
+    // Rebuilt from the stripped pieces rather than concatenated as given: a
+    // stray slash on either side would make `plaques//<slug>/` resolve to a
+    // doubled-slash URL, which a crawler indexes as a duplicate of the real
+    // page (decision-log #42).
+    const dir = String(base ?? '').replace(/^\/+|\/+$/g, '');
+    if (!SLUG_RE.test(dir) || !slugs) return new Map();
     return new Map(Object.entries(slugs)
       .filter(([, slug]) => SLUG_RE.test(slug))
-      .map(([id, slug]) => [String(id), `${base}${slug}/`]));
+      .map(([id, slug]) => [String(id), `${dir}/${slug}/`]));
   } catch {
     return new Map();
   }
