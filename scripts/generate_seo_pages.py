@@ -30,6 +30,14 @@ prose and an ordered list of plaque ids; the stop count, distance and walking
 time on the page are derived here from the coordinates, never typed. A plaque
 that is a stop on a walk links up to it from its own page.
 
+The full A–Z directory lives at
+
+    blue-plaques/index.html        →  /blueplaques/blue-plaques/
+
+and lists every plaque in the dataset by name, linked to its page. Search,
+category and letter filtering are layered on by js/directory.js; the list
+itself is complete in the initial HTML.
+
 `data/plaque-urls.json` is written by the same run, so the app can render its
 discovery lists as real links to these pages without reimplementing slugify()
 in JavaScript and drifting from it.
@@ -78,6 +86,7 @@ SITE_NAME = "London Uncovered"
 PAGES_DIR = "plaques"          # relative to the site root
 CATS_DIR = "categories"        # relative to the site root
 WALKS_DIR = "walks"            # relative to the site root
+DIRECTORY_DIR = "blue-plaques" # relative to the site root
 URL_MAP = os.path.join("data", "plaque-urls.json")
 SLUG_MAX = 60                  # characters before the id suffix
 NEARBY = 5                     # internal links per page
@@ -448,7 +457,8 @@ def category_block(p, siblings):
     return ('      <section class="sp-more">\n'
             f'        <h2>More in {esc(p["category_label"])}</h2>\n'
             f'        <p><a href="../../{CATS_DIR}/{esc(p["category_url"])}/">'
-            f'Browse all {count} in {esc(p["category_label"])}</a></p>\n'
+            f'Browse all {count} in {esc(p["category_label"])}</a>, or the '
+            f'<a href="../../{DIRECTORY_DIR}/">full list of London blue plaques</a>.</p>\n'
             '      </section>\n')
 
 
@@ -728,9 +738,14 @@ def category_rows_block(rows):
 
 
 def category_nav_block(current, groups):
-    links = [f'      <a href="../{esc(CATEGORY_URL[key])}/">{esc(CATEGORY_LABELS[key])} '
-             f'<span class="cat-nav-n">{len(rows):,}</span></a>'
-             for key, rows in groups.items() if key != current]
+    # The whole collection leads, because it is the one set every other
+    # category is a part of.
+    total = sum(len(rows) for rows in groups.values())
+    links = [f'      <a href="../../{DIRECTORY_DIR}/">All plaques A–Z '
+             f'<span class="cat-nav-n">{total:,}</span></a>']
+    links += [f'      <a href="../{esc(CATEGORY_URL[key])}/">{esc(CATEGORY_LABELS[key])} '
+              f'<span class="cat-nav-n">{len(rows):,}</span></a>'
+              for key, rows in groups.items() if key != current]
     return ('    <nav class="cat-nav" aria-labelledby="other-cats">\n'
             '      <h2 id="other-cats">Other collections</h2>\n'
             + "\n".join(links) + "\n    </nav>")
@@ -1187,6 +1202,7 @@ def render_walks_index(walks):
 
     <nav class="cat-nav" aria-labelledby="browse">
       <h2 id="browse">Browse another way</h2>
+      <a href="../{DIRECTORY_DIR}/">All plaques A–Z</a>
       <a href="../{CATS_DIR}/writers-literature/">Writers &amp; Literature</a>
       <a href="../{CATS_DIR}/music/">Music</a>
       <a href="../{CATS_DIR}/science-technology/">Science &amp; Technology</a>
@@ -1247,6 +1263,7 @@ def render_404(walks, groups):
     <p class="cat-intro">The link may be old, or mistyped. Everything else is still
        here: the map, the walks and every category are below.</p>
     <a class="sp-cta" href="{site_path()}">Explore the map</a>
+    <p><a href="{site_path(DIRECTORY_DIR)}">Or browse the full list of London blue plaques</a></p>
 
     <nav class="cat-nav" aria-labelledby="walks-404">
       <h2 id="walks-404">Self-guided walks</h2>
@@ -1268,10 +1285,237 @@ def render_404(walks, groups):
 """
 
 
-def render_sitemap(plaques, groups, walks=()):
-    """Homepage, every category page, then every plaque page.
+# ── The A–Z directory ───────────────────────────────────────────────────────
+#
+# One page listing every plaque by name, for people (and searches) asking for
+# "a list of London blue plaques" rather than a map. The whole list is in the
+# initial HTML — every name an anchor to its plaque page — so it is complete
+# without JavaScript. js/directory.js, imported by js/static-page.js on this
+# page only, filters the rows already in the DOM; it loads no data of its own.
+#
+# Order is by the name as the dataset records it, which for people is first
+# name first. Sorting by surname would need a rule for "de", "von", "the
+# Younger" and the organisations among the titles, and a rule that is right
+# most of the time is a list that is wrong in places nobody checks, so the
+# page says how it is ordered and search covers surnames.
 
-    Ordered home → walk → category → plaque so the file mirrors the link graph. Each
+LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def fold(text):
+    """Lowercase ASCII for sorting and bucketing: "Émile Zola" → "emile zola"."""
+    return (unicodedata.normalize("NFKD", str(text or ""))
+            .encode("ascii", "ignore").decode("ascii").lower())
+
+
+def directory_key(p):
+    # Address breaks ties, so the two William Wilberforce plaques have a stable
+    # order; the id makes it total.
+    name = re.sub(r"^[^a-z0-9]+", "", fold(p["title"]))
+    return (name, fold(p["address"]), p["id"])
+
+
+def directory_letter(p):
+    """The A–Z bucket a plaque sits under; anything else goes under "#"."""
+    first = directory_key(p)[0][:1].upper()
+    return first if first in LETTERS else "#"
+
+
+def by_letter(plaques):
+    """Letter → plaques in directory order, A–Z then "#" if anything is in it."""
+    groups = collections.OrderedDict((letter, []) for letter in LETTERS + "#")
+    for p in sorted(plaques, key=directory_key):
+        groups[directory_letter(p)].append(p)
+    if not groups["#"]:
+        del groups["#"]
+    return groups
+
+
+def letter_id(letter):
+    return "letter-" + ("other" if letter == "#" else letter.lower())
+
+
+def directory_title(total):
+    return f"London Blue Plaques List — {total:,} Plaques A–Z — {SITE_NAME}"
+
+
+def directory_description(total):
+    return truncate(f"The full list of all {total:,} English Heritage blue plaques "
+                    "in London, A–Z. Search by name or street, filter by category, "
+                    "and open any plaque on the map.")
+
+
+def directory_item(p):
+    """One compact row: name, category · address, and a link onto the map.
+
+    `data-c` carries the category key so the client can filter without
+    parsing the label. The map link's accessible name includes the plaque's
+    name, so a screen reader's links list is not 1,001 identical "Show on map"s.
+    It is `nofollow` because it is the homepage with a query string — the
+    plaque page linked beside it is the URL that should be crawled.
+    """
+    meta = " · ".join(filter(None, [p["category_label"], p["address"] or p["locality"]]))
+    dates = f' <span class="dir-dates">{esc(p["dates"])}</span>' if p["dates"] else ""
+    return (f'        <li data-c="{esc(p["category"])}">'
+            f'<a class="dir-name" href="../{PAGES_DIR}/{esc(p["slug"])}/">{esc(p["title"])}</a>'
+            f'{dates}'
+            f'<span class="dir-meta">{esc(meta)}</span>'
+            f'<a class="dir-map" href="../?plaque={quote(p["id"], safe="")}" rel="nofollow">'
+            f'Show on map<span class="sp-vh">: {esc(p["title"])}</span></a></li>')
+
+
+def render_directory_page(plaques, groups, walks=()):
+    total = len(plaques)
+    letters = by_letter(plaques)
+    url = site_url(DIRECTORY_DIR)
+    title = directory_title(total)
+    description = directory_description(total)
+    listing = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "London blue plaques — full list",
+        "url": url,
+        "description": description,
+        "isPartOf": {"@type": "WebSite", "name": SITE_NAME, "url": SITE},
+    }
+    payload = json.dumps(listing, ensure_ascii=False, indent=2).replace("<", "\\u003c")
+
+    az = ['      <a href="#directory" class="dir-az-all" aria-current="true">All</a>']
+    for letter in LETTERS + ("#" if "#" in letters else ""):
+        rows = letters.get(letter)
+        az.append(f'      <a href="#{letter_id(letter)}">{esc(letter)}</a>' if rows else
+                  f'      <span class="dir-az-off" aria-disabled="true">{esc(letter)}</span>')
+
+    sections = "\n".join(
+        f'    <section class="dir-letter" id="{letter_id(letter)}">\n'
+        f'      <h2>{esc(letter)}</h2>\n'
+        '      <ul class="dir-list">\n'
+        + "\n".join(directory_item(p) for p in rows)
+        + '\n      </ul>\n    </section>'
+        for letter, rows in letters.items() if rows)
+
+    options = "\n".join(
+        f'          <option value="{esc(key)}">{esc(CATEGORY_LABELS[key])} ({len(rows):,})</option>'
+        for key, rows in groups.items())
+    cats = "\n".join(
+        f'      <a href="../{CATS_DIR}/{esc(CATEGORY_URL[key])}/">{esc(CATEGORY_LABELS[key])} '
+        f'<span class="cat-nav-n">{len(rows):,}</span></a>'
+        for key, rows in groups.items())
+    walk_line = (f'    <p class="dir-walks">Prefer a route? Follow one of the '
+                 f'<a href="../{WALKS_DIR}/">self-guided blue plaque walks</a>.</p>\n'
+                 if walks else "")
+
+    return f"""<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1456A0">
+<title>{esc(title)}</title>
+<meta name="description" content="{esc(description)}">
+<link rel="canonical" href="{esc(url)}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{esc(SITE_NAME)}">
+<meta property="og:url" content="{esc(url)}">
+<meta property="og:title" content="{esc(title)}">
+<meta property="og:description" content="{esc(description)}">
+<meta property="og:image" content="{esc(site_file('assets', 'social', 'og-cover.png'))}">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{esc(title)}">
+<meta name="twitter:description" content="{esc(description)}">
+<meta name="twitter:image" content="{esc(site_file('assets', 'social', 'og-cover.png'))}">
+{social_image_meta(f"The full list of London blue plaques on {SITE_NAME}")}
+<link rel="icon" href="../assets/app-icons/icon-192.png" sizes="192x192">
+<link rel="manifest" href="../manifest.json">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/plaque-page.css">
+{jsonld(payload)}
+{jsonld(breadcrumb_data([(SITE_NAME, SITE), ("London blue plaques list", None)]))}
+{runtime_script(1)}
+</head>
+<body class="sp-body" data-page="directory">
+  <header class="sp-header">
+    <a class="sp-brand" href="../">
+      <span class="sp-brand-disc" aria-hidden="true"></span>
+      <span>{esc(SITE_NAME)}</span>
+    </a>
+  </header>
+
+  <main class="sp-main cat-main dir-main">
+    <nav class="sp-crumbs" aria-label="Breadcrumb">
+      <a href="../">{esc(SITE_NAME)}</a>
+      <span aria-hidden="true">›</span>
+      <span>London blue plaques list</span>
+    </nav>
+    <p class="sp-eyebrow">A–Z directory</p>
+    <h1>London Blue Plaques — Full List</h1>
+    <p class="cat-intro">Explore all {total:,} English Heritage blue plaques in London.
+       Search by name, browse A–Z, filter by category, or open a plaque on the
+       <a href="../" data-track="to-app">interactive map</a>.</p>
+
+    <div class="dir-tools" id="directory">
+      <!-- Revealed by js/directory.js: without JavaScript there is nothing for
+           these controls to drive, and the A–Z links below still work. -->
+      <form class="dir-controls" role="search" hidden>
+        <div class="dir-field dir-field-q">
+          <label for="dir-q">Search by name or address</label>
+          <input id="dir-q" type="search" autocomplete="off" autocapitalize="off"
+                 spellcheck="false" enterkeyhint="search"
+                 placeholder="e.g. Dickens or Doughty Street">
+        </div>
+        <div class="dir-field">
+          <label for="dir-cat">Category</label>
+          <select id="dir-cat">
+          <option value="">All categories ({total:,})</option>
+{options}
+          </select>
+        </div>
+      </form>
+
+      <nav class="dir-az" aria-label="Browse A to Z">
+{chr(10).join(az)}
+      </nav>
+      <p class="dir-hint">Listed by the name on the plaque, so Charles Dickens is under C.
+         Search finds surnames and streets too.</p>
+
+      <div class="dir-status">
+        <p class="dir-count" id="dir-count" role="status">{total:,} plaques</p>
+        <button type="button" class="dir-clear" data-clear hidden>Clear filters</button>
+      </div>
+    </div>
+
+    <div class="dir-empty" id="dir-empty" hidden>
+      <p><strong>No plaques match.</strong> Try a surname, a street name, or fewer filters.</p>
+      <button type="button" class="dir-clear" data-clear>Clear filters</button>
+    </div>
+
+{sections}
+
+    <nav class="cat-nav" aria-labelledby="by-category">
+      <h2 id="by-category">Browse by category</h2>
+{cats}
+    </nav>
+{walk_line}    {share_button("Share this list")}
+  </main>
+
+  <footer class="sp-footer">
+    <p>Part of <a href="../">{esc(SITE_NAME)}</a>, an interactive map of the
+       English Heritage blue plaque scheme in London.</p>
+    <p>Plaque data from <a href="https://openplaques.org" rel="noopener nofollow"
+       target="_blank">OpenPlaques</a> (public domain). {esc(SITE_NAME)} is an
+       independent project and is not affiliated with or endorsed by English Heritage.</p>
+  </footer>
+</body>
+</html>
+"""
+
+
+def render_sitemap(plaques, groups, walks=()):
+    """Homepage, the A–Z directory, the walks, every category, every plaque.
+
+    Ordered home → directory → walk → category → plaque so the file mirrors the
+    link graph. Each
     URL is the page's own canonical, and duplicates are dropped rather than
     trusted not to occur.
 
@@ -1279,7 +1523,7 @@ def render_sitemap(plaques, groups, walks=()):
     changed, and an invented date is worse than none. No `priority` or
     `changefreq` either — Google ignores both.
     """
-    ordered = ([site_url()]
+    ordered = ([site_url(), site_url(DIRECTORY_DIR)]
                + ([site_url(WALKS_DIR)] if walks else [])
                + [site_url(WALKS_DIR, w["slug"]) for w in walks]
                + [site_url(CATS_DIR, CATEGORY_URL[key]) for key in groups]
@@ -1485,10 +1729,11 @@ def generate(out_root, plaques, clean=True, walks=None):
     pages_root = os.path.join(out_root, PAGES_DIR)
     cats_root = os.path.join(out_root, CATS_DIR)
     walks_root = os.path.join(out_root, WALKS_DIR)
+    directory_root = os.path.join(out_root, DIRECTORY_DIR)
     if clean:
         # Stale directories would otherwise outlive plaques, categories and
         # walks dropped from the data and stay in the index.
-        for root in (pages_root, cats_root, walks_root):
+        for root in (pages_root, cats_root, walks_root, directory_root):
             if os.path.isdir(root):
                 shutil.rmtree(root)
     os.makedirs(pages_root, exist_ok=True)
@@ -1510,6 +1755,9 @@ def generate(out_root, plaques, clean=True, walks=None):
             others = [w for w in walks if w["slug"] != walk["slug"]]
             write(os.path.join(walks_root, walk["slug"], "index.html"),
                   render_walk_page(walk, others))
+
+    write(os.path.join(directory_root, "index.html"),
+          render_directory_page(plaques, groups, walks))
 
     write(os.path.join(out_root, URL_MAP), render_url_map(plaques))
     write(os.path.join(out_root, "404.html"), render_404(walks, groups))
@@ -1545,9 +1793,10 @@ def main(argv=None):
     print(f"wrote {categories} category pages under {os.path.join(args.out, CATS_DIR)}")
     print(f"wrote {URL_MAP}")
     print(f"wrote {walk_count} walk pages under {os.path.join(args.out, WALKS_DIR)}")
+    print(f"wrote the A–Z directory at {os.path.join(args.out, DIRECTORY_DIR)}/ ({count:,} plaques)")
     print("wrote 404.html")
     print(f"wrote sitemap.xml with "
-          f"{count + categories + walk_count + (1 if walk_count else 0) + 1} URLs")
+          f"{count + categories + walk_count + (1 if walk_count else 0) + 2} URLs")
     if indexed:
         print(f"wrote the generated counts in {INDEX} ({count:,})")
     elif os.path.abspath(args.out) == os.path.abspath(ROOT):

@@ -21,9 +21,9 @@
  * Nothing here reads storage, location or anything about the visitor.
  */
 
-import { loadProvider, trackEvent } from './analytics.js';
+import { loadProvider, trackEvent, recordedEvents } from './analytics.js';
 
-/** `plaque` | `category` | `walk` | `walks-index`, set by the generator. */
+/** `plaque` | `category` | `walk` | `walks-index` | `directory`, set by the generator. */
 const kind = document.body.dataset.page || 'unknown';
 
 /* ── Share ─────────────────────────────────────────────────────────────── */
@@ -75,6 +75,11 @@ function said(button, message) {
 loadProvider();
 trackEvent('static_page_view', { kind });
 
+// Development helper, the static pages' counterpart of `window.__lu` in the
+// app: the smoke suite reads what these pages recorded. Names only — the
+// buffer never holds anything the paths do not.
+window.__luStatic = { events: recordedEvents };
+
 document.addEventListener('click', event => {
   const node = event.target.closest('[data-track]');
   if (!node) return;
@@ -85,3 +90,12 @@ document.addEventListener('click', event => {
 // The button is inert without JavaScript, so the generator ships it hidden and
 // this reveals it. A dead "Share" on a no-script page would be worse than none.
 document.querySelectorAll('[data-track="share"]').forEach(b => { b.hidden = false; });
+
+// The A–Z directory's search and filters. Imported here, on that page only, so
+// the other 1,000-odd static pages never fetch it and every page still loads
+// exactly one script.
+if (kind === 'directory') {
+  import('./directory.js')
+    .then(({ initDirectory }) => initDirectory())
+    .catch(() => { /* the full list is already on the page */ });
+}

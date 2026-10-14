@@ -428,10 +428,11 @@ try:
     with open(os.path.join(out, "sitemap.xml"), encoding="utf-8") as fh:
         sitemap = fh.read()
     locs = re.findall(r"<loc>([^<]+)</loc>", sitemap)
-    eq("homepage, walks, categories and plaque pages",
+    eq("homepage, directory, walks, categories and plaque pages",
        len(locs),
-       len(plaques) + len(groups) + len(walks) + (1 if walks else 0) + 1)
+       len(plaques) + len(groups) + len(walks) + (1 if walks else 0) + 2)
     eq("the homepage comes first", locs[0], gen.SITE)
+    eq("the A–Z directory comes second", locs[1], f"{gen.SITE}{gen.DIRECTORY_DIR}/")
     eq("no URL is listed twice", len(set(locs)), len(locs))
     check("every category page is listed",
           {f"{gen.SITE}categories/{u}/" for u in cat_urls} <= set(locs))
@@ -625,6 +626,108 @@ eq("index.html links every generated walk, and only those",
 check("the no-JavaScript fallback carries the walks too",
       'href="walks/' in home.split("<noscript>")[1].split("</noscript>")[0])
 
+# ── The A–Z directory ───────────────────────────────────────────────────────
+#
+# The page exists to answer "list of London blue plaques" searches, so what it
+# must guarantee is that the whole list is in the initial HTML — every plaque,
+# once, linked to its canonical page — and that nothing about it depends on
+# the script that filters it. Read from the committed file; the drift check
+# below proves it is what the generator writes.
+
+group("A–Z directory content")
+with open(os.path.join(ROOT, gen.DIRECTORY_DIR, "index.html"), encoding="utf-8") as fh:
+    directory = fh.read()
+all_plaques = gen.load_plaques()
+dir_rows = re.findall(r'<li data-c="([a-z-]+)"><a class="dir-name" href="\.\./'
+                      + gen.PAGES_DIR + r'/([a-z0-9-]+)/">(.*?)</a>', directory)
+check("the H1 is in the initial HTML",
+      "<h1>London Blue Plaques — Full List</h1>" in directory)
+check("the intro states the generated count",
+      f"Explore all {len(all_plaques):,} English Heritage blue plaques" in directory)
+eq("one row per plaque in the dataset", len(dir_rows), len(all_plaques))
+eq("no plaque page is listed twice", len({slug for _, slug, _ in dir_rows}), len(dir_rows))
+eq("every row links the slug the generator wrote for it",
+   {slug for _, slug, _ in dir_rows}, {p["slug"] for p in all_plaques})
+by_slug = {p["slug"]: p for p in all_plaques}
+check("every row names its plaque and carries its category",
+      all(name == gen.esc(by_slug[slug]["title"]) and cat == by_slug[slug]["category"]
+          for cat, slug, name in dir_rows))
+check("every linked page exists on disk",
+      all(os.path.isfile(os.path.join(ROOT, gen.PAGES_DIR, slug, "index.html"))
+          for _, slug, _ in dir_rows))
+check("rows are in A–Z order",
+      [gen.directory_key(by_slug[s]) for _, s, _ in dir_rows]
+      == sorted(gen.directory_key(by_slug[s]) for _, s, _ in dir_rows))
+eq("every row offers its plaque on the map",
+   len(re.findall(r'class="dir-map" href="\.\./\?plaque=[^"]+" rel="nofollow"', directory)),
+   len(all_plaques))
+check("the map links use the app's existing ?plaque=<id> deep link",
+      all(f'href="../?plaque={p["id"]}"' in directory for p in all_plaques[:50]))
+letters = gen.by_letter(all_plaques)
+check("each populated letter is a section the A–Z bar links to",
+      all(f'id="{gen.letter_id(l)}"' in directory and f'href="#{gen.letter_id(l)}"' in directory
+          for l, rows in letters.items() if rows))
+check("a letter with no plaques is shown but not linked",
+      all(f'href="#{gen.letter_id(l)}"' not in directory
+          and f'<span class="dir-az-off" aria-disabled="true">{l}</span>' in directory
+          for l in gen.LETTERS if not letters.get(l)))
+check("the category filter offers the existing categories, and only those",
+      set(re.findall(r'<option value="([a-z-]+)">', directory))
+      == set(gen.by_category(all_plaques)))
+check("the filter controls ship hidden until the script can drive them",
+      '<form class="dir-controls" role="search" hidden>' in directory)
+check("the search field has a visible label",
+      '<label for="dir-q">' in directory and 'id="dir-q"' in directory)
+check("the result count is a status region", 'id="dir-count" role="status"' in directory)
+eq("nothing but structured data and the deferred runtime script",
+   content_scripts(directory), [])
+check("the page declares its kind for analytics",
+      '<body class="sp-body" data-page="directory">' in directory)
+check("it links every category page",
+      all(f'href="../{gen.CATS_DIR}/{gen.CATEGORY_URL[k]}/"' in directory
+          for k in gen.by_category(all_plaques)))
+
+group("A–Z directory head")
+dir_url = f"{gen.SITE}{gen.DIRECTORY_DIR}/"
+eq("the canonical URL is the production URL",
+   re.search(r'<link rel="canonical" href="([^"]+)">', directory).group(1), dir_url)
+eq("…with exactly one slash between path segments",
+   dir_url, "https://nyatasha.github.io/blueplaques/blue-plaques/")
+check("Open Graph title, description and URL are present",
+      all(f'property="og:{k}"' in directory for k in ("title", "description", "url", "image"))
+      and f'<meta property="og:url" content="{dir_url}">' in directory)
+dir_title = re.search(r"<title>(.*?)</title>", directory).group(1)
+dir_desc = re.search(r'name="description" content="(.*?)"', directory).group(1)
+check("the title names the list intent and the count",
+      dir_title.startswith("London Blue Plaques List") and f"{len(all_plaques):,}" in dir_title)
+check("the description fits without truncation",
+      len(gen.html.unescape(dir_desc)) <= gen.DESC_MAX and not dir_desc.endswith("…"))
+other_heads = [home] + [open(os.path.join(ROOT, gen.CATS_DIR, d, "index.html"),
+                             encoding="utf-8").read()
+                        for d in sorted(os.listdir(os.path.join(ROOT, gen.CATS_DIR)))]
+other_heads.append(open(os.path.join(ROOT, gen.WALKS_DIR, "index.html"), encoding="utf-8").read())
+check("the title is unique on the site",
+      all(f"<title>{dir_title}</title>" not in t for t in other_heads))
+check("the meta description is unique on the site",
+      all(f'content="{dir_desc}"' not in t for t in other_heads))
+check("the sitemap lists it", f"<loc>{dir_url}</loc>" in open(
+    os.path.join(ROOT, "sitemap.xml"), encoding="utf-8").read())
+
+group("links into the A–Z directory")
+check("the homepage links it", 'href="blue-plaques/"' in home)
+check("…including without JavaScript",
+      'href="blue-plaques/"' in home.split("<noscript>")[1].split("</noscript>")[0])
+check("the homepage keeps its map title and H1",
+      "<title>London Uncovered — London Blue Plaques Map" in home
+      and "London Uncovered — London Blue Plaques Map</h1>" in home)
+check("every category page links it",
+      all(f'href="../../{gen.DIRECTORY_DIR}/"' in t for t in other_heads[1:-1]))
+check("plaque pages link it",
+      f'href="../../{gen.DIRECTORY_DIR}/"' in open(
+          os.path.join(ROOT, gen.PAGES_DIR, all_plaques[0]["slug"], "index.html"),
+          encoding="utf-8").read())
+check("the walks index links it", f'href="../{gen.DIRECTORY_DIR}/"' in other_heads[-1])
+
 # ── What is committed is what GitHub Pages serves ───────────────────────────
 #
 # The site deploys straight from the branch: no build step runs on push, so a
@@ -636,8 +739,9 @@ committed = tempfile.mkdtemp()
 try:
     gen.generate(committed, gen.load_plaques())
     drift = []
-    for rel in (gen.URL_MAP, "sitemap.xml",
-                os.path.join(gen.WALKS_DIR, "index.html")):
+    for rel in (gen.URL_MAP, "sitemap.xml", "404.html",
+                os.path.join(gen.WALKS_DIR, "index.html"),
+                os.path.join(gen.DIRECTORY_DIR, "index.html")):
         with open(os.path.join(ROOT, rel), encoding="utf-8") as a, \
              open(os.path.join(committed, rel), encoding="utf-8") as b:
             if a.read() != b.read():
@@ -685,6 +789,8 @@ def committed_dirs(sub):
 walk_dirs = committed_dirs(gen.WALKS_DIR)
 on_disk = {
     gen.SITE,
+    *({f"{gen.SITE}{gen.DIRECTORY_DIR}/"}
+      if os.path.isfile(os.path.join(ROOT, gen.DIRECTORY_DIR, "index.html")) else set()),
     *({f"{gen.SITE}{gen.WALKS_DIR}/"} if walk_dirs else set()),
     *(f"{gen.SITE}{gen.WALKS_DIR}/{d}/" for d in walk_dirs),
     *(f"{gen.SITE}{gen.CATS_DIR}/{d}/" for d in committed_dirs(gen.CATS_DIR)),
@@ -749,6 +855,8 @@ eq("a walk page's trail is site › walks › walk",
    [(gen.SITE_NAME, gen.SITE), ("Walks", f"{gen.SITE}{gen.WALKS_DIR}/"),
     (walks[0]["name"], None)])
 check("a category page carries a trail too", trail_of(committed_cat) is not None)
+eq("the A–Z directory's trail is site › list", trail_of(directory),
+   [(gen.SITE_NAME, gen.SITE), ("London blue plaques list", None)])
 check("only the last crumb omits its URL — it is the page itself",
       all(all(url for _, url in trail[:-1]) and trail[-1][1] is None
           for trail in (trail_of(committed_plaque), trail_of(committed_cat),
@@ -785,7 +893,8 @@ check("it links to every category",
 
 group("no committed URL has an empty path segment")
 _outputs = ["index.html", "404.html", "sitemap.xml", "robots.txt",
-            gen.URL_MAP, os.path.join(gen.WALKS_DIR, "index.html")]
+            gen.URL_MAP, os.path.join(gen.WALKS_DIR, "index.html"),
+            os.path.join(gen.DIRECTORY_DIR, "index.html")]
 _outputs += [os.path.join(sub, d, "index.html")
              for sub in (gen.PAGES_DIR, gen.CATS_DIR, gen.WALKS_DIR)
              for d in sorted(os.listdir(os.path.join(ROOT, sub)))

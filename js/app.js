@@ -209,7 +209,10 @@ function renderMapPanel(visible) {
     heading: located ? 'Near you' : searching ? 'In this view' : 'Iconic Londoners',
     count: searching && !located ? visible.length : rows.length,
     emptyText: 'Nothing matches the current filters.',
-  });
+  })
+    // The way out to the A–Z directory, for someone who would rather scan names
+    // than pan a map. A plain link: the directory is its own static page.
+    + `<p class="mp-all"><a href="blue-plaques/">Full list of all ${fmtNumber(state.plaques.length)} plaques, A–Z</a></p>`;
 }
 
 /**

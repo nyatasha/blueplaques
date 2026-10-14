@@ -903,6 +903,8 @@ body[data-tab="mylondon"] #map-empty { display: none; }
   padding: var(--sp-5) var(--sp-5) var(--sp-2);
 }
 .mp-list { padding: 0 var(--sp-5) var(--sp-6); }
+.mp-all { margin: 0; padding: 0 var(--sp-5) var(--sp-6); font-size: var(--fs-sm); }
+.mp-all a { color: var(--blue-800); font-weight: 600; }
 .mp-item {
   display: flex; align-items: center; gap: var(--sp-3);
   width: 100%; text-align: left;

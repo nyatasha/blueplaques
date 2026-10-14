@@ -104,6 +104,16 @@ function describe(name, props = {}) {
     case 'static_to_app':      return [`open-app/${props.kind}`,   `Opened the map from a ${props.kind} page`];
     case 'static_share':       return [`share/page/${props.kind}`, `Shared a ${props.kind} page`];
 
+    // The A–Z directory at blue-plaques/. Opening it is `page/directory` above.
+    // What was typed is never sent — only that the search box was used, once
+    // per page load. The category is the app's own slug, one of nine.
+    case 'directory_search':   return ['directory/search',       'Directory search used'];
+    case 'directory_category': return [`directory/category/${props.category}`,
+                                       `Directory filtered · ${props.category}`];
+    case 'directory_letter':   return ['directory/a-z',          'Directory A–Z letter chosen'];
+    case 'directory_plaque':   return ['directory/open-plaque',  'Plaque page opened from the directory'];
+    case 'directory_map':      return ['directory/show-on-map',  'Show on map from the directory'];
+
     case 'install_prompt_shown': return [props.manual ? 'install/opened' : 'install/offered',
                                         props.manual ? 'Home Screen opened from My London' : 'Home Screen offered'];
     case 'install_outcome':      return [`install/${props.outcome}`, `Home Screen ${props.outcome}`];

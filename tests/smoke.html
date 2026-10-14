@@ -1040,6 +1040,160 @@ group('walk analytics');
   }
 }
 
+/* ── The A–Z directory at blue-plaques/ ──────────────────────────────────── */
+group('A–Z directory');
+{
+  frame.src = 'about:blank';
+  await until(() => frame.contentDocument?.URL === 'about:blank', { timeout: 8000 });
+  frame.width = '390';
+  frame.src = '/blue-plaques/';
+  const ready = await until(() => {
+    const d = frame.contentDocument;
+    return d?.querySelector('.dir-controls') && !d.querySelector('.dir-controls').hidden;
+  }, { timeout: 20000 });
+  check('the directory loads and reveals its controls', !!ready);
+
+  if (ready) {
+    const win = frame.contentWindow;
+    const doc = frame.contentDocument;
+    const input = doc.getElementById('dir-q');
+    const select = doc.getElementById('dir-cat');
+    const count = () => doc.getElementById('dir-count').textContent;
+    const rows = () => [...doc.querySelectorAll('.dir-list > li')];
+    const shown = () => rows().filter(li => li.offsetParent !== null);
+    const events = () => win.__luStatic.events().map(e => e.path);
+    const type = value => { input.value = value; input.dispatchEvent(new win.Event('input', { bubbles: true })); };
+    const choose = value => { select.value = value; select.dispatchEvent(new win.Event('change', { bubbles: true })); };
+    const total = rows().length;
+
+    eq('every plaque is listed', total, 1001);
+    eq('all of them show with no filters', shown().length, total);
+    eq('the count says so', count(), '1,001 plaques');
+    check('opening it is recorded as a directory page view',
+          events().includes('page/directory'));
+
+    type('dickens');
+    const hits = shown();
+    check('search by name narrows the list',
+          hits.length > 0 && hits.length < 10, `${hits.length} rows`);
+    check('every row shown matches', hits.every(li => /dickens/i.test(li.textContent)));
+    eq('the count matches what is shown', count(), `${hits.length} plaque${hits.length === 1 ? '' : 's'}`);
+    check('search use is recorded, without what was typed',
+          events().includes('directory/search') && !events().some(p => /dickens/i.test(p)));
+
+    type('doughty street');
+    check('search matches addresses too',
+          shown().some(li => li.querySelector('.dir-name').textContent === 'Charles Dickens')
+          && shown().every(li => /doughty street/i.test(li.textContent)));
+
+    type('jose san martin');
+    check('search ignores accents and word order',
+          shown().length === 1 && shown()[0].querySelector('.dir-name').textContent === 'José de San Martín');
+
+    type('');
+    choose('music');
+    check('the category filter keeps only that category',
+          shown().length > 0 && shown().every(li => li.dataset.c === 'music'));
+    eq('and all of it', shown().length, rows().filter(li => li.dataset.c === 'music').length);
+    check('the category is recorded', events().includes('directory/category/music'));
+
+    type('jimi');
+    check('search and category combine',
+          shown().length === 1 && shown()[0].textContent.includes('Jimi Hendrix'));
+    choose('sport');
+    eq('a combination with no results shows none', shown().length, 0);
+    check('…and says so', !doc.getElementById('dir-empty').hidden && count() === 'No plaques');
+
+    doc.querySelector('#dir-empty [data-clear]').click();
+    eq('clearing brings every plaque back', shown().length, total);
+    check('…empties the controls', input.value === '' && select.value === '');
+    check('…hides the empty state', doc.getElementById('dir-empty').hidden);
+    check('…and leaves focus in the search field', doc.activeElement === input);
+
+    const m = doc.querySelector('.dir-az a[href="#letter-m"]');
+    m.click();
+    const mRows = doc.querySelectorAll('#letter-m .dir-list > li').length;
+    eq('a letter filters to that section', shown().length, mRows);
+    check('every row shown starts with that letter',
+          shown().every(li => /^m/i.test(li.querySelector('.dir-name').textContent)));
+    check('the letter reads as current', m.getAttribute('aria-current') === 'true'
+          && !doc.querySelector('.dir-az-all').hasAttribute('aria-current'));
+    check('A–Z use is recorded', events().includes('directory/a-z'));
+    type('gandhi');
+    check('a letter and a search combine',
+          shown().length > 0 && shown().every(li => li.textContent.includes('Mahatma Gandhi')));
+    type('mozart');
+    eq('…so a name filed under another letter is not shown', shown().length, 0);
+    type('');
+    m.click();
+    eq('choosing the letter again shows everything', shown().length, total);
+
+    type('dickens');
+    const dead = doc.querySelector('.dir-az a[href="#letter-z"]');
+    check('letters with no matches are disabled', dead?.getAttribute('aria-disabled') === 'true');
+    dead.click();
+    eq('…and choosing one does nothing', shown().length, hits.length);
+    check('a letter with no plaques at all is not a link',
+          !doc.querySelector('.dir-az a[href="#letter-x"]')
+          && !!doc.querySelector('.dir-az .dir-az-off'));
+    doc.querySelector('.dir-status [data-clear]').click();
+    eq('the status-bar clear works too', shown().length, total);
+
+    // Layout: nothing scrolls sideways, and the things you tap are big enough.
+    for (const width of [320, 390, 768, 1280]) {
+      frame.width = String(width);
+      await sleep(150);
+      check(`no horizontal scroll at ${width}px`,
+            doc.documentElement.scrollWidth <= doc.documentElement.clientWidth,
+            `${doc.documentElement.scrollWidth} > ${doc.documentElement.clientWidth}`);
+    }
+    frame.width = '390';
+    await sleep(150);
+    const h = el => el.getBoundingClientRect().height;
+    check('the search field is a full tap target', h(input) >= 44, `${h(input)}px`);
+    check('the search field will not make iOS zoom',
+          parseFloat(win.getComputedStyle(input).fontSize) >= 16);
+    check('A–Z letters are at least 40px tall',
+          [...doc.querySelectorAll('.dir-az a')].every(a => h(a) >= 40));
+    check('"Show on map" is at least 40px tall', h(doc.querySelector('.dir-map')) >= 40);
+    check('the A–Z bar wraps instead of overflowing',
+          doc.querySelector('.dir-az').scrollWidth <= doc.querySelector('.dir-az').clientWidth);
+
+    // Clicks are recorded, then followed by hand so the event can be read
+    // before the page that recorded it is gone.
+    const hold = e => e.preventDefault();
+    win.addEventListener('click', hold);
+    const first = rows()[0];
+    const plaqueLink = first.querySelector('.dir-name');
+    const mapLink = first.querySelector('.dir-map');
+    plaqueLink.click();
+    check('opening a plaque is recorded', events().includes('directory/open-plaque'));
+    mapLink.click();
+    check('"Show on map" is recorded', events().includes('directory/show-on-map'));
+    const name = plaqueLink.textContent;
+    const id = new URL(mapLink.href).searchParams.get('plaque');
+    check('no path carries the plaque id or name',
+          !events().some(p => p.includes(id) || p.includes(name)));
+    win.removeEventListener('click', hold);
+    frame.src = plaqueLink.href;
+    const page = await until(() => frame.contentDocument?.querySelector('h1')?.textContent === name,
+                             { timeout: 10000 });
+    check('the plaque link opens that plaque\'s page', !!page);
+
+    frame.src = mapLink.href;
+    const opened = await until(() => frame.contentWindow?.__lu &&
+                                     frame.contentDocument?.getElementById('boot')?.hidden &&
+                                     frame.contentDocument.querySelector('#sheet-plaque.open'),
+                               { timeout: 40000 });
+    check('"Show on map" opens the app on that plaque', !!opened);
+    if (opened) {
+      eq('…the right one', frame.contentWindow.__lu.state.openPlaqueId, id);
+      check('…with its name on the sheet',
+            frame.contentDocument.querySelector('#plaque-body').textContent.includes(name));
+    }
+  }
+}
+
 } catch (err) {
   failed++;
   lines.push(`<span class="fail">  THREW</span> ${err && err.stack ? err.stack : err}`);
