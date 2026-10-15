@@ -18,7 +18,7 @@ import * as mapView from './map.js';
 import { Sheet, initScrim, closeAllSheets } from './sheet.js';
 import { initSearch, clear as clearSearch } from './search.js';
 import { initFilters, openFilters, refreshFilters, activeFilterCount, clearFilters, isFiltered } from './filters.js';
-import { initPlaqueSheet, openPlaque, renderPlaqueSheet, currentPlaqueId } from './plaque-sheet.js';
+import { initPlaqueSheet, openPlaque, renderPlaqueSheet } from './plaque-sheet.js';
 import { initQuestScreen, renderQuest } from './quest-screen.js';
 import { initWalkScreen, renderWalks, showWalk } from './walk-screen.js';
 import { loadWalks, walkBySlug, allWalks, walksWithPlaque,
@@ -132,7 +132,8 @@ function refresh({ rerenderSheet = false } = {}) {
   renderMapPanel(visible);
 
   renderEmptyState(visible.length);
-  if (rerenderSheet && currentPlaqueId()) renderPlaqueSheet();
+  // Only an open sheet: rendering sets state.openPlaqueId, the map's selection.
+  if (rerenderSheet && state.openPlaqueId) renderPlaqueSheet();
   if (state.tab === 'walks') renderWalks();
   if (state.tab === 'quest') renderQuest();
   if (state.tab === 'mylondon') renderMyLondon();
@@ -568,8 +569,7 @@ async function findNext({ another = false } = {}) {
 
   state.suggestedIds.push(pick.plaque.id);
   mapView.setTarget(pick.plaque.id);
-  mapView.focusPlaque(pick.plaque.id, { zoom: 16 });
-  openPlaque(pick.plaque.id);
+  showPlaque(pick.plaque.id, 16);
   announce(`Next discovery: ${pick.plaque.title}, ${formatDistance(pick.distance)} away.`);
 }
 
@@ -874,8 +874,17 @@ function selectPlaque(id, { from } = {}) {
   // camera — otherwise the marker may still be sitting outside the layer.
   refresh();
   trackEvent('plaque_opened', { fame: plaque.fame, category: plaque.category, from: from || 'unknown' });
-  mapView.focusPlaque(id, { zoom: Math.max(mapView.getMap().getZoom(), 16) });
+  showPlaque(id, Math.max(mapView.getMap().getZoom(), 16));
+}
+
+/**
+ * Open a plaque's sheet and mark its marker as selected, then move the camera.
+ * The sheet goes first so the camera can measure it and keep the marker clear.
+ */
+function showPlaque(id, zoom) {
   openPlaque(id);
+  mapView.syncSelection();
+  mapView.focusPlaque(id, { zoom });
 }
 
 /**
@@ -949,7 +958,7 @@ function bootError(err) {
 
 function wire() {
   sheets.plaque = new Sheet('#sheet-plaque', {
-    onClose: () => { state.openPlaqueId = null; },
+    onClose: () => { state.openPlaqueId = null; mapView.syncSelection(); },
   });
   sheets.filters = new Sheet('#sheet-filters', { alwaysScrim: true });
   sheets.about = new Sheet('#sheet-about', { alwaysScrim: true });
@@ -1117,6 +1126,7 @@ async function boot() {
     reset: () => { store.resetProgress(); state.plaques.forEach(p => mapView.refreshMarker(p.id)); refresh(); },
     collect: (id, verified = false) => { handleCollect(state.byId.get(id), verified); },
     open: id => selectPlaque(id, { from: 'console' }),
+    map: () => mapView.getMap(),
     verifyAnywhere: setVerifyAnywhere,
     backupUrl: () => backupUrl(state.saved),
   };

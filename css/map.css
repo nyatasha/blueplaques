@@ -62,6 +62,19 @@
   50%      { box-shadow: 0 0 0 3px rgba(255,255,255,.95), 0 0 0 13px rgba(20,86,160,.05), 0 3px 12px rgba(20,32,43,.34); }
 }
 
+/* The open plaque. The pin keeps its own fill, border and tick; around it go
+   a white separator, an amber ring and a dark hairline that keeps the ring
+   crisp on pale tiles. The outer edge (8px) matches SELECTED_RING in map.js.
+   Steady by design — no pulse, so it never competes with the sheet. */
+.pin.pin-selected {
+  box-shadow:
+    0 0 0 3px #fff,
+    0 0 0 7px var(--amber),
+    0 0 0 8px rgba(20,32,43,.5),
+    0 4px 14px 3px rgba(20,32,43,.34);
+}
+.pin-target.pin-selected { animation: none; }   /* the collect pop still plays */
+
 .pin-just-collected { animation: pin-pop var(--dur-4) var(--ease-out); }
 @keyframes pin-pop {
   0%   { transform: scale(1); }
@@ -84,6 +97,11 @@
 .cluster-iconic {
   background: var(--gold);
   box-shadow: 0 2px 10px rgba(110,83,32,.36);
+}
+/* Zoomed out, the cluster holding the open plaque wears the same rings. */
+.cluster-selected {
+  box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--amber), 0 0 0 8px rgba(20,32,43,.5),
+              0 2px 10px rgba(20,32,43,.3);
 }
 .leaflet-marker-icon.leaflet-interactive:focus-visible { outline: 3px solid var(--blue-800); }
 

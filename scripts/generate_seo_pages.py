@@ -34,7 +34,8 @@ The full A–Z directory lives at
 
     blue-plaques/index.html        →  /blueplaques/blue-plaques/
 
-and lists every plaque in the dataset by name, linked to its page. Search,
+and lists every plaque in the dataset by name (the dataset, not the whole
+scheme: OpenPlaques can lag the newest English Heritage plaques), linked to its page. Search,
 category and letter filtering are layered on by js/directory.js; the list
 itself is complete in the initial HTML.
 
@@ -1340,9 +1341,11 @@ def directory_title(total):
 
 
 def directory_description(total):
-    return truncate(f"The full list of all {total:,} English Heritage blue plaques "
-                    "in London, A–Z. Search by name or street, filter by category, "
-                    "and open any plaque on the map.")
+    # "In our dataset", not "all": OpenPlaques lags the scheme, so the newest
+    # English Heritage plaques may not be in it yet.
+    return truncate(f"Browse {total:,} London blue plaques in our dataset, A–Z. "
+                    "Search by name or street, filter by category, and find each "
+                    "plaque on the map.")
 
 
 def directory_item(p):
@@ -1373,7 +1376,7 @@ def render_directory_page(plaques, groups, walks=()):
     listing = {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        "name": "London blue plaques — full list",
+        "name": "London blue plaques list",
         "url": url,
         "description": description,
         "isPartOf": {"@type": "WebSite", "name": SITE_NAME, "url": SITE},
@@ -1425,7 +1428,7 @@ def render_directory_page(plaques, groups, walks=()):
 <meta name="twitter:title" content="{esc(title)}">
 <meta name="twitter:description" content="{esc(description)}">
 <meta name="twitter:image" content="{esc(site_file('assets', 'social', 'og-cover.png'))}">
-{social_image_meta(f"The full list of London blue plaques on {SITE_NAME}")}
+{social_image_meta(f"An A–Z list of London blue plaques on {SITE_NAME}")}
 <link rel="icon" href="../assets/app-icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="../manifest.json">
 <link rel="stylesheet" href="../css/tokens.css">
@@ -1449,10 +1452,12 @@ def render_directory_page(plaques, groups, walks=()):
       <span>London blue plaques list</span>
     </nav>
     <p class="sp-eyebrow">A–Z directory</p>
-    <h1>London Blue Plaques — Full List</h1>
-    <p class="cat-intro">Explore all {total:,} English Heritage blue plaques in London.
+    <h1>London Blue Plaques List</h1>
+    <p class="cat-intro">Explore the {total:,} London blue plaques in our dataset.
        Search by name, browse A–Z, filter by category, or open a plaque on the
        <a href="../" data-track="to-app">interactive map</a>.</p>
+    <p class="dir-coverage">This directory includes every plaque in our dataset,
+       which covers the English Heritage scheme. Newer plaques may be missing.</p>
 
     <div class="dir-tools" id="directory">
       <!-- Revealed by js/directory.js: without JavaScript there is nothing for

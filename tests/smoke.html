@@ -935,6 +935,161 @@ group('deep link');
   }
 }
 
+/* ── The open plaque's marker (selected treatment) ───────────────────────── */
+group('selected marker');
+{
+  /** The selected pin for `id`, once the camera has stopped moving it. */
+  async function settledPin(doc, id) {
+    let last = null;
+    return until(() => {
+      const pin = doc.querySelector(`.pin-selected[data-plaque="${id}"]`);
+      if (!pin) { last = null; return null; }
+      const r = pin.getBoundingClientRect();
+      const key = `${Math.round(r.left)},${Math.round(r.top)}`;
+      const stable = key === last;
+      last = key;
+      return stable ? pin : null;
+    }, { timeout: 15000, step: 450 });
+  }
+
+  /** Inside the map, clear of the search row and the sheet or panel, and on top. */
+  function clearOfUi(doc, win, pin) {
+    const r = pin.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const map = doc.querySelector('#map').getBoundingClientRect();
+    const sheet = doc.querySelector('#sheet-plaque').getBoundingClientRect();
+    const desktop = win.matchMedia('(min-width: 900px)').matches;
+    const controls = doc.querySelector('#map-controls').getBoundingClientRect();
+    return {
+      inMap: cx > map.left && cx < map.right && cy > map.top && cy < map.bottom,
+      clearOfSheet: desktop ? r.right <= sheet.left : r.bottom <= sheet.top,
+      clearOfControls: desktop || r.top >= controls.bottom,
+      onTop: doc.elementFromPoint(cx, cy)?.closest('.leaflet-marker-icon')
+               ?.querySelector('.pin') === pin,
+    };
+  }
+
+  async function boot(query) {
+    frame.src = 'about:blank';
+    await until(() => !frame.contentWindow?.__lu, { timeout: 8000 });
+    frame.src = `/index.html${query}`;
+    return until(() => frame.contentWindow?.__lu &&
+                       frame.contentDocument?.getElementById('boot')?.hidden,
+                 { timeout: 40000 });
+  }
+
+  // Two plaques at exactly the same spot, in the densest part of town (nearest
+  // Charing Cross) and on no walk, so collecting one here disturbs nothing later.
+  const all = frame.contentWindow.__lu.state.plaques;
+  const onWalk = new Set(frame.contentWindow.__lu.walks().flatMap(w => w.ids));
+  const spots = new Map();
+  for (const p of all) {
+    const k = `${p.lat},${p.lng}`;
+    spots.set(k, [...(spots.get(k) || []), p]);
+  }
+  const twins = [...spots.values()]
+    .filter(g => g.length === 2 && g.every(p => !onWalk.has(p.id)))
+    .sort((g, h) => Math.hypot(g[0].lat - 51.5074, g[0].lng + 0.1278)
+                  - Math.hypot(h[0].lat - 51.5074, h[0].lng + 0.1278))[0];
+  check('the dataset has two plaques at one spot to test with', !!twins);
+
+  if (twins && await boot(`?plaque=${encodeURIComponent(twins[0].id)}`)) {
+    const [a, b] = twins;
+    const doc = frame.contentDocument, win = frame.contentWindow;
+    const pin = await settledPin(doc, a.id);
+    check('a deep-linked plaque gets the selected marker', !!pin);
+    if (pin) {
+      eq('exactly one marker is selected', doc.querySelectorAll('.pin-selected').length, 1);
+      const others = [...doc.querySelectorAll('.pin:not(.pin-selected)')];
+      check('it is larger than every other marker on screen',
+            others.every(o => o.offsetWidth < pin.offsetWidth),
+            `${pin.offsetWidth}px vs ${Math.max(...others.map(o => o.offsetWidth))}px`);
+      check('its outline is a double ring, not just a colour',
+            (getComputedStyle(pin).boxShadow.match(/rgb/g) || []).length >= 3);
+      eq('it does not pulse', getComputedStyle(pin).animationName, 'none');
+      const z = el => Number(el.closest('.leaflet-marker-icon').style.zIndex);
+      check('it is raised above every other marker',
+            others.every(o => z(o) < z(pin)));
+      const twin = doc.querySelector(`.pin[data-plaque="${b.id}"]`);
+      check('its twin at the same spot is drawn, but beneath it', !!twin && z(twin) < z(pin));
+      const at = clearOfUi(doc, win, pin);
+      check('it is inside the map', at.inMap);
+      check('…not hidden under the plaque sheet', at.clearOfSheet);
+      check('…not hidden under the search row', at.clearOfControls);
+      check('…and on top where it sits, so it can be tapped', at.onTop);
+    }
+
+    win.__lu.open(b.id);
+    const pinB = await settledPin(doc, b.id);
+    check('opening another plaque moves the selection to it', !!pinB);
+    eq('…and only to it', doc.querySelectorAll('.pin-selected').length, 1);
+    if (pinB) check('…now on top of its twin', clearOfUi(doc, win, pinB).onTop);
+
+    win.__lu.collect(b.id);
+    check('collecting it keeps the selection and adds the collected look',
+          !!doc.querySelector(`.pin-selected.pin-collected[data-plaque="${b.id}"]`));
+
+    doc.querySelector('#chips .chip:not([data-cat="all"])').click();
+    doc.querySelector('#chips .chip[data-cat="all"]').click();
+    check('rebuilding the markers keeps the selection',
+          !!await until(() => doc.querySelector(`.pin-selected[data-plaque="${b.id}"]`)));
+
+    win.__lu.map().setZoom(11, { animate: false });
+    check('zoomed out, the cluster holding it carries the ring',
+          !!await until(() => doc.querySelectorAll('.cluster-selected').length === 1));
+    win.__lu.map().setView([b.lat, b.lng], 17, { animate: false });
+    check('zoomed back in, the marker is selected again',
+          !!await until(() => doc.querySelector(`.pin-selected[data-plaque="${b.id}"]`)));
+
+    doc.querySelector('#plaque-close').click();
+    check('closing the sheet removes the selection',
+          !!await until(() => !doc.querySelector('.pin-selected, .cluster-selected')));
+    check('…and leaves the marker in its ordinary state',
+          !!doc.querySelector(`.pin[data-plaque="${b.id}"]:not(.pin-selected)`));
+
+    const freddie = all.find(p => p.title === 'Freddie Mercury');
+    if (freddie) {
+      win.__lu.open(freddie.id);
+      const pinF = await settledPin(doc, freddie.id);
+      check('Freddie Mercury opens with his marker selected', !!pinF);
+      if (pinF) {
+        const at = clearOfUi(doc, win, pinF);
+        check('…clear of the sheet and on top', at.inMap && at.clearOfSheet && at.onTop);
+      }
+    }
+
+    // A gesture mid-move hands the camera to the user: the follow-up steps
+    // (revealing the twin pair at 17) are dropped, and nothing pulls it back.
+    const lmap = win.__lu.map();
+    lmap.setView([51.46, -0.2], 12, { animate: false });
+    win.__lu.open(a.id);
+    lmap.getContainer().dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    await sleep(1500);
+    eq('a gesture during the camera move cancels the follow-up zoom', lmap.getZoom(), 16);
+    lmap.setView([51.53, -0.05], 15, { animate: false });   // the user's pan
+    await sleep(2000);
+    const c = lmap.getCenter();
+    check('…and a pan afterwards is not undone',
+          Math.abs(c.lat - 51.53) < 1e-6 && Math.abs(c.lng + 0.05) < 1e-6,
+          `centre moved to ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}`);
+    eq('…while the plaque stays open', win.__lu.state.openPlaqueId, a.id);
+
+    // Desktop: the panel sits beside the map; the pin must stay in the map.
+    frame.width = 1280; frame.height = 800;
+    await sleep(400);
+    win.__lu.open(a.id);
+    const pinD = await settledPin(doc, a.id);
+    check('on desktop the plaque opens selected', !!pinD);
+    if (pinD) {
+      const at = clearOfUi(doc, win, pinD);
+      check('…inside the map, clear of the panel and on top',
+            at.inMap && at.clearOfSheet && at.onTop, JSON.stringify(at));
+    }
+    frame.width = 390; frame.height = 844;
+    await sleep(300);
+  }
+}
+
 /* ── Deep link from a static category page (?category=<slug>) ───────────── */
 group('category deep link');
 {

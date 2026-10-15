@@ -607,6 +607,14 @@ a.sp-link:hover { background: var(--ivory-3); }
   cursor: default;
 }
 
+/* Sits under the intro: says the list is our dataset, not the whole scheme. */
+.dir-coverage {
+  margin: calc(-1 * var(--sp-2)) 0 var(--sp-5);
+  max-width: 60ch;
+  font-size: var(--fs-sm);
+  color: var(--ink-400);
+}
+
 .dir-hint {
   margin: var(--sp-2) 0 0;
   font-size: var(--fs-xs);

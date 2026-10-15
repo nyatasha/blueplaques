@@ -641,9 +641,15 @@ all_plaques = gen.load_plaques()
 dir_rows = re.findall(r'<li data-c="([a-z-]+)"><a class="dir-name" href="\.\./'
                       + gen.PAGES_DIR + r'/([a-z0-9-]+)/">(.*?)</a>', directory)
 check("the H1 is in the initial HTML",
-      "<h1>London Blue Plaques — Full List</h1>" in directory)
+      "<h1>London Blue Plaques List</h1>" in directory)
 check("the intro states the generated count",
-      f"Explore all {len(all_plaques):,} English Heritage blue plaques" in directory)
+      f"Explore the {len(all_plaques):,} London blue plaques in our dataset." in directory)
+check("a visible note qualifies coverage as the dataset, not the whole scheme",
+      re.search(r'<p class="dir-coverage">This directory includes every plaque in our '
+                r'dataset,\s+which covers the English Heritage scheme\. Newer plaques '
+                r'may be missing\.</p>', directory) is not None)
+check("no copy on the page claims the whole scheme",
+      not re.search(r"(?i)\bfull list\b|\ball [\d,]+ English Heritage", directory))
 eq("one row per plaque in the dataset", len(dir_rows), len(all_plaques))
 eq("no plaque page is listed twice", len({slug for _, slug, _ in dir_rows}), len(dir_rows))
 eq("every row links the slug the generator wrote for it",
@@ -700,6 +706,12 @@ dir_title = re.search(r"<title>(.*?)</title>", directory).group(1)
 dir_desc = re.search(r'name="description" content="(.*?)"', directory).group(1)
 check("the title names the list intent and the count",
       dir_title.startswith("London Blue Plaques List") and f"{len(all_plaques):,}" in dir_title)
+eq("the description qualifies the count as our dataset", gen.html.unescape(dir_desc),
+   f"Browse {len(all_plaques):,} London blue plaques in our dataset, A–Z. Search by "
+   "name or street, filter by category, and find each plaque on the map.")
+check("Open Graph and Twitter carry the same description",
+      f'<meta property="og:description" content="{dir_desc}">' in directory
+      and f'<meta name="twitter:description" content="{dir_desc}">' in directory)
 check("the description fits without truncation",
       len(gen.html.unescape(dir_desc)) <= gen.DESC_MAX and not dir_desc.endswith("…"))
 other_heads = [home] + [open(os.path.join(ROOT, gen.CATS_DIR, d, "index.html"),
